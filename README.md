@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QR STUDIO
+
+เว็บแอพพลิเคชันขาย Script เกม และ UI สำหรับ FiveM พร้อมบริการรับทำ UI ตามสั่ง
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Runtime:** Bun
+- **Styling:** TailwindCSS v4
+- **UI Components:** Custom Glassmorphism Design
+- **State Management:** Zustand
+- **Animation:** Framer Motion
+- **Authentication:** NextAuth.js (Discord OAuth)
+- **Payment:** Stripe
+- **Icons:** Lucide React
+- **Font:** Kanit (Thai/Latin)
+
+## Features
+
+1. **ขาย Script เกม / UI** - ระบบ E-commerce สำหรับขาย Digital Products
+2. **รับทำ UI** - ระบบ Commission สำหรับรับทำ UI ตามสั่ง
+3. **Discord OAuth** - ล็อคอินผ่าน Discord
+4. **Dashboard** - แสดงจำนวนผู้เข้าชม / สินค้า / License / สมาชิก
+5. **Notifications** - ระบบแจ้งเตือนการอัพเดท
+6. **Product Showcase** - หน้าโชว์สินค้าพร้อมระบบกรองและค้นหา
+7. **Mobile Responsive** - รองรับการแสดงผลบนมือถือ
+8. **Top-up System** - ระบบเติมเงิน (เตรียมไว้สำหรับ Backend)
+9. **Payment System** - ระบบชำระเงินผ่าน Stripe
+10. **Shopping Cart** - ระบบตะกร้าสินค้า
+11. **SEO Optimized** - ปรับแต่ง Meta tags และ Open Graph
+12. **Security** - ใช้ Stripe สำหรับการชำระเงินที่ปลอดภัย
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- [Bun](https://bun.sh/) v1.0+
+- Discord Application (สำหรับ OAuth)
+- Stripe Account (สำหรับ Payment)
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone https://github.com/your-username/qr-studios.git
+cd qr-studios
+
+# Install dependencies
+bun install
+
+# Copy environment variables
+cp env.example .env.local
+
+# Run development server
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+สร้างไฟล์ `.env.local` และกำหนดค่าต่อไปนี้:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-## Learn More
+# Discord OAuth
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
 
-To learn more about Next.js, take a look at the following resources:
+# NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret_key_here
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+STRIPE_SECRET_KEY=sk_test_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Database (for future backend)
+DATABASE_URL=your_database_url
+```
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API Routes
+│   ├── auth/              # Authentication pages
+│   ├── cart/              # Shopping cart
+│   ├── checkout/          # Checkout flow
+│   ├── commission/        # Commission/Custom UI page
+│   ├── products/          # Products listing & detail
+│   └── layout.tsx         # Root layout
+├── components/
+│   ├── home/              # Homepage sections
+│   ├── layout/            # Navbar, Footer
+│   ├── product/           # Product components
+│   ├── providers/         # Context providers
+│   └── ui/                # Reusable UI components
+├── data/                  # Mock data
+├── lib/                   # Utilities & configurations
+├── store/                 # Zustand stores
+└── types/                 # TypeScript types
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Design System
+
+- **Theme:** Glassmorphism (Purple/Black)
+- **Primary Color:** Purple (#9333ea)
+- **Background:** Black (#050505)
+- **Font:** Kanit (Thai/Latin support)
+
+## Scripts
+
+```bash
+bun run dev      # Start development server
+bun run build    # Build for production
+bun run start    # Start production server
+bun run lint     # Run ESLint
+```
+
+## Future Backend Integration
+
+โปรเจคนี้เตรียมไว้สำหรับการเชื่อมต่อกับ Backend ในอนาคต:
+
+- **Database:** Prisma + PostgreSQL/MySQL
+- **API:** Next.js API Routes หรือ Separate Backend
+- **File Storage:** AWS S3 / Cloudflare R2
+- **Email:** Resend / SendGrid
+
+## License
+
+MIT License

@@ -30,8 +30,12 @@ import { apiRateLimit } from './middleware/rate-limit.middleware';
 import { requestSizeLimit } from './middleware/size-limit.middleware';
 import { visitorTracker } from './middleware/visitor.middleware';
 import { httpsEnforcement } from './middleware/https.middleware';
+import { requestIdMiddleware } from './middleware/request-id.middleware';
 
 const app = new Hono({ strict: false });
+
+// Request ID middleware (first - for tracing)
+app.use('*', requestIdMiddleware);
 
 // Global middleware
 app.use('*', corsMiddleware);

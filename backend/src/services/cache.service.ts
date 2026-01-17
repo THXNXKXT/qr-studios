@@ -267,6 +267,86 @@ class CacheService {
     }
 
     /**
+     * Delete keys matching a pattern (e.g., "products:*")
+     * Uses Redis SCAN for production, simple iteration for in-memory
+     */
+    async invalidatePattern(pattern: string): Promise<number> {
+        let deleted = 0;
+
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                // Use SCAN to find keys matching pattern (safer than KEYS for production)
+                let cursor = '0';
+                do {
+                    const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+                    cursor = nextCursor;
+                    if (keys.length > 0) {
+                        await this.redis.del(...keys);
+                        deleted += keys.length;
+                    }
+                } while (cursor !== '0');
+
+                console.log(`[Cache] Invalidated ${deleted} keys matching "${pattern}"`);
+                return deleted;
+            } catch (error) {
+                console.error('[Cache] Redis invalidatePattern error:', error);
+            }
+        }
+
+        // In-memory fallback: convert glob pattern to regex
+        const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+        for (const key of this.memoryCache.keys()) {
+            if (regex.test(key)) {
+                this.memoryCache.delete(key);
+                deleted++;
+            }
+        }
+        console.log(`[Cache] [Memory] Invalidated ${deleted} keys matching "${pattern}"`);
+        return deleted;
+    }
+
+    /**
+     * Invalidate all cache entries for a specific entity
+     */
+    async invalidateEntity(entity: 'product' | 'user' | 'order', id: string): Promise<void> {
+        await this.invalidatePattern(`${entity}:${id}*`);
+        await this.invalidatePattern(`${entity}s:*`); // List caches
+    }
+
+    /**
+     * Invalidate product-related caches
+     */
+    async invalidateProduct(productId: string): Promise<void> {
+        await Promise.all([
+            this.del(`product:${productId}`),
+            this.invalidatePattern('products:list:*'),
+            this.invalidatePattern('products:featured:*'),
+        ]);
+    }
+
+    /**
+     * Invalidate user-related caches
+     */
+    async invalidateUser(userId: string): Promise<void> {
+        await Promise.all([
+            this.del(`user:${userId}`),
+            this.del(`user:${userId}:profile`),
+            this.del(`user:${userId}:orders`),
+        ]);
+    }
+
+    /**
+     * Invalidate order-related caches
+     */
+    async invalidateOrder(orderId: string, userId?: string): Promise<void> {
+        const tasks = [this.del(`order:${orderId}`)];
+        if (userId) {
+            tasks.push(this.del(`user:${userId}:orders`));
+        }
+        await Promise.all(tasks);
+    }
+
+    /**
      * Cleanup expired entries (for in-memory cache)
      */
     private cleanup(): void {

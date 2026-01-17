@@ -68,6 +68,11 @@ app.use('*', apiRateLimit);
 app.use('*', requestSizeLimit(5 * 1024 * 1024)); // 5MB limit
 app.use('*', visitorTracker);
 
+// Prometheus metrics endpoint (before routes, no auth required)
+import { metricsMiddleware, metricsHandler } from './middleware/metrics.middleware';
+app.use('*', metricsMiddleware);
+app.get('/metrics', metricsHandler);
+
 // Simple health check
 app.get('/health', (c) => {
   return c.json({

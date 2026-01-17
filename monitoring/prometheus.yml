@@ -1,0 +1,50 @@
+# Prometheus Configuration for QR Studios
+# =============================================================================
+# This file configures Prometheus to scrape metrics from the QR Studios API
+# and set up alerting rules.
+# =============================================================================
+
+global:
+  scrape_interval: 15s          # How often to scrape targets
+  evaluation_interval: 15s      # How often to evaluate rules
+  external_labels:
+    monitor: 'qr-studios'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # QR Studios Backend API
+  - job_name: 'qr-studios-api'
+    static_configs:
+      # For Docker: use host.docker.internal on Windows/Mac
+      # For Linux Docker: use the actual host IP or container name
+      - targets: ['host.docker.internal:4001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    
+    # Add labels to identify the environment
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'qr-studios-backend'
+
+  # Optional: Node Exporter for system metrics
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']

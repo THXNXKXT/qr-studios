@@ -1,0 +1,76 @@
+# Prometheus Alerting Rules
+# =============================================================================
+# Define alerts for important conditions
+# =============================================================================
+
+groups:
+  - name: qr-studios-alerts
+    rules:
+      # API Availability
+      - alert: APIDown
+        expr: up{job="qr-studios-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "QR Studios API is down"
+          description: "The API has been unreachable for more than 1 minute."
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_errors_total{job="qr-studios-api"}[5m])) 
+          / sum(rate(http_requests_total{job="qr-studios-api"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for the last 5 minutes."
+
+      # High Response Time
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket{job="qr-studios-api"}[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile response time is above 2 seconds."
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: process_heap_bytes{type="used"} / process_heap_bytes{type="total"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Heap memory usage is above 90%."
+
+      # Order Processing Issues
+      - alert: OrderFailures
+        expr: |
+          sum(increase(orders_total{status="failed"}[1h])) 
+          / sum(increase(orders_total[1h])) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High order failure rate"
+          description: "More than 10% of orders are failing in the last hour."
+
+      # Payment Processing Issues
+      - alert: PaymentFailures
+        expr: |
+          sum(increase(payments_total{status="failed"}[1h])) 
+          / sum(increase(payments_total[1h])) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High payment failure rate"
+          description: "More than 10% of payments are failing in the last hour."

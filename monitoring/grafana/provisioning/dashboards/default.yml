@@ -1,0 +1,16 @@
+# Grafana Dashboard Provisioning
+# Auto-load dashboards from folder on startup
+
+apiVersion: 1
+
+providers:
+  - name: 'QR Studios Dashboards'
+    orgId: 1
+    folder: 'QR Studios'
+    folderUid: 'qr-studios'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

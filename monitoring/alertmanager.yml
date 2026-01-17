@@ -1,0 +1,74 @@
+# Alertmanager Configuration
+# =============================================================================
+# Configure how alerts are routed and sent
+# =============================================================================
+
+global:
+  # Global SMTP settings (configure for email alerts)
+  # smtp_smarthost: 'smtp.example.com:587'
+  # smtp_from: 'alertmanager@qr-studios.com'
+  # smtp_auth_username: 'alertmanager'
+  # smtp_auth_password: 'password'
+
+  # Slack webhook (configure for Slack alerts)
+  # slack_api_url: 'https://hooks.slack.com/services/xxx/yyy/zzz'
+
+route:
+  # Default receiver
+  receiver: 'default-receiver'
+  
+  # Group alerts by alertname
+  group_by: ['alertname', 'severity']
+  
+  # How long to wait before sending notification
+  group_wait: 30s
+  
+  # How long to wait before sending notification for new alerts in group
+  group_interval: 5m
+  
+  # How long to wait before resending notification
+  repeat_interval: 4h
+
+  # Child routes for different severity levels
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      repeat_interval: 1h
+    
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      repeat_interval: 4h
+
+receivers:
+  # Default receiver - just logs
+  - name: 'default-receiver'
+    # webhook_configs:
+    #   - url: 'http://localhost:5001/webhook'
+
+  # Critical alerts - immediate notification
+  - name: 'critical-receiver'
+    # email_configs:
+    #   - to: 'admin@qr-studios.com'
+    #     send_resolved: true
+    # slack_configs:
+    #   - channel: '#alerts-critical'
+    #     send_resolved: true
+
+  # Warning alerts
+  - name: 'warning-receiver'
+    # email_configs:
+    #   - to: 'dev-team@qr-studios.com'
+    #     send_resolved: true
+    # slack_configs:
+    #   - channel: '#alerts-warning'
+    #     send_resolved: true
+
+# Inhibition rules - prevent alert storms
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']

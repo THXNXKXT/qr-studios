@@ -32,7 +32,8 @@ const mockDbQuery = {
             name: 'Test Product',
             price: 299,
             stock: 10,
-            isActive: true
+            isActive: true,
+            rewardPoints: 30
         }))
     },
     orders: {
@@ -72,8 +73,8 @@ describe('Order Flow Integration', () => {
             // Simulate product validation logic
             const products = await mockDbQuery.products.findMany();
             expect(products.length).toBeGreaterThan(0);
-            expect(products[0].stock).toBeGreaterThan(0);
-            expect(products[0].isActive).toBe(true);
+            expect(products[0]?.stock).toBeGreaterThan(0);
+            expect(products[0]?.isActive).toBe(true);
         });
 
         it('should check user balance for balance payment method', async () => {

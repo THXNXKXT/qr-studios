@@ -101,6 +101,7 @@ describe('Stripe Webhook Handler', () => {
                         payment_status: 'paid',
                         metadata: {
                             orderId: 'order_123',
+                            userId: 'user_123',
                             type: 'order'
                         }
                     }
@@ -120,7 +121,7 @@ describe('Stripe Webhook Handler', () => {
             const result = await webhooksController.handleStripe(mockContext as any);
 
             expect(mockHandleStripeWebhook).toHaveBeenCalled();
-            expect(result).toEqual({ received: true });
+            expect(result).toEqual({ received: true } as any);
         });
     });
 
@@ -131,8 +132,12 @@ describe('Stripe Webhook Handler', () => {
                 data: {
                     object: {
                         id: 'pi_test_123',
-                        amount: 1000,
-                        metadata: {}
+                        payment_status: 'paid',
+                        metadata: {
+                            orderId: 'order_123',
+                            userId: 'user_123',
+                            type: 'payment'
+                        }
                     }
                 }
             }));
@@ -148,7 +153,7 @@ describe('Stripe Webhook Handler', () => {
             };
 
             const result = await webhooksController.handleStripe(mockContext as any);
-            expect(result).toEqual({ received: true });
+            expect(result).toEqual({ received: true } as any);
         });
     });
 });

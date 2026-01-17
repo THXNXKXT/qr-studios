@@ -5,6 +5,7 @@ import { AlertTriangle, Trash2, Ban, X, Loader2 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -23,11 +24,16 @@ export function ConfirmModal({
   onConfirm,
   title,
   message,
-  confirmText = "ยืนยัน",
-  cancelText = "ยกเลิก",
+  confirmText,
+  cancelText,
   type = "danger",
 }: ConfirmModalProps) {
+  const { t } = useTranslation("admin");
   const [isLoading, setIsLoading] = useState(false);
+
+  // If text props are not provided, use translations from common namespace
+  const finalConfirmText = confirmText || t("common.confirm");
+  const finalCancelText = cancelText || t("common.cancel");
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -75,17 +81,17 @@ export function ConfirmModal({
             <div className={cn(
               "absolute top-0 left-0 w-full h-1 bg-linear-to-r",
               type === "danger" ? "from-red-600 via-red-500 to-transparent" :
-              type === "warning" ? "from-yellow-600 via-yellow-500 to-transparent" :
-              "from-blue-600 via-blue-500 to-transparent"
+                type === "warning" ? "from-yellow-600 via-yellow-500 to-transparent" :
+                  "from-blue-600 via-blue-500 to-transparent"
             )} />
-            
+
             <div className="flex flex-col items-center text-center space-y-6">
               {/* Icon Container */}
               <div className={cn(
                 "w-20 h-20 rounded-4xl flex items-center justify-center border transition-all duration-500",
                 type === "danger" ? "bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]" :
-                type === "warning" ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.1)]" :
-                "bg-blue-500/10 border-blue-500/20 text-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                  type === "warning" ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.1)]" :
+                    "bg-blue-500/10 border-blue-500/20 text-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
               )}>
                 <Icon className="w-10 h-10" />
               </div>
@@ -106,27 +112,27 @@ export function ConfirmModal({
                   className={cn(
                     "w-full py-8 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg",
                     type === "danger" ? "bg-red-600 hover:bg-red-700 text-white shadow-red-600/20" :
-                    type === "warning" ? "bg-yellow-600 hover:bg-yellow-700 text-white shadow-yellow-600/20" :
-                    "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20"
+                      type === "warning" ? "bg-yellow-600 hover:bg-yellow-700 text-white shadow-yellow-600/20" :
+                        "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20"
                   )}
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing...</span>
+                      <span>{t("common.processing")}</span>
                     </div>
                   ) : (
-                    confirmText
+                    finalConfirmText
                   )}
                 </Button>
-                
+
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={isLoading}
                   className="w-full py-4 text-gray-500 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
                 >
-                  {cancelText}
+                  {finalCancelText}
                 </button>
               </div>
             </div>

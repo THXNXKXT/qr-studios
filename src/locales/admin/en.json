@@ -10,15 +10,27 @@
     "no_data": "No data found",
     "confirm": "Confirm",
     "actions": "Actions",
-    "status": "Status"
+    "status": "Status",
+    "processing": "Processing..."
   },
   "sidebar": {
+    "admin_panel": "Admin Panel",
+    "admin_user": "Admin User",
+    "super_admin": "Super Admin",
     "dashboard": "Dashboard",
     "products": "Products",
     "users": "Users",
     "orders": "Orders",
     "analytics": "Analytics",
-    "licenses": "Licenses",
+    "flash_sale": "Flash Sale",
+    "licenses": "License",
+    "promo_codes": "Promo Codes",
+    "announcements": "Announcements",
+    "reviews": "Reviews",
+    "commissions": "Commissions",
+    "lucky_wheel": "Lucky Wheel",
+    "export": "Export",
+    "audit_logs": "Audit Logs",
     "settings": "Settings",
     "logout_admin": "Logout Admin"
   },
@@ -85,6 +97,19 @@
       "no_products": "No products found",
       "no_products_subtitle": "Try changing your search terms or add a new product"
     },
+    "categories": {
+      "script": "Script",
+      "ui": "UI Design",
+      "bundle": "Bundle"
+    },
+    "errors": {
+      "archive_fail": "Failed to archive product",
+      "archive_error": "An error occurred while archiving the product",
+      "delete_fail": "Failed to delete product permanently",
+      "delete_error": "An error occurred while permanently deleting the product",
+      "restore_fail": "Failed to restore product",
+      "restore_error": "An error occurred while restoring the product"
+    },
     "modals": {
       "archive": {
         "title": "Archive Product",
@@ -102,6 +127,73 @@
           "undo": "This action CANNOT be undone"
         },
         "confirm": "Permanently Delete"
+      },
+      "form": {
+        "edit_title": "Edit Product",
+        "create_title": "Create New Product",
+        "edit_subtitle": "Product ID: {{id}}",
+        "create_subtitle": "Configure your item details",
+        "tabs": {
+          "basic": "Basic Info",
+          "media": "Media & Assets",
+          "settings": "Configuration",
+          "delivery": "Delivery"
+        },
+        "basic": {
+          "name": "Product Name",
+          "slug": "URL Slug",
+          "description": "Description",
+          "category": "Category",
+          "version": "Version",
+          "stock": "Stock (0 for ∞)",
+          "stock_placeholder": "0"
+        },
+        "media": {
+          "cover": "Cover Image",
+          "gallery": "Image Gallery",
+          "upload_cover": "Upload Cover",
+          "add_image": "Add Image",
+          "pending": "Pending"
+        },
+        "settings": {
+          "pricing_title": "Pricing & Points",
+          "sale_price": "Sale Price",
+          "original_price": "Original Price",
+          "reward_points": "Reward Points",
+          "visibility_title": "Visibility Settings",
+          "active": "Active Shop",
+          "new": "New Item",
+          "featured": "Featured",
+          "flash_sale": "Flash Sale",
+          "flash_config": "Flash Sale Configuration",
+          "flash_price": "Flash Sale Price",
+          "flash_ends": "Sale Ends At"
+        },
+        "delivery": {
+          "title": "Digital Delivery",
+          "subtitle": "How customers receive this product",
+          "mode_physical": "Physical product mode",
+          "mode_digital": "Digital asset ready",
+          "asset_method": "Asset Delivery Method",
+          "direct_upload": "Direct File Upload",
+          "upload_hint": "Upload .zip, .rar, .json",
+          "external": "External URL / Keymaster",
+          "url_override": "Download URL Override",
+          "ready": "Ready to Upload",
+          "linked": "Remote Asset Linked",
+          "features": "Key Features",
+          "tags": "Search Tags",
+          "add_new": "Add New",
+          "placeholder_package": "e.g. package_name",
+          "placeholder_url": "https://...",
+          "linked_asset": "Linked Asset",
+          "feature_placeholder": "Feature #{{count}}",
+          "tags_placeholder": "Type and press Enter..."
+        },
+        "btn_discard": "Discard",
+        "btn_save": "Publish Product",
+        "btn_update": "Update Product",
+        "btn_saving": "Saving..."
       }
     }
   },
@@ -234,9 +326,24 @@
     "guide_desc": "Exporting data will pull the latest information directly from the database. The resulting file will be in CSV format, which can be opened with Excel, Google Sheets, or other spreadsheet programs. If you have a large amount of data (more than 5,000 items), it may take a moment to prepare the file.",
     "btn_export": "Export Data",
     "btn_exporting": "Exporting...",
+    "coming_soon": "(Coming Soon)",
     "coming_soon_filter": "Filter by time (Coming Soon)",
     "coming_soon_formats": "Additional formats (Coming Soon)",
-    "time_options": ["7 Days", "30 Days", "All Time"],
+    "time_options": [
+      "7 Days",
+      "30 Days",
+      "All Time"
+    ],
+    "headers": {
+      "order_id": "Order ID",
+      "date": "Date",
+      "customer_name": "Customer Name",
+      "customer_email": "Customer Email",
+      "products": "Products",
+      "total": "Total",
+      "status": "Status",
+      "payment_method": "Payment Method"
+    },
     "errors": {
       "no_data": "No data found to export, or an error occurred while fetching data",
       "failed": "Error exporting data"
@@ -286,6 +393,48 @@
       "processing": "Processing",
       "cancelled": "Cancelled",
       "refunded": "Refunded"
+    },
+    "table": {
+      "order_id": "Order ID",
+      "customer": "Customer",
+      "products": "Products",
+      "total": "Total",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions",
+      "more_items": "+{{count}} more items",
+      "view_details": "View Details"
+    },
+    "filter": {
+      "all": "All Orders"
+    },
+    "messages": {
+      "receipt_sent": "Receipt resent successfully",
+      "receipt_fail": "Failed to resend receipt"
+    },
+    "modals": {
+      "details": {
+        "title": "Order Details",
+        "status_label": "Current Status",
+        "process_btn": "Process Order",
+        "success_btn": "Mark Success",
+        "cancel_btn": "Cancel",
+        "customer_info": "Customer Info",
+        "payment_details": "Payment Details",
+        "method": "Method",
+        "ref": "Reference",
+        "timestamp": "Timestamp",
+        "items": "Order Items",
+        "quantity": "Quantity",
+        "keys": "Asset Keys / Licenses",
+        "keys_count": "{{count}} Keys Attached",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "total": "Grand Total",
+        "verified": "Verified transaction",
+        "close": "Close",
+        "resend": "Resend Invoice"
+      }
     }
   },
   "users": {
@@ -294,6 +443,51 @@
     "search_placeholder": "Search by Username, Email, or Discord ID...",
     "no_users": "No users found",
     "no_users_subtitle": "Try changing your search terms or import new data",
+    "stats": {
+      "total": "Total Accounts",
+      "new_signups": "New Signups (24h)",
+      "completed_orders": "Completed Orders",
+      "total_revenue": "Total Revenue"
+    },
+    "filter": {
+      "all": "All Users",
+      "members": "Members"
+    },
+    "roles": {
+      "admin": "Admin",
+      "vip": "VIP",
+      "user": "User",
+      "moderator": "Mod"
+    },
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "platinum": "Platinum",
+      "diamond": "Diamond",
+      "elite": "Elite",
+      "royal": "Royal",
+      "legend": "Legend"
+    },
+    "table": {
+      "identity": "User Identity",
+      "role": "Role",
+      "tier": "Member Tier",
+      "points": "Points",
+      "balance": "Available Balance",
+      "total_spent": "Total Contributions",
+      "status": "Account Status",
+      "actions": "Actions",
+      "no_email": "No Email",
+      "active": "ACTIVE",
+      "banned": "BANNED"
+    },
+    "actions": {
+      "edit": "Edit",
+      "ban": "Ban",
+      "unban": "Unban",
+      "view": "View Details"
+    },
     "modals": {
       "ban": {
         "title": "Ban User",
@@ -302,7 +496,29 @@
         "unban_message": "Are you sure you want to unban \"{{name}}\"?",
         "confirm": "Ban",
         "unban_confirm": "Unban"
-      }
+      },
+      "form": {
+        "edit_title": "Edit Account",
+        "create_title": "Register User",
+        "subtitle": "Manage user profile and permissions",
+        "section_profile": "Profile Information",
+        "username": "Username",
+        "email": "Email Address",
+        "discord_id": "Discord Identifier",
+        "section_permissions": "Permissions & Wallet",
+        "system_role": "System Role",
+        "account_status": "Account Status",
+        "status_operational": "✓ OPERATIONAL",
+        "status_restricted": "⚠ RESTRICTED",
+        "credits": "Credits (฿)",
+        "reward_points": "Reward Points",
+        "btn_discard": "Discard",
+        "btn_update": "Update Profile",
+        "btn_create": "Create Account",
+        "btn_syncing": "Syncing..."
+      },
+      "update_fail": "Failed to update user",
+      "ban_fail": "Failed to update ban status"
     }
   }
 }

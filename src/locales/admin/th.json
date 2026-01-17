@@ -10,17 +10,29 @@
     "no_data": "ไม่พบข้อมูล",
     "confirm": "ยืนยัน",
     "actions": "การจัดการ",
-    "status": "สถานะ"
+    "status": "สถานะ",
+    "processing": "กำลังดำเนินการ..."
   },
   "sidebar": {
-    "dashboard": "แดชบอร์ด",
-    "products": "จัดการสินค้า",
-    "users": "จัดการผู้ใช้",
-    "orders": "จัดการคำสั่งซื้อ",
+    "admin_panel": "แผงควบคุม",
+    "admin_user": "ผู้ดูแลระบบ",
+    "super_admin": "ซูเปอร์แอดมิน",
+    "dashboard": "หน้าหลัก",
+    "products": "สินค้า",
+    "users": "ผู้ใช้งาน",
+    "orders": "คำสั่งซื้อ",
     "analytics": "วิเคราะห์ข้อมูล",
-    "licenses": "ทะเบียนไลเซนส์",
+    "flash_sale": "แฟลชเซล",
+    "licenses": "ใบอนุญาต",
+    "promo_codes": "รหัสส่วนลด",
+    "announcements": "ประกาศ",
+    "reviews": "รีวิว",
+    "commissions": "คอมมิชชัน",
+    "lucky_wheel": "วงล้อลุ้นโชค",
+    "export": "ส่งออกข้อมูล",
+    "audit_logs": "บันทึกกิจกรรม",
     "settings": "ตั้งค่า",
-    "logout_admin": "ออกจากระบบแอดมิน"
+    "logout_admin": "ออกจากระบบ"
   },
   "dashboard": {
     "title": "แดชบอร์ดผู้ดูแลระบบ",
@@ -83,7 +95,20 @@
       "featured": "แนะนำ",
       "loading": "กำลังโหลดข้อมูลสินค้า...",
       "no_products": "ไม่พบสินค้า",
-      "no_products_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือเพิ่มสินค้าใหม่"
+      "no_products_subtitle": "ลองเปลี่ยนคำค้นหา หรือเพิ่มสินค้าใหม่"
+    },
+    "categories": {
+      "script": "สคริปต์",
+      "ui": "ดีไซน์ UI",
+      "bundle": "รวมมิตร"
+    },
+    "errors": {
+      "archive_fail": "เกิดข้อผิดพลาดในการเก็บถาวรสินค้า",
+      "archive_error": "เกิดข้อผิดพลาดขณะดำเนินการเก็บถาวรสินค้า",
+      "delete_fail": "เกิดข้อผิดพลาดในการลบสินค้าถาวร",
+      "delete_error": "เกิดข้อผิดพลาดขณะดำเนินการลบสินค้าถาวร",
+      "restore_fail": "เกิดข้อผิดพลาดในการกู้คืนสินค้า",
+      "restore_error": "เกิดข้อผิดพลาดขณะดำเนินการกู้คืนสินค้า"
     },
     "modals": {
       "archive": {
@@ -102,6 +127,73 @@
           "undo": "การดำเนินการนี้ไม่สามารถย้อนกลับได้"
         },
         "confirm": "ลบถาวร"
+      },
+      "form": {
+        "edit_title": "แก้ไขข้อมูลสินค้า",
+        "create_title": "เพิ่มสินค้าใหม่",
+        "edit_subtitle": "รหัสสินค้า: {{id}}",
+        "create_subtitle": "กรอกข้อมูลสินค้าของคุณ",
+        "tabs": {
+          "basic": "ข้อมูลทั่วไป",
+          "media": "รูปภาพและสื่อ",
+          "settings": "การตั้งค่า",
+          "delivery": "การจัดส่ง"
+        },
+        "basic": {
+          "name": "ชื่อสินค้า",
+          "slug": "URL Slug",
+          "description": "รายละเอียด",
+          "category": "หมวดหมู่",
+          "version": "เวอร์ชัน",
+          "stock": "สินค้าคงเหลือ (0 = ไม่จำกัด)",
+          "stock_placeholder": "0"
+        },
+        "media": {
+          "cover": "รูปภาพหน้าปก",
+          "gallery": "อัลบั้มรูปภาพ",
+          "upload_cover": "อัปโหลดปก",
+          "add_image": "เพิ่มรูป",
+          "pending": "รออัปโหลด"
+        },
+        "settings": {
+          "pricing_title": "ราคาและแต้มสะสม",
+          "sale_price": "ราคาขาย",
+          "original_price": "ราคาเต็ม (ก่อนลด)",
+          "reward_points": "แต้มสะสมที่ได้รับ",
+          "visibility_title": "การแสดงผล",
+          "active": "เปิดขาย",
+          "new": "สินค้าใหม่",
+          "featured": "แนะนำ",
+          "flash_sale": "เข้าร่วม Flash Sale",
+          "flash_config": "ตั้งค่า Flash Sale",
+          "flash_price": "ราคา Flash Sale",
+          "flash_ends": "สิ้นสุดเมื่อ"
+        },
+        "delivery": {
+          "title": "การจัดส่งไฟล์ดิจิทัล",
+          "subtitle": "รูปแบบการรับสินค้าของลูกค้า",
+          "mode_physical": "โหมดสินค้าทั่วไป",
+          "mode_digital": "พร้อมส่งไฟล์ดิจิทัล",
+          "asset_method": "วิธีการส่งไฟล์",
+          "direct_upload": "อัปโหลดไฟล์โดยตรง",
+          "upload_hint": "รองรับ .zip, .rar, .json",
+          "external": "ลิงก์ภายนอก / Keymaster",
+          "url_override": "ลิงก์ดาวน์โหลดสำรอง",
+          "ready": "พร้อมอัปโหลด",
+          "linked": "เชื่อมโยงแล้ว",
+          "features": "คุณสมบัติเด่น",
+          "tags": "แท็กค้นหา",
+          "add_new": "เพิ่มใหม่",
+          "placeholder_package": "เช่น package_name",
+          "placeholder_url": "https://...",
+          "linked_asset": "สินทรัพย์ที่เชื่อมโยง",
+          "feature_placeholder": "คุณสมบัติ #{{count}}",
+          "tags_placeholder": "พิมพ์และกด Enter..."
+        },
+        "btn_discard": "ยกเลิก",
+        "btn_save": "ลงขายสินค้า",
+        "btn_update": "บันทึกการแก้ไข",
+        "btn_saving": "กำลังบันทึก..."
       }
     }
   },
@@ -234,9 +326,24 @@
     "guide_desc": "การส่งออกข้อมูลจะดึงข้อมูลล่าสุดจากฐานข้อมูลโดยตรง ไฟล์ที่ได้จะเป็นรูปแบบ CSV ซึ่งสามารถเปิดได้ด้วย Excel, Google Sheets หรือโปรแกรม Spreadsheet อื่นๆ หากคุณมีข้อมูลจำนวนมาก (มากกว่า 5,000 รายการ) อาจใช้เวลาในการเตรียมไฟล์สักครู่",
     "btn_export": "ส่งออกข้อมูล",
     "btn_exporting": "กำลังส่งออก...",
-    "coming_soon_filter": "กรองตามช่วงเวลา (Coming Soon)",
-    "coming_soon_formats": "รูปแบบไฟล์เพิ่มเติม (Coming Soon)",
-    "time_options": ["7 วัน", "30 วัน", "ทั้งหมด"],
+    "coming_soon": "(เร็วๆ นี้)",
+    "coming_soon_filter": "กรองตามช่วงเวลา (เร็วๆ นี้)",
+    "coming_soon_formats": "รูปแบบไฟล์เพิ่มเติม (เร็วๆ นี้)",
+    "time_options": [
+      "7 วัน",
+      "30 วัน",
+      "ทั้งหมด"
+    ],
+    "headers": {
+      "order_id": "เลขที่คำสั่งซื้อ",
+      "date": "วันที่",
+      "customer_name": "ชื่อลูกค้า",
+      "customer_email": "อีเมลลูกค้า",
+      "products": "สินค้า",
+      "total": "ยอดรวม",
+      "status": "สถานะ",
+      "payment_method": "วิธีการชำระเงิน"
+    },
     "errors": {
       "no_data": "ไม่พบข้อมูลที่จะส่งออก หรือเกิดข้อผิดพลาดในการดึงข้อมูล",
       "failed": "เกิดข้อผิดพลาดในการส่งออกข้อมูล"
@@ -286,6 +393,48 @@
       "processing": "กำลังดำเนินการ",
       "cancelled": "ยกเลิก",
       "refunded": "คืนเงิน"
+    },
+    "table": {
+      "order_id": "รหัสคำสั่งซื้อ",
+      "customer": "ลูกค้า",
+      "products": "สินค้า",
+      "total": "ยอดรวม",
+      "status": "สถานะ",
+      "date": "วันที่",
+      "actions": "การจัดการ",
+      "more_items": "+{{count}} รายการ",
+      "view_details": "ดูรายละเอียด"
+    },
+    "filter": {
+      "all": "คำสั่งซื้อทั้งหมด"
+    },
+    "messages": {
+      "receipt_sent": "ส่งใบเสร็จใหม่เรียบร้อยแล้ว",
+      "receipt_fail": "ไม่สามารถส่งใบเสร็จได้"
+    },
+    "modals": {
+      "details": {
+        "title": "รายละเอียดคำสั่งซื้อ",
+        "status_label": "สถานะปัจจุบัน",
+        "process_btn": "ดำเนินการ",
+        "success_btn": "ยืนยันสำเร็จ",
+        "cancel_btn": "ยกเลิกออเดอร์",
+        "customer_info": "ข้อมูลลูกค้า",
+        "payment_details": "ข้อมูลการชำระเงิน",
+        "method": "ช่องทาง",
+        "ref": "อ้างอิง",
+        "timestamp": "เวลาสั่งซื้อ",
+        "items": "รายการสินค้า",
+        "quantity": "จำนวน",
+        "keys": "คีย์สินทรัพย์ / ไลเซนส์",
+        "keys_count": "{{count}} คีย์แนบมา",
+        "subtotal": "ยอดรวมย่อย",
+        "discount": "ส่วนลด",
+        "total": "ยอดสุทธิ",
+        "verified": "ธุรกรรมได้รับการยืนยันแล้ว",
+        "close": "ปิดหน้าต่าง",
+        "resend": "ส่งใบเสร็จอีกครั้ง"
+      }
     }
   },
   "users": {
@@ -294,15 +443,82 @@
     "search_placeholder": "ค้นหาด้วย Username, Email หรือ Discord ID...",
     "no_users": "No users found",
     "no_users_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือนำเข้าข้อมูลใหม่",
+    "stats": {
+      "total": "บัญชีโปรไฟล์",
+      "new_signups": "สมัครใหม่ (24ชม.)",
+      "completed_orders": "คำสั่งซื้อสำเร็จ",
+      "total_revenue": "รายได้รวม"
+    },
+    "filter": {
+      "all": "ผู้ใช้งานทั้งหมด",
+      "members": "สมาชิก"
+    },
+    "roles": {
+      "admin": "แอดมิน",
+      "vip": "วีไอพี",
+      "user": "ผู้ใช้งาน",
+      "moderator": "ผู้ดูแล"
+    },
+    "tiers": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "platinum": "Platinum",
+      "diamond": "Diamond",
+      "elite": "Elite",
+      "royal": "Royal",
+      "legend": "Legend"
+    },
+    "table": {
+      "identity": "ข้อมูลผู้ใช้",
+      "role": "บทบาท",
+      "tier": "ระดับสมาชิก",
+      "points": "แต้มสะสม",
+      "balance": "ยอดเงินคงเหลือ",
+      "total_spent": "ยอดใช้จ่ายรวม",
+      "status": "สถานะบัญชี",
+      "actions": "การจัดการ",
+      "no_email": "ไม่มีอีเมล",
+      "active": "ปกติ",
+      "banned": "ถูกแบน"
+    },
+    "actions": {
+      "edit": "แก้ไข",
+      "ban": "แบน",
+      "unban": "ปลดแบน",
+      "view": "ดูรายละเอียด"
+    },
     "modals": {
       "ban": {
-        "title": "แบนผู้ใช้",
-        "unban_title": "ปลดแบนผู้ใช้",
-        "message": "คุณต้องการแบน \"{{name}}\" หรือไม่?",
-        "unban_message": "คุณต้องการปลดแบน \"{{name}}\" หรือไม่?",
-        "confirm": "แบน",
-        "unban_confirm": "ปลดแบน"
-      }
+        "title": "ระงับผู้ใช้งาน",
+        "unban_title": "ยกเลิกการระงับ",
+        "message": "คุณแน่ใจหรือไม่ว่าต้องการระงับการใช้งานของ \"{{name}}\"?",
+        "unban_message": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการระงับของ \"{{name}}\"?",
+        "confirm": "ระงับการใช้งาน",
+        "unban_confirm": "ยกเลิกการระงับ"
+      },
+      "form": {
+        "edit_title": "แก้ไขบัญชีผู้ใช้",
+        "create_title": "ลงทะเบียนผู้ใช้ใหม่",
+        "subtitle": "จัดการข้อมูลโปรไฟล์และสิทธิ์การใช้งาน",
+        "section_profile": "ข้อมูลส่วนตัว",
+        "username": "ชื่อผู้ใช้",
+        "email": "ที่อยู่อีเมล",
+        "discord_id": "Discord ID",
+        "section_permissions": "สิทธิ์และกระเป๋าเงิน",
+        "system_role": "บทบาทในระบบ",
+        "account_status": "สถานะบัญชี",
+        "status_operational": "✓ ปกติ",
+        "status_restricted": "⚠ ถูกระงับ",
+        "credits": "เครดิต (฿)",
+        "reward_points": "แต้มสะสม",
+        "btn_discard": "ยกเลิก",
+        "btn_update": "อัปเดตข้อมูล",
+        "btn_create": "สร้างบัญชี",
+        "btn_syncing": "กำลังบันทึก..."
+      },
+      "update_fail": "ไม่สามารถอัปเดตข้อมูลผู้ใช้ได้",
+      "ban_fail": "ไม่สามารถเปลี่ยนสถานะการระงับได้"
     }
   }
 }

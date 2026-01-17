@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Save, Loader2, Shield, Crown, User, Mail, Hash, Wallet, Star, Ban, CheckCircle2 } from "lucide-react";
 import { Button, Input, Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface UserData {
   id?: string;
@@ -35,6 +36,7 @@ const defaultUser: UserData = {
 };
 
 export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalProps) {
+  const { t } = useTranslation("admin");
   const [formData, setFormData] = useState<UserData>(defaultUser);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,7 +57,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
     if (!formData.username || formData.username.trim().length < 2) newErrors.username = "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร";
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "รูปแบบอีเมลไม่ถูกต้อง";
     if (!formData.discordId || formData.discordId.trim().length < 1) newErrors.discordId = "กรุณากรอก Discord ID";
-    
+
     if (formData.balance < 0) newErrors.balance = "ยอดเงินไม่สามารถติดลบได้";
     if (formData.points < 0) newErrors.points = "แต้มสะสมไม่สามารถติดลบได้";
 
@@ -102,7 +104,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
         >
           <Card className="flex flex-col overflow-hidden border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl shadow-2xl relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-            
+
             <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/2 shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-500">
@@ -110,16 +112,16 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-white uppercase tracking-tight">
-                    {isEditing ? "Edit Account" : "Register User"}
+                    {isEditing ? t("users.modals.form.edit_title") : t("users.modals.form.create_title")}
                   </h2>
                   <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest opacity-60">
-                    Manage user profile and permissions
+                    {t("users.modals.form.subtitle")}
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 type="button"
-                onClick={onClose} 
+                onClick={onClose}
                 className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all group"
               >
                 <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -130,12 +132,12 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <User className="w-4 h-4 text-blue-500" />
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Profile Information</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("users.modals.form.section_profile")}</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Username</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.username")}</label>
                     <div className="relative">
                       <Input
                         value={formData.username || ""}
@@ -147,9 +149,9 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Email Address</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.email")}</label>
                     <div className="relative">
                       <Input
                         type="email"
@@ -166,7 +168,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Discord Identifier</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.discord_id")}</label>
                   <div className="relative">
                     <Input
                       value={formData.discordId || ""}
@@ -184,42 +186,42 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <Shield className="w-4 h-4 text-purple-500" />
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Permissions & Wallet</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("users.modals.form.section_permissions")}</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">System Role</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.system_role")}</label>
                     <div className="relative">
                       <select
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                         className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-red-500/50 appearance-none transition-all font-bold text-sm uppercase tracking-widest"
                       >
-                        <option value="USER" className="bg-[#111]">USER</option>
-                        <option value="VIP" className="bg-[#111]">VIP MEMBER</option>
-                        <option value="MODERATOR" className="bg-[#111]">MODERATOR</option>
-                        <option value="ADMIN" className="bg-[#111]">ADMINISTRATOR</option>
+                        <option value="USER" className="bg-[#111]">{t("users.roles.user")}</option>
+                        <option value="VIP" className="bg-[#111]">{t("users.roles.vip")}</option>
+                        <option value="MODERATOR" className="bg-[#111]">{t("users.roles.moderator")}</option>
+                        <option value="ADMIN" className="bg-[#111]">{t("users.roles.admin")}</option>
                       </select>
                       <Crown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Account Status</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.account_status")}</label>
                     <div className="relative">
                       <select
                         value={formData.isBanned ? "banned" : "active"}
                         onChange={(e) => setFormData({ ...formData, isBanned: e.target.value === "banned" })}
                         className={cn(
                           "w-full px-4 py-3.5 border rounded-xl focus:outline-none appearance-none transition-all font-bold text-sm uppercase tracking-widest",
-                          formData.isBanned 
-                            ? "bg-red-500/10 border-red-500/40 text-red-500" 
+                          formData.isBanned
+                            ? "bg-red-500/10 border-red-500/40 text-red-500"
                             : "bg-green-500/10 border-green-500/40 text-green-500"
                         )}
                       >
-                        <option value="active" className="bg-[#111] text-green-500">✓ OPERATIONAL</option>
-                        <option value="banned" className="bg-[#111] text-red-500">⚠ RESTRICTED</option>
+                        <option value="active" className="bg-[#111] text-green-500">{t("users.modals.form.status_operational")}</option>
+                        <option value="banned" className="bg-[#111] text-red-500">{t("users.modals.form.status_restricted")}</option>
                       </select>
                       <Ban className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     </div>
@@ -228,7 +230,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Credits (฿)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.credits")}</label>
                     <div className="relative">
                       <Input
                         type="number"
@@ -241,7 +243,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Reward Points</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("users.modals.form.reward_points")}</label>
                     <div className="relative">
                       <Input
                         type="number"
@@ -257,13 +259,13 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
               </div>
 
               <div className="flex items-center gap-3 pt-4">
-                <button 
+                <button
                   type="button"
-                  onClick={onClose} 
+                  onClick={onClose}
                   disabled={isLoading}
                   className="flex-1 px-8 py-6 rounded-2xl text-gray-400 hover:text-white uppercase font-black text-[10px] tracking-widest transition-all"
                 >
-                  Discard
+                  {t("users.modals.form.btn_discard")}
                 </button>
                 <Button
                   type="submit"
@@ -273,12 +275,12 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Syncing...</span>
+                      <span>{t("users.modals.form.btn_syncing")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4" />
-                      <span>{isEditing ? "Update Profile" : "Create Account"}</span>
+                      <span>{isEditing ? t("users.modals.form.btn_update") : t("users.modals.form.btn_create")}</span>
                     </div>
                   )}
                 </Button>

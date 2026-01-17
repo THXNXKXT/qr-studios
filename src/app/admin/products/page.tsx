@@ -25,40 +25,40 @@ import { formatPrice, cn, isProductOnFlashSale } from "@/lib/utils";
 import { adminApi, productsApi } from "@/lib/api";
 import type { Product } from "@/types";
 
- function safeLower(value: unknown): string {
-   if (typeof value === "string") return value.toLowerCase();
-   if (value === undefined || value === null) return "";
-   return String(value).toLowerCase();
- }
+function safeLower(value: unknown): string {
+  if (typeof value === "string") return value.toLowerCase();
+  if (value === undefined || value === null) return "";
+  return String(value).toLowerCase();
+}
 
- function isSafeImageSrc(value: unknown): value is string {
-   if (typeof value !== "string") return false;
-   const v = value.trim();
-   if (!v) return false;
-   return v.startsWith("/") || v.startsWith("http://") || v.startsWith("https://");
- }
+function isSafeImageSrc(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const v = value.trim();
+  if (!v) return false;
+  return v.startsWith("/") || v.startsWith("http://") || v.startsWith("https://");
+}
 
- function normalizeProducts(raw: unknown): Product[] {
-   const arr = Array.isArray(raw) ? raw : [];
-   return arr
-     .filter(Boolean)
-     .map((p: any) => {
-       const images = Array.isArray(p?.images) ? p.images.filter(isSafeImageSrc) : [];
-       const thumbnail = isSafeImageSrc(p?.thumbnail) ? p.thumbnail : undefined;
-       return {
-         ...p,
-         id: typeof p?.id === "string" ? p.id : String(p?.id ?? ""),
-         name: typeof p?.name === "string" ? p.name : String(p?.name ?? ""),
-         category: (p?.category ?? "").toString(),
-         thumbnail,
-         images,
-         features: Array.isArray(p?.features) ? p.features : [],
-         tags: Array.isArray(p?.tags) ? p.tags : [],
-         isActive: p?.isActive !== undefined ? Boolean(p.isActive) : true,
-       } as Product;
-     })
-     .filter((p) => Boolean((p as any).id));
- }
+function normalizeProducts(raw: unknown): Product[] {
+  const arr = Array.isArray(raw) ? raw : [];
+  return arr
+    .filter(Boolean)
+    .map((p: any) => {
+      const images = Array.isArray(p?.images) ? p.images.filter(isSafeImageSrc) : [];
+      const thumbnail = isSafeImageSrc(p?.thumbnail) ? p.thumbnail : undefined;
+      return {
+        ...p,
+        id: typeof p?.id === "string" ? p.id : String(p?.id ?? ""),
+        name: typeof p?.name === "string" ? p.name : String(p?.name ?? ""),
+        category: (p?.category ?? "").toString(),
+        thumbnail,
+        images,
+        features: Array.isArray(p?.features) ? p.features : [],
+        tags: Array.isArray(p?.tags) ? p.tags : [],
+        isActive: p?.isActive !== undefined ? Boolean(p.isActive) : true,
+      } as Product;
+    })
+    .filter((p) => Boolean((p as any).id));
+}
 
 export default function AdminProductsPage() {
   const { t } = useTranslation("admin");
@@ -137,11 +137,11 @@ export default function AdminProductsPage() {
         await fetchProducts();
         setIsDeleteOpen(false);
       } else {
-        alert((res.data as any)?.error || "Failed to archive product");
+        alert((res.data as any)?.error || t("products.errors.archive_fail"));
       }
     } catch (err) {
       console.error("Error archiving product:", err);
-      alert("An error occurred while archiving the product");
+      alert(t("products.errors.archive_error"));
     }
   }, [selectedProduct, fetchProducts]);
 
@@ -153,11 +153,11 @@ export default function AdminProductsPage() {
         await fetchProducts();
         setIsHardDeleteOpen(false);
       } else {
-        alert((res.data as any)?.error || "Failed to delete product permanently");
+        alert((res.data as any)?.error || t("products.errors.delete_fail"));
       }
     } catch (err) {
       console.error("Error permanently deleting product:", err);
-      alert("An error occurred while permanently deleting the product");
+      alert(t("products.errors.delete_error"));
     }
   }, [selectedProduct, fetchProducts]);
 
@@ -167,11 +167,11 @@ export default function AdminProductsPage() {
       if (res.data && (res.data as any).success) {
         await fetchProducts();
       } else {
-        alert((res.data as any)?.error || "Failed to restore product");
+        alert((res.data as any)?.error || t("products.errors.restore_fail"));
       }
     } catch (err) {
       console.error("Error restoring product:", err);
-      alert("An error occurred while restoring the product");
+      alert(t("products.errors.restore_error"));
     }
   }, [fetchProducts]);
 
@@ -186,14 +186,14 @@ export default function AdminProductsPage() {
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("products.title")}</h1>
           <p className="text-gray-400 mt-1">{t("products.subtitle")}</p>
         </div>
-        <Button 
+        <Button
           onClick={handleAddProduct}
           className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300"
         >
@@ -222,12 +222,12 @@ export default function AdminProductsPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
                   "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                  selectedCategory === cat 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  selectedCategory === cat
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {cat === "all" ? t("products.all_items") : cat}
+                {cat === "all" ? t("products.all_items") : t(`products.categories.${cat.toLowerCase()}`)}
               </button>
             ))}
           </div>
@@ -338,8 +338,8 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-2">
                         <div className={cn(
                           "w-2 h-2 rounded-full",
-                          product.stock === -1 ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" : 
-                          product.stock > 0 ? "bg-red-400" : "bg-gray-600"
+                          product.stock === -1 ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
+                            product.stock > 0 ? "bg-red-400" : "bg-gray-600"
                         )} />
                         <span className="font-black text-white text-sm">
                           {product.stock === -1 ? t("products.table.unlimited") : product.stock}
@@ -350,8 +350,8 @@ export default function AdminProductsPage() {
                       <div className="flex flex-col gap-2">
                         <Badge className={cn(
                           "px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase tracking-widest w-fit",
-                          product.isActive 
-                            ? "bg-green-500/10 text-green-500" 
+                          product.isActive
+                            ? "bg-green-500/10 text-green-500"
                             : "bg-orange-500/10 text-orange-500"
                         )}>
                           {product.isActive ? t("products.table.active") : t("products.table.archived")}
@@ -366,25 +366,25 @@ export default function AdminProductsPage() {
                     <td className="px-6 py-6">
                       <div className="flex items-center justify-end gap-2">
                         <Link href={`/products/${product.id}`} target="_blank">
-                          <Button variant="ghost" size="icon" title="View Product" className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all">
+                          <Button variant="ghost" size="icon" title={t("common.view")} className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all">
                             <Eye className="w-4 h-4" />
                           </Button>
                         </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          title="Edit Product"
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={t("common.edit")}
                           onClick={() => handleEditProduct(product)}
                           className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        
+
                         {product.isActive ? (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Archive Product"
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={t("products.modals.archive.title")}
                             onClick={() => {
                               setSelectedProduct(product);
                               setIsDeleteOpen(true);
@@ -394,10 +394,10 @@ export default function AdminProductsPage() {
                             <Archive className="w-4 h-4" />
                           </Button>
                         ) : (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Restore Product"
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={t("common.restore")}
                             onClick={() => handleRestoreProduct(product)}
                             className="w-10 h-10 rounded-xl hover:bg-green-500/10 text-green-500/50 hover:text-green-500 transition-all"
                           >
@@ -405,10 +405,10 @@ export default function AdminProductsPage() {
                           </Button>
                         )}
 
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          title="Delete Permanently"
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={t("products.modals.delete.title")}
                           onClick={() => {
                             setSelectedProduct(product);
                             setIsHardDeleteOpen(true);

@@ -5,14 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Plus, Trash2, Save, Loader2, FileText, Layout, Image as ImageIcon, Settings, Zap, Globe, Package as PackageIcon, Info, Star, Edit } from "lucide-react";
 import { Button, Input, Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
- function toDatetimeLocalValue(value: unknown): string | undefined {
-   if (!value) return undefined;
-   const d = new Date(value as any);
-   if (Number.isNaN(d.getTime())) return undefined;
-   const tzOffsetMs = d.getTimezoneOffset() * 60_000;
-   return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16);
- }
+function toDatetimeLocalValue(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const d = new Date(value as any);
+  if (Number.isNaN(d.getTime())) return undefined;
+  const tzOffsetMs = d.getTimezoneOffset() * 60_000;
+  return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+}
 
 interface Product {
   id?: string;
@@ -80,6 +81,7 @@ const defaultProduct: Product = {
 };
 
 export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFormModalProps) {
+  const { t } = useTranslation("admin");
   const [activeTab, setActiveTab] = useState<"basic" | "media" | "settings" | "delivery">("basic");
   const [formData, setFormData] = useState<Product>(defaultProduct);
   const [isLoading, setIsLoading] = useState(false);
@@ -232,27 +234,27 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     if (!formData.name || formData.name.trim().length < 1) newErrors.name = "กรุณากรอกชื่อสินค้า";
     if (!formData.slug || formData.slug.trim().length < 1) newErrors.slug = "กรุณากรอก Slug สำหรับ URL";
     if (!formData.description || formData.description.trim().length < 1) newErrors.description = "กรุณากรอกรายละเอียดสินค้า";
-    
+
     if (formData.price === undefined || formData.price === null || formData.price < 0) {
       newErrors.price = "กรุณากรอกราคาที่ถูกต้อง (ต้องไม่น้อยกว่า 0)";
     }
-    
+
     if (formData.originalPrice !== undefined && formData.originalPrice !== null && formData.originalPrice < 0) {
       newErrors.originalPrice = "ราคาเดิมต้องไม่น้อยกว่า 0";
     }
-    
+
     if (formData.stock === undefined || formData.stock === null || formData.stock < 0) {
       newErrors.stock = "สต็อกต้องระบุเป็นตัวเลข (0 สำหรับไม่จำกัด)";
     }
-    
+
     if (formData.rewardPoints !== undefined && formData.rewardPoints !== null && formData.rewardPoints < 0) {
       newErrors.rewardPoints = "แต้มสะสมต้องไม่น้อยกว่า 0";
     }
-    
+
     if (!formData.category) {
       newErrors.category = "กรุณาเลือกหมวดหมู่สินค้า";
     }
-    
+
     if (!formData.thumbnail && !thumbnailFile) {
       newErrors.thumbnail = "กรุณาเลือกรูปหน้าปกสินค้า";
     }
@@ -282,7 +284,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     if (formData.features && formData.features.some(f => f.trim().length > 0)) {
       // Valid if at least one feature is filled, or all are empty (optional)
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -401,7 +403,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         >
           <Card className="flex flex-col overflow-hidden border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl shadow-2xl relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/2">
               <div className="flex items-center gap-4">
@@ -410,16 +412,16 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-white uppercase tracking-tight">
-                    {isEditing ? "Edit Product" : "Create New Product"}
+                    {isEditing ? t("products.modals.form.edit_title") : t("products.modals.form.create_title")}
                   </h2>
                   <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest opacity-60">
-                    {isEditing ? "Product ID: " + product?.id : "Configure your item details"}
+                    {isEditing ? t("products.modals.form.edit_subtitle", { id: product?.id }) : t("products.modals.form.create_subtitle")}
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 type="button"
-                onClick={onClose} 
+                onClick={onClose}
                 className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all group"
               >
                 <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -429,10 +431,10 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
             {/* Tabs Navigation */}
             <div className="flex px-6 bg-white/2 border-b border-white/5 overflow-x-auto no-scrollbar">
               {[
-                { id: "basic", label: "Basic Info", icon: Info },
-                { id: "media", label: "Media & Assets", icon: ImageIcon },
-                { id: "settings", label: "Configuration", icon: Settings },
-                { id: "delivery", label: "Delivery", icon: Globe },
+                { id: "basic", label: t("products.modals.form.tabs.basic"), icon: Info },
+                { id: "media", label: t("products.modals.form.tabs.media"), icon: ImageIcon },
+                { id: "settings", label: t("products.modals.form.tabs.settings"), icon: Settings },
+                { id: "delivery", label: t("products.modals.form.tabs.delivery"), icon: Globe },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -440,8 +442,8 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                   onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
                     "flex items-center gap-2 px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all relative whitespace-nowrap",
-                    activeTab === tab.id 
-                      ? "text-red-500" 
+                    activeTab === tab.id
+                      ? "text-red-500"
                       : "text-gray-500 hover:text-gray-300"
                   )}
                 >
@@ -474,14 +476,14 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              Product Name
+                              {t("products.modals.form.basic.name")}
                             </label>
                             <Input
                               value={formData.name || ""}
                               onChange={(e) => {
                                 const name = e.target.value;
                                 setFormData({ ...formData, name, slug: generateSlug(name) });
-                                if (errors.name) setErrors({...errors, name: ""});
+                                if (errors.name) setErrors({ ...errors, name: "" });
                               }}
                               placeholder="e.g. Advanced Scoreboard"
                               className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6"
@@ -490,7 +492,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              URL Slug
+                              {t("products.modals.form.basic.slug")}
                             </label>
                             <Input
                               value={formData.slug || ""}
@@ -504,7 +506,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                            Description
+                            {t("products.modals.form.basic.description")}
                           </label>
                           <textarea
                             value={formData.description || ""}
@@ -521,7 +523,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              Category
+                              {t("products.modals.form.basic.category")}
                             </label>
                             <div className="relative">
                               <select
@@ -529,16 +531,16 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                                 className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-red-500/50 appearance-none transition-all font-bold text-sm uppercase tracking-widest"
                               >
-                                <option value="SCRIPT" className="bg-[#111] text-white">SCRIPT</option>
-                                <option value="UI" className="bg-[#111] text-white">UI DESIGN</option>
-                                <option value="BUNDLE" className="bg-[#111] text-white">BUNDLE PACK</option>
+                                <option value="SCRIPT" className="bg-[#111] text-white">{t("products.categories.script")}</option>
+                                <option value="UI" className="bg-[#111] text-white">{t("products.categories.ui")}</option>
+                                <option value="BUNDLE" className="bg-[#111] text-white">{t("products.categories.bundle")}</option>
                               </select>
                               <Layout className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                             </div>
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              Version
+                              {t("products.modals.form.basic.version")}
                             </label>
                             <Input
                               value={formData.version || ""}
@@ -549,7 +551,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           </div>
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              Stock (0 for ∞)
+                              {t("products.modals.form.basic.stock")}
                             </label>
                             <Input
                               type="number"
@@ -572,14 +574,14 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           {/* Thumbnail Upload */}
                           <div className="md:col-span-1 space-y-4">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              Cover Image
+                              {t("products.modals.form.media.cover")}
                             </label>
                             <label className={cn(
                               "relative group flex flex-col items-center justify-center aspect-square rounded-3xl border-2 border-dashed transition-all cursor-pointer overflow-hidden",
                               errors.thumbnail ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-red-500/50 hover:bg-red-500/5"
                             )}>
                               <input type="file" className="hidden" onChange={handleThumbnailSelect} accept="image/*" />
-                              
+
                               {thumbnailFile ? (
                                 <img src={thumbnailFile.preview} alt="" className="w-full h-full object-cover" />
                               ) : formData.thumbnail ? (
@@ -589,10 +591,10 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-red-500 group-hover:bg-red-500/10 transition-all">
                                     <Upload className="w-6 h-6" />
                                   </div>
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Upload Cover</span>
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("products.modals.form.media.upload_cover")}</span>
                                 </div>
                               )}
-                              
+
                               {(thumbnailFile || formData.thumbnail) && (
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <Upload className="w-8 h-8 text-white" />
@@ -605,7 +607,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           {/* Gallery Upload */}
                           <div className="md:col-span-2 space-y-4">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              Image Gallery
+                              {t("products.modals.form.media.gallery")}
                             </label>
                             <div className="grid grid-cols-3 gap-4">
                               {/* Existing Images */}
@@ -621,12 +623,12 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                   </button>
                                 </div>
                               ))}
-                              
+
                               {/* New Gallery Files */}
                               {galleryFiles.map((file, idx) => (
                                 <div key={"new-" + idx} className="relative aspect-video rounded-2xl overflow-hidden border border-red-500/20 group">
                                   <img src={file.preview} alt="" className="w-full h-full object-cover" />
-                                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600 text-[8px] font-black text-white uppercase tracking-widest">Pending</div>
+                                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600 text-[8px] font-black text-white uppercase tracking-widest">{t("products.modals.form.media.pending")}</div>
                                   <button
                                     type="button"
                                     onClick={() => removeGalleryFile(idx)}
@@ -641,7 +643,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                               <label className="aspect-video rounded-2xl border-2 border-dashed border-white/10 hover:border-red-500/50 hover:bg-red-500/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group">
                                 <input type="file" className="hidden" onChange={handleImageSelect} multiple accept="image/*" />
                                 <Plus className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
-                                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 group-hover:text-red-500">Add Image</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 group-hover:text-red-500">{t("products.modals.form.media.add_image")}</span>
                               </label>
                             </div>
                           </div>
@@ -656,12 +658,12 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           <div className="p-6 rounded-3xl bg-white/2 border border-white/5 space-y-6">
                             <div className="flex items-center gap-3 mb-2">
                               <Zap className="w-5 h-5 text-red-500" />
-                              <h3 className="text-sm font-black text-white uppercase tracking-widest">Pricing & Points</h3>
+                              <h3 className="text-sm font-black text-white uppercase tracking-widest">{t("products.modals.form.settings.pricing_title")}</h3>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Sale Price</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.settings.sale_price")}</label>
                                 <Input
                                   type="number"
                                   value={formData.price}
@@ -670,7 +672,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Original Price</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.settings.original_price")}</label>
                                 <Input
                                   type="number"
                                   value={formData.originalPrice || ""}
@@ -680,9 +682,9 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 />
                               </div>
                             </div>
-                            
+
                             <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Reward Points</label>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.settings.reward_points")}</label>
                               <Input
                                 type="number"
                                 value={formData.rewardPoints || 0}
@@ -696,22 +698,22 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           <div className="p-6 rounded-3xl bg-white/2 border border-white/5 space-y-6">
                             <div className="flex items-center gap-3 mb-2">
                               <Settings className="w-5 h-5 text-red-500" />
-                              <h3 className="text-sm font-black text-white uppercase tracking-widest">Visibility Settings</h3>
+                              <h3 className="text-sm font-black text-white uppercase tracking-widest">{t("products.modals.form.settings.visibility_title")}</h3>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                               {[
-                                { key: "isActive", label: "Active Shop", icon: Globe, color: "text-green-500" },
-                                { key: "isNew", label: "New Item", icon: Zap, color: "text-blue-500" },
-                                { key: "isFeatured", label: "Featured", icon: Star, color: "text-yellow-500" },
-                                { key: "isFlashSale", label: "Flash Sale", icon: Zap, color: "text-red-500" },
+                                { key: "isActive", label: t("products.modals.form.settings.active"), icon: Globe, color: "text-green-500" },
+                                { key: "isNew", label: t("products.modals.form.settings.new"), icon: Zap, color: "text-blue-500" },
+                                { key: "isFeatured", label: t("products.modals.form.settings.featured"), icon: Star, color: "text-yellow-500" },
+                                { key: "isFlashSale", label: t("products.modals.form.settings.flash_sale"), icon: Zap, color: "text-red-500" },
                               ].map((item) => (
                                 <label
                                   key={item.key}
                                   className={cn(
                                     "flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer group",
-                                    formData[item.key as keyof Product] 
-                                      ? "bg-red-500/10 border-red-500/30" 
+                                    formData[item.key as keyof Product]
+                                      ? "bg-red-500/10 border-red-500/30"
                                       : "bg-white/5 border-white/10 hover:border-white/20"
                                   )}
                                 >
@@ -754,11 +756,11 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                   <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center">
                                     <Zap className="w-4 h-4 text-white" />
                                   </div>
-                                  <h3 className="text-lg font-black text-white uppercase tracking-tighter">Flash Sale Configuration</h3>
+                                  <h3 className="text-lg font-black text-white uppercase tracking-tighter">{t("products.modals.form.settings.flash_config")}</h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                   <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">Flash Sale Price</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">{t("products.modals.form.settings.flash_price")}</label>
                                     <Input
                                       type="number"
                                       value={formData.flashSalePrice || ""}
@@ -768,7 +770,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                     />
                                   </div>
                                   <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">Sale Ends At</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">{t("products.modals.form.settings.flash_ends")}</label>
                                     <Input
                                       type="datetime-local"
                                       value={formData.flashSaleEnds || ""}
@@ -794,16 +796,16 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 <PackageIcon className="w-6 h-6 text-blue-500" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-black text-white uppercase tracking-widest">Digital Delivery</h3>
-                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">How customers receive this product</p>
+                                <h3 className="text-sm font-black text-white uppercase tracking-widest">{t("products.modals.form.delivery.title")}</h3>
+                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{t("products.modals.form.delivery.subtitle")}</p>
                               </div>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
-                              <input 
-                                type="checkbox" 
+                              <input
+                                type="checkbox"
                                 checked={formData.isDownloadable}
                                 onChange={(e) => setFormData({ ...formData, isDownloadable: e.target.checked })}
-                                className="sr-only peer" 
+                                className="sr-only peer"
                               />
                               <div className="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
                             </label>
@@ -818,7 +820,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 className="space-y-6 overflow-hidden"
                               >
                                 <div className="space-y-4">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Asset Delivery Method</label>
+                                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.delivery.asset_method")}</label>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <label className={cn(
                                       "flex flex-col items-center justify-center p-8 rounded-4xl border-2 border-dashed transition-all cursor-pointer group gap-4",
@@ -829,27 +831,27 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         <Upload className="w-6 h-6" />
                                       </div>
                                       <div className="text-center">
-                                        <p className="text-xs font-black text-white uppercase tracking-widest">Direct File Upload</p>
-                                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tight mt-1">Upload .zip, .rar, .json</p>
+                                        <p className="text-xs font-black text-white uppercase tracking-widest">{t("products.modals.form.delivery.direct_upload")}</p>
+                                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tight mt-1">{t("products.modals.form.delivery.upload_hint")}</p>
                                       </div>
                                     </label>
 
                                     <div className="space-y-4 flex flex-col justify-center">
                                       <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">External URL / Keymaster</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.delivery.external")}</label>
                                         <Input
                                           value={formData.downloadKey || ""}
                                           onChange={(e) => setFormData({ ...formData, downloadKey: e.target.value })}
-                                          placeholder="e.g. package_name"
+                                          placeholder={t("products.modals.form.delivery.placeholder_package")}
                                           className="bg-white/5 border-white/10 focus:border-blue-500/50 rounded-xl py-6"
                                         />
                                       </div>
                                       <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Download URL Override</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.delivery.url_override")}</label>
                                         <Input
                                           value={formData.downloadUrl || ""}
                                           onChange={(e) => setFormData({ ...formData, downloadUrl: e.target.value })}
-                                          placeholder="https://..."
+                                          placeholder={t("products.modals.form.delivery.placeholder_url")}
                                           className="bg-white/5 border-white/10 focus:border-blue-500/50 rounded-xl py-6"
                                         />
                                       </div>
@@ -864,17 +866,17 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                     </div>
                                     <div className="flex-1 overflow-hidden">
                                       <p className="text-xs font-bold text-white truncate">
-                                        {productFile ? productFile.name : (formData.downloadUrl ? formData.downloadUrl.split('/').pop() : "Linked Asset")}
+                                        {productFile ? productFile.name : (formData.downloadUrl ? formData.downloadUrl.split('/').pop() : t("products.modals.form.delivery.linked_asset"))}
                                       </p>
                                       <p className="text-[8px] text-blue-400 uppercase font-black tracking-widest">
-                                        {productFile ? "Ready to Upload" : "Remote Asset Linked"}
+                                        {productFile ? t("products.modals.form.delivery.ready") : t("products.modals.form.delivery.linked")}
                                       </p>
                                     </div>
                                     <button
                                       type="button"
                                       onClick={() => {
                                         setProductFile(null);
-                                        if (!productFile) setFormData({...formData, downloadUrl: undefined, downloadFileKey: undefined});
+                                        if (!productFile) setFormData({ ...formData, downloadUrl: undefined, downloadFileKey: undefined });
                                       }}
                                       className="p-2 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all"
                                     >
@@ -891,8 +893,8 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Key Features</label>
-                              <button type="button" onClick={addFeature} className="text-[8px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors">Add New</button>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.delivery.features")}</label>
+                              <button type="button" onClick={addFeature} className="text-[8px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors">{t("products.modals.form.delivery.add_new")}</button>
                             </div>
                             <div className="space-y-3">
                               {formData.features.map((feature, idx) => (
@@ -900,7 +902,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                   <Input
                                     value={feature}
                                     onChange={(e) => updateFeature(idx, e.target.value)}
-                                    placeholder={"Feature #" + (idx + 1)}
+                                    placeholder={t("products.modals.form.delivery.feature_placeholder", { count: idx + 1 })}
                                     className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl pr-12"
                                   />
                                   <button
@@ -916,14 +918,14 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           </div>
 
                           <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Search Tags</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.delivery.tags")}</label>
                             <div className="space-y-4">
                               <div className="relative group">
                                 <Input
                                   value={newTag}
                                   onChange={(e) => setNewTag(e.target.value)}
                                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
-                                  placeholder="Type and press Enter..."
+                                  placeholder={t("products.modals.form.delivery.tags_placeholder")}
                                   className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6"
                                 />
                                 <button
@@ -963,18 +965,18 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                   activeTab === "delivery" && !formData.isDownloadable ? "bg-yellow-500" : "bg-green-500"
                 )} />
                 <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">
-                  {activeTab === "delivery" && !formData.isDownloadable ? "Physical product mode" : "Digital asset ready"}
+                  {activeTab === "delivery" && !formData.isDownloadable ? t("products.modals.form.delivery.mode_physical") : t("products.modals.form.delivery.mode_digital")}
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <Button 
+                <Button
                   type="button"
-                  variant="ghost" 
-                  onClick={onClose} 
+                  variant="ghost"
+                  onClick={onClose}
                   disabled={isLoading}
                   className="text-gray-400 hover:text-white uppercase font-black text-[10px] tracking-widest px-8"
                 >
-                  Discard
+                  {t("products.modals.form.btn_discard")}
                 </Button>
                 <Button
                   type="button"
@@ -985,12 +987,12 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
+                      <span>{t("products.modals.form.btn_saving")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4" />
-                      <span>{isEditing ? "Update Product" : "Publish Product"}</span>
+                      <span>{isEditing ? t("products.modals.form.btn_update") : t("products.modals.form.btn_save")}</span>
                     </div>
                   )}
                 </Button>

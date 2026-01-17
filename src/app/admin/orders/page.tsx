@@ -13,6 +13,7 @@ import {
   Package,
   Loader2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { OrderDetailModal } from "@/components/admin";
 import { formatPrice, cn } from "@/lib/utils";
@@ -35,15 +36,16 @@ type Order = {
   updatedAt?: string;
 };
 
-const statusConfig: Record<string, { icon: any; label: string; bg: string; text: string }> = {
-  COMPLETED: { icon: CheckCircle, label: "สำเร็จ", bg: "bg-red-500/10", text: "text-red-400" },
-  PENDING: { icon: Clock, label: "รอชำระ", bg: "bg-red-900/20", text: "text-red-500/70" },
-  PROCESSING: { icon: Clock, label: "กำลังดำเนินการ", bg: "bg-red-500/5", text: "text-red-300" },
-  CANCELLED: { icon: XCircle, label: "ยกเลิก", bg: "bg-white/5", text: "text-gray-500" },
-  REFUNDED: { icon: XCircle, label: "คืนเงิน", bg: "bg-amber-500/10", text: "text-amber-400" },
+const statusConfig: Record<string, { icon: any; bg: string; text: string }> = {
+  COMPLETED: { icon: CheckCircle, bg: "bg-red-500/10", text: "text-red-400" },
+  PENDING: { icon: Clock, bg: "bg-red-900/20", text: "text-red-500/70" },
+  PROCESSING: { icon: Clock, bg: "bg-red-500/5", text: "text-red-300" },
+  CANCELLED: { icon: XCircle, bg: "bg-white/5", text: "text-gray-500" },
+  REFUNDED: { icon: XCircle, bg: "bg-amber-500/10", text: "text-amber-400" },
 };
 
 export default function AdminOrdersPage() {
+  const { t } = useTranslation("admin");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -116,9 +118,9 @@ export default function AdminOrdersPage() {
     try {
       const res = await adminApi.resendOrderReceipt(orderId);
       if (res.data && (res.data as any).success) {
-        alert("Receipt resent successfully");
+        alert(t("orders.messages.receipt_sent"));
       } else {
-        alert((res.data as any)?.error || "Failed to resend receipt");
+        alert((res.data as any)?.error || t("orders.messages.receipt_fail"));
       }
     } catch (err) {
       console.error("Error resending receipt:", err);
@@ -146,7 +148,7 @@ export default function AdminOrdersPage() {
       if (data && (data as any).success) {
         const exportData = (data as any).data || [];
         if (exportData.length === 0) {
-          alert("No data to export");
+          alert(t("export.errors.no_data"));
           return;
         }
 
@@ -202,14 +204,14 @@ export default function AdminOrdersPage() {
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Order Management</h1>
-          <p className="text-gray-400 mt-1">ติดตามและบริหารจัดการรายการสั่งซื้อทั้งหมดในระบบ</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("orders.title")}</h1>
+          <p className="text-gray-400 mt-1">{t("orders.subtitle")}</p>
         </div>
-        <Button 
+        <Button
           onClick={handleExport}
           disabled={isExporting}
           className="bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300 disabled:opacity-50"
@@ -219,7 +221,7 @@ export default function AdminOrdersPage() {
           ) : (
             <Download className="w-5 h-5 mr-2" />
           )}
-          {isExporting ? "Exporting..." : "Export Data"}
+          {isExporting ? t("export.btn_exporting") : t("export.btn_export")}
         </Button>
       </div>
 
@@ -230,7 +232,7 @@ export default function AdminOrdersPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder="ค้นหา Order ID, ชื่อลูกค้า หรืออีเมล..."
+              placeholder={t("orders.search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -243,12 +245,12 @@ export default function AdminOrdersPage() {
                 onClick={() => setFilterStatus(status)}
                 className={cn(
                   "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                  filterStatus === status 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  filterStatus === status
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {status === "all" ? "All Orders" : statusConfig[status]?.label || status}
+                {status === "all" ? t("orders.filter.all") : t(`orders.status.${status.toLowerCase()}`)}
               </button>
             ))}
           </div>
@@ -262,19 +264,19 @@ export default function AdminOrdersPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading orders...</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t("common.loading")}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">Order ID</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Customer</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Products</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Total</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Status</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Date</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">Actions</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.order_id")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.customer")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.products")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.total")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.status")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.date")}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{t("orders.table.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -306,7 +308,7 @@ export default function AdminOrdersPage() {
                             </div>
                           ))}
                           {order.items.length > 2 && (
-                            <p className="text-[10px] text-gray-500 uppercase font-black ml-5">+{order.items.length - 2} more items</p>
+                            <p className="text-[10px] text-gray-500 uppercase font-black ml-5">{t("orders.table.more_items", { count: order.items.length - 2 })}</p>
                           )}
                         </div>
                       </td>
@@ -319,7 +321,7 @@ export default function AdminOrdersPage() {
                           status.bg,
                           status.text
                         )}>
-                          {status.label}
+                          {t(`orders.status.${order.status.toLowerCase()}`)}
                         </Badge>
                       </td>
                       <td className="px-6 py-6">
@@ -330,9 +332,9 @@ export default function AdminOrdersPage() {
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleViewOrder(order)}
                             className="rounded-xl px-4 hover:bg-red-500/10 hover:text-red-400 font-black uppercase tracking-widest text-[10px] transition-all"
                           >
@@ -363,8 +365,8 @@ export default function AdminOrdersPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <ShoppingCart className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No orders found</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">ลองเปลี่ยนเงื่อนไขการค้นหาหรือรอคำสั่งซื้อใหม่</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{t("orders.no_orders")}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{t("orders.no_orders_subtitle")}</p>
           </div>
         )}
       </Card>

@@ -16,7 +16,11 @@ import {
   Loader2,
   DollarSign,
   Star,
+  Activity,
+  Calendar,
+  Wallet
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { UserFormModal, ConfirmModal, OrderDetailModal } from "@/components/admin";
 import { formatPrice, cn, getTierInfo, TIERS, MemberTier } from "@/lib/utils";
@@ -38,14 +42,15 @@ type UserData = {
   createdAt: string;
 };
 
-const roleConfig: Record<string, { icon: any; label: string; bg: string; text: string }> = {
-  ADMIN: { icon: Shield, label: "Admin", bg: "bg-red-600", text: "text-white shadow-lg shadow-red-600/20" },
-  VIP: { icon: Crown, label: "VIP", bg: "bg-red-500/20", text: "text-red-400 border border-red-500/20" },
-  USER: { icon: User, label: "User", bg: "bg-white/5", text: "text-gray-400 border border-white/5" },
-  MODERATOR: { icon: Shield, label: "Mod", bg: "bg-amber-500/20", text: "text-amber-400 border border-amber-500/20" },
+const roleConfig: Record<string, { icon: any; bg: string; text: string }> = {
+  ADMIN: { icon: Shield, bg: "bg-red-600", text: "text-white shadow-lg shadow-red-600/20" },
+  VIP: { icon: Crown, bg: "bg-red-500/20", text: "text-red-400 border border-red-500/20" },
+  USER: { icon: User, bg: "bg-white/5", text: "text-gray-400 border border-white/5" },
+  MODERATOR: { icon: Shield, bg: "bg-amber-500/20", text: "text-amber-400 border border-amber-500/20" },
 };
 
 export default function AdminUsersPage() {
+  const { t } = useTranslation("admin");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterTier, setFilterTier] = useState<MemberTier | "all">("all");
@@ -64,7 +69,7 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const [usersRes, statsRes] = await Promise.all([
-        adminApi.getUsers({ 
+        adminApi.getUsers({
           search: searchQuery || undefined,
           role: filterRole !== "all" ? filterRole : undefined,
           tier: filterTier !== "all" ? filterTier : undefined
@@ -199,12 +204,12 @@ export default function AdminUsersPage() {
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">User Management</h1>
-          <p className="text-gray-400 mt-1">บริหารจัดการบัญชีผู้ใช้งาน สิทธิ์การใช้งาน และตรวจสอบสถานะทั้งหมด</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("users.title")}</h1>
+          <p className="text-gray-400 mt-1">{t("users.subtitle")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
           {["all", "admin", "moderator", "vip", "user"].map((role) => (
@@ -213,12 +218,12 @@ export default function AdminUsersPage() {
               onClick={() => setFilterRole(role)}
               className={cn(
                 "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                filterRole === role 
-                  ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                filterRole === role
+                  ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                   : "text-gray-500 hover:text-white hover:bg-white/5"
               )}
             >
-              {role === "all" ? "All Users" : roleConfig[role.toUpperCase()]?.label || role}
+              {role === "all" ? t("users.filter.all") : t(`users.roles.${role}`)}
             </button>
           ))}
         </div>
@@ -227,10 +232,10 @@ export default function AdminUsersPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Accounts", value: stats?.users?.total || 0, icon: Users, color: "text-white", bg: "bg-white/5" },
-          { label: "New Signups (24h)", value: stats?.users?.today || 0, icon: CheckCircle, color: "text-red-500", bg: "bg-red-500/10" },
-          { label: "Completed Orders", value: stats?.orders?.completed || 0, icon: ShoppingCart, color: "text-red-400", bg: "bg-red-500/5" },
-          { label: "Total Revenue", value: formatPrice(stats?.revenue?.total || 0), icon: DollarSign, color: "text-red-800", bg: "bg-red-900/20" },
+          { label: t("users.stats.total"), value: stats?.users?.total || 0, icon: Users, color: "text-white", bg: "bg-white/5" },
+          { label: t("users.stats.new_signups"), value: stats?.users?.today || 0, icon: CheckCircle, color: "text-red-500", bg: "bg-red-500/10" },
+          { label: t("users.stats.completed_orders"), value: stats?.orders?.completed || 0, icon: ShoppingCart, color: "text-red-400", bg: "bg-red-500/5" },
+          { label: t("users.stats.total_revenue"), value: formatPrice(stats?.revenue?.total || 0), icon: DollarSign, color: "text-red-800", bg: "bg-red-900/20" },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -280,9 +285,9 @@ export default function AdminUsersPage() {
                   tier.bg
                 )} />
                 <p className="text-2xl mb-1">{tier.icon}</p>
-                <p className={cn("text-[10px] font-black uppercase tracking-tighter mb-1", tier.color)}>{tier.name}</p>
+                <p className={cn("text-[10px] font-black uppercase tracking-tighter mb-1", tier.color)}>{t(`users.tiers.${tier.name.toLowerCase()}`)}</p>
                 <p className="text-xl font-black text-white">{count}</p>
-                <p className="text-[8px] text-gray-500 uppercase font-bold">Members</p>
+                <p className="text-[8px] text-gray-500 uppercase font-bold">{t("users.filter.members")}</p>
                 {isActive && (
                   <div className="absolute top-1 right-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -300,7 +305,7 @@ export default function AdminUsersPage() {
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
           <Input
-            placeholder="ค้นหาด้วย Username, Email หรือ Discord ID..."
+            placeholder={t("users.search_placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -315,20 +320,23 @@ export default function AdminUsersPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading users...</p>
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Loader2 className="w-10 h-10 animate-spin text-red-600" />
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t("common.loading")}</p>
+              </div>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">User Identity</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Role</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Member Tier</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Points</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Available Balance</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Total Contributions</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Account Status</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">Actions</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.identity")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.role")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.tier")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.points")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.balance")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.total_spent")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.status")}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{t("users.table.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -356,7 +364,7 @@ export default function AdminUsersPage() {
                           </div>
                           <div>
                             <p className="font-bold text-white group-hover:text-red-400 transition-colors">{user.username}</p>
-                            <p className="text-[10px] text-gray-500 font-black tracking-tighter opacity-60">{user.email || "No Email"}</p>
+                            <p className="text-[10px] text-gray-500 font-black tracking-tighter opacity-60">{user.email || t("users.table.no_email")}</p>
                           </div>
                         </div>
                       </td>
@@ -367,7 +375,7 @@ export default function AdminUsersPage() {
                           role.text
                         )}>
                           <RoleIcon className="w-3.5 h-3.5" />
-                          {role.label}
+                          {t(`users.roles.${user.role.toLowerCase()}`)}
                         </Badge>
                       </td>
                       <td className="px-6 py-6">
@@ -379,7 +387,7 @@ export default function AdminUsersPage() {
                               tier.bg,
                               tier.color
                             )}>
-                              {tier.icon} {tier.name}
+                              {tier.icon} {t(`users.tiers.${tier.name.toLowerCase()}`)}
                             </Badge>
                           );
                         })()}
@@ -399,11 +407,11 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-6">
                         <Badge className={cn(
                           "px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase tracking-widest",
-                          !user.isBanned 
-                            ? "bg-red-500/10 text-red-400" 
+                          !user.isBanned
+                            ? "bg-red-500/10 text-red-400"
                             : "bg-red-900/40 text-red-500/50"
                         )}>
-                          {!user.isBanned ? "ACTIVE" : "BANNED"}
+                          {!user.isBanned ? t("users.table.active") : t("users.table.banned")}
                         </Badge>
                       </td>
                       <td className="px-6 py-6">
@@ -413,22 +421,22 @@ export default function AdminUsersPage() {
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleEditUser(user)}
                             className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleBanUser(user)}
                             className={cn(
                               "w-10 h-10 rounded-xl transition-all",
-                              !user.isBanned 
-                                ? "text-red-500/50 hover:bg-red-900/20 hover:text-red-500" 
+                              !user.isBanned
+                                ? "text-red-500/50 hover:bg-red-900/20 hover:text-red-500"
                                 : "text-red-400 hover:bg-red-500/10 hover:text-red-400"
                             )}
                           >
@@ -458,8 +466,8 @@ export default function AdminUsersPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Users className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No users found</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">ลองเปลี่ยนเงื่อนไขการค้นหาหรือนำเข้าข้อมูลใหม่</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{t("users.no_users")}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{t("users.no_users_subtitle")}</p>
           </div>
         )}
       </Card>
@@ -477,12 +485,12 @@ export default function AdminUsersPage() {
         isOpen={isBanOpen}
         onClose={() => setIsBanOpen(false)}
         onConfirm={handleConfirmBan}
-        title={!selectedUser?.isBanned ? "แบนผู้ใช้" : "ปลดแบนผู้ใช้"}
-        message={!selectedUser?.isBanned 
-          ? `คุณต้องการแบน "${selectedUser?.username}" หรือไม่?`
-          : `คุณต้องการปลดแบน "${selectedUser?.username}" หรือไม่?`
+        title={!selectedUser?.isBanned ? t("users.modals.ban.title") : t("users.modals.ban.unban_title")}
+        message={!selectedUser?.isBanned
+          ? t("users.modals.ban.message", { name: selectedUser?.username })
+          : t("users.modals.ban.unban_message", { name: selectedUser?.username })
         }
-        confirmText={!selectedUser?.isBanned ? "แบน" : "ปลดแบน"}
+        confirmText={!selectedUser?.isBanned ? t("users.modals.ban.confirm") : t("users.modals.ban.unban_confirm")}
         type={!selectedUser?.isBanned ? "danger" : "info"}
       />
 

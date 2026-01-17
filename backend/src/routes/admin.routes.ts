@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { adminController } from '../controllers/admin.controller';
+import { adminController } from '../controllers/admin';
 import { authMiddleware, adminMiddleware } from '../middleware/auth.middleware';
 import { adminIpMiddleware } from '../middleware/admin-ip.middleware';
-import { 
-  updateUserRoleSchema, 
-  updateCommissionStatusSchema, 
+import {
+  updateUserRoleSchema,
+  updateCommissionStatusSchema,
   updateOrderStatusSchema,
   createPromoCodeSchema,
   createAnnouncementSchema,

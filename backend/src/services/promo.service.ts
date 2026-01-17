@@ -35,7 +35,7 @@ export const promoService = {
       });
 
       if (usage) {
-        throw new BadRequestError('คุณได้ใช้คูปองนี้ไปแล้ว');
+        throw new BadRequestError('You have already used this promo code');
       }
     }
 
@@ -63,7 +63,7 @@ export const promoService = {
       type: promo.type.toLowerCase(), // Return lowercase type ('percentage' or 'fixed')
       maxDiscount: promo.maxDiscount,
       minPurchase: promo.minPurchase,
-      message: `ใช้คูปอง ${promo.code} สำเร็จ`,
+      message: `Promo code ${promo.code} applied successfully`,
     };
   },
 
@@ -71,17 +71,17 @@ export const promoService = {
     return await db.transaction(async (tx) => {
       const order = await tx.query.orders.findFirst({
         where: eq(schema.orders.id, orderId),
-        with: { 
-          items: { 
-            with: { 
+        with: {
+          items: {
+            with: {
               product: {
                 columns: {
                   id: true,
                   price: true,
                 }
-              } 
-            } 
-          } 
+              }
+            }
+          }
         }
       });
 
@@ -99,7 +99,7 @@ export const promoService = {
 
       // Calculate subtotal from items to ensure we don't trust stored total if it was tampered with
       const subtotal = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      
+
       // Use the transaction client for validation too
       const promo = await tx.query.promoCodes.findFirst({
         where: eq(schema.promoCodes.code, code.toUpperCase()),
@@ -109,7 +109,7 @@ export const promoService = {
       if (!promo.isActive) throw new BadRequestError('Promo code is not active');
       if (promo.expiresAt && promo.expiresAt < new Date()) throw new BadRequestError('Promo code has expired');
       if (promo.usageLimit && promo.usedCount >= promo.usageLimit) throw new BadRequestError('Promo code usage limit reached');
-      
+
       // Check usage for this specific user
       const usage = await tx.query.promoCodeUsages.findFirst({
         where: and(
@@ -117,7 +117,7 @@ export const promoService = {
           eq(schema.promoCodeUsages.promoCodeId, promo.id)
         )
       });
-      if (usage) throw new BadRequestError('คุณได้ใช้คูปองนี้ไปแล้ว');
+      if (usage) throw new BadRequestError('You have already used this promo code');
 
       if (promo.minPurchase && subtotal < promo.minPurchase) {
         throw new BadRequestError(`Minimum purchase amount is ฿${promo.minPurchase}`);
@@ -169,12 +169,12 @@ export const promoService = {
         orderId: order.id,
       });
 
-      return { 
-        valid: true, 
-        code: promo.code, 
-        discount: promo.discount, 
-        type: promo.type.toLowerCase(), 
-        absoluteDiscount: discountAmount 
+      return {
+        valid: true,
+        code: promo.code,
+        discount: promo.discount,
+        type: promo.type.toLowerCase(),
+        absoluteDiscount: discountAmount
       };
     });
   },

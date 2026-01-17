@@ -7,7 +7,7 @@ import { env } from '../config/env';
 export const errorHandler = async (err: Error, c: Context) => {
   const path = c.req.path;
   const method = c.req.method;
-  
+
   // Capture error in Sentry if not a simple validation error
   if (!(err instanceof AppError && err.statusCode < 500)) {
     Sentry.captureException(err, {
@@ -39,11 +39,11 @@ export const errorHandler = async (err: Error, c: Context) => {
   if (err.name === 'ZodError' || (err as any).constructor?.name === 'ZodError') {
     const errors = (err as any).errors || (err as any).issues || [];
     console.warn(`[ErrorHandler] Zod Validation Error for ${path}:`, JSON.stringify(errors, null, 2));
-    
+
     return c.json({
       success: false,
       error: 'Validation Error',
-      message: 'ข้อมูลที่ส่งมาไม่ถูกต้อง',
+      message: 'Invalid request data',
       errors: errors.map((issue: any) => ({
         field: issue.path.join('.'),
         message: issue.message,
@@ -54,8 +54,8 @@ export const errorHandler = async (err: Error, c: Context) => {
 
   return c.json({
     success: false,
-    error: env.NODE_ENV === 'development' 
-      ? err.message 
+    error: env.NODE_ENV === 'development'
+      ? err.message
       : 'Internal Server Error',
     stack: env.NODE_ENV === 'development' ? err.stack : undefined,
   }, 500);

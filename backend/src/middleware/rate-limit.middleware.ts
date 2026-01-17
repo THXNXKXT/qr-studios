@@ -169,14 +169,14 @@ export const luckyWheelRateLimit = createRateLimiter({
   windowMs: 5 * 60 * 1000,
   max: 10, // Production: 10 spins per 5 minutes
   devMax: 50,
-  message: 'คุณหมุนวงล้อบ่อยเกินไป กรุณารอสักครู่',
+  message: 'Too many wheel spins, please wait',
 });
 
 // Promo validation rate limit
 export const promoValidationRateLimit = createRateLimiter({
   windowMs: 5 * 60 * 1000,
   max: 10,
-  message: 'คุณตรวจสอบคูปองบ่อยเกินไป กรุณารอสักครู่',
+  message: 'Too many promo validations, please wait',
 });
 
 // Top-up creation rate limit

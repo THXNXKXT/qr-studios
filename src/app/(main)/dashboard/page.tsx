@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -8,121 +9,194 @@ import {
   Key,
   Wallet,
   ShoppingBag,
+  Award,
   Settings,
   Bell,
   CreditCard,
   Download,
   Clock,
+  History,
   CheckCircle,
   AlertCircle,
+  Loader2,
+  Star,
 } from "lucide-react";
-import { Card, Button, Badge } from "@/components/ui";
-import { formatPrice } from "@/lib/utils";
+import { Badge, Button, Card, Skeleton } from "@/components/ui";
+import { useTranslation } from "react-i18next";
+import { DashboardSidebar, SidebarSkeleton } from "@/components/dashboard/sidebar";
+import { DashboardStats, StatsSkeleton } from "@/components/dashboard/stats-grid";
+import { RecentTopups, RecentListSkeleton } from "@/components/dashboard/recent-topups";
+import { RecentOrders } from "@/components/dashboard/recent-orders";
+import { MyLicenses } from "@/components/dashboard/my-licenses";
+import { TopupDetailModal } from "@/components/dashboard/topup-detail-modal";
+import { TierProgress } from "@/components/dashboard/tier-progress";
+import { cn, formatPrice, getTierInfo, getUserTier, TIERS } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { getAuthToken } from "@/lib/auth-helper";
+import { ordersApi, licensesApi, topupApi } from "@/lib/api";
 
-// Mock user data
-const mockUser = {
-  id: "1",
-  username: "TestUser",
-  email: "test@example.com",
-  avatar: null,
-  balance: 2500,
-  createdAt: new Date("2024-01-15"),
-};
+interface Order {
+  id: string;
+  total: number;
+  status: string;
+  createdAt: string;
+  items: Array<{
+    product: {
+      name: string;
+    };
+  }>;
+}
 
-// Mock orders
-const mockOrders = [
-  {
-    id: "ORD-001",
-    productName: "Advanced Inventory System",
-    price: 599,
-    status: "completed",
-    date: new Date("2024-12-01"),
-  },
-  {
-    id: "ORD-002",
-    productName: "Modern HUD UI",
-    price: 399,
-    status: "completed",
-    date: new Date("2024-11-28"),
-  },
-  {
-    id: "ORD-003",
-    productName: "Vehicle Shop UI",
-    price: 299,
-    status: "pending",
-    date: new Date("2024-12-09"),
-  },
-];
+interface License {
+  id: string;
+  licenseKey: string;
+  status: string;
+  product: {
+    name: string;
+  };
+}
 
-// Mock licenses
-const mockLicenses = [
-  {
-    id: "LIC-001",
-    productName: "Advanced Inventory System",
-    key: "XXXX-XXXX-XXXX-1234",
-    status: "active",
-    expiresAt: null,
-  },
-  {
-    id: "LIC-002",
-    productName: "Modern HUD UI",
-    key: "XXXX-XXXX-XXXX-5678",
-    status: "active",
-    expiresAt: null,
-  },
-];
-
-const menuItems = [
-  { icon: User, label: "โปรไฟล์", href: "/dashboard" },
-  { icon: ShoppingBag, label: "คำสั่งซื้อ", href: "/dashboard/orders" },
-  { icon: Key, label: "License", href: "/dashboard/licenses" },
-  { icon: Wallet, label: "เติมเงิน", href: "/dashboard/topup" },
-  { icon: Settings, label: "ตั้งค่า", href: "/dashboard/settings" },
-];
+interface TopupTransaction {
+  id: string;
+  amount: number;
+  bonus: number;
+  paymentMethod: string | null;
+  status: string;
+  createdAt: string;
+}
 
 export default function DashboardPage() {
+  const { t } = useTranslation("common");
+  const { user, loading: authLoading, isSynced, isSyncing } = useAuth();
+
+  const menuItems = useMemo(() => [
+    { icon: User, label: t("dashboard.menu.profile"), href: "/dashboard" },
+    { icon: ShoppingBag, label: t("dashboard.menu.orders"), href: "/dashboard/orders" },
+    { icon: Key, label: t("dashboard.menu.licenses"), href: "/dashboard/licenses" },
+    { icon: Star, label: t("dashboard.menu.points"), href: "/dashboard/points" },
+    { icon: Wallet, label: t("dashboard.menu.topup"), href: "/dashboard/topup" },
+    { icon: History, label: t("dashboard.menu.topup_history"), href: "/dashboard/topup/history" },
+    { icon: Settings, label: t("dashboard.menu.settings"), href: "/dashboard/settings" },
+  ], [t]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [topups, setTopups] = useState<TopupTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTopup, setSelectedTopup] = useState<TopupTransaction | null>(null);
+
+  const calculateDaysAsMember = useCallback((createdAt: string | undefined) => {
+    if (!createdAt) return 0;
+    try {
+      const start = new Date(createdAt);
+      start.setHours(0, 0, 0, 0);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const diffTime = Math.abs(now.getTime() - start.getTime());
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+      return 0;
+    }
+  }, []);
+
+  const fetchData = useCallback(async (showLoading = false) => {
+    const token = getAuthToken();
+    if (!isSynced && !user?.id && token) return;
+    if (!user?.id && !token) {
+      setLoading(false);
+      return;
+    }
+
+    if (showLoading) setLoading(true);
+    
+    try {
+      const [ordersRes, licensesRes, topupRes] = await Promise.all([
+        ordersApi.getAll(),
+        licensesApi.getAll(),
+        topupApi.getHistory()
+      ]);
+
+      if (ordersRes.data && typeof ordersRes.data === 'object' && 'data' in ordersRes.data) {
+        setOrders((ordersRes.data as any).data || []);
+      }
+
+      if (licensesRes.data && typeof licensesRes.data === 'object' && 'data' in licensesRes.data) {
+        setLicenses((licensesRes.data as any).data || []);
+      }
+
+      if (topupRes.data && typeof topupRes.data === 'object' && 'data' in topupRes.data) {
+        setTopups((topupRes.data as any).data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, isSynced]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const stats = useMemo(() => [
+    { icon: ShoppingBag, label: t("dashboard.stats.orders"), value: orders.length },
+    { icon: Key, label: t("dashboard.stats.licenses"), value: licenses.length },
+    { 
+      icon: Award, 
+      label: t("dashboard.stats.total_spent"), 
+      value: (
+        <span className="text-yellow-400 font-bold">
+          ฿{(user?.totalSpent || 0).toLocaleString()}
+        </span>
+      )
+    },
+    { 
+      icon: Star, 
+      label: t("dashboard.stats.points"), 
+      value: (
+        <span className="text-yellow-500 font-bold">
+          {(user?.points || 0).toLocaleString()} <span className="text-[10px] uppercase">Pts</span>
+        </span>
+      )
+    },
+  ], [t, orders.length, licenses.length, user?.totalSpent, user?.points]);
+
+  if (authLoading || (loading && (user || getAuthToken()))) {
+    return (
+      <div className="min-h-screen pt-32">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <SidebarSkeleton />
+            <div className="lg:col-span-3 space-y-6">
+              <StatsSkeleton />
+              <RecentListSkeleton title={t("dashboard.recent.topups")} />
+              <RecentListSkeleton title={t("dashboard.recent.orders")} />
+              <RecentListSkeleton title={t("dashboard.recent.licenses")} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Robust check: if no user and no cookie token, then redirect
+  if (!user && !authLoading && !getAuthToken()) {
+    if (typeof window !== 'undefined') {
+      window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
+    }
+    return null;
+  }
+
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-32">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-1"
-          >
-            <Card className="p-6">
-              {/* User Info */}
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-linear-to-br from-red-600 to-red-400 flex items-center justify-center">
-                  <span className="text-3xl font-bold text-white">
-                    {mockUser.username.charAt(0)}
-                  </span>
-                </div>
-                <h2 className="text-xl font-bold text-white">{mockUser.username}</h2>
-                <p className="text-sm text-gray-400">{mockUser.email}</p>
-                <div className="mt-3 px-4 py-2 rounded-xl bg-red-500/20 inline-block">
-                  <span className="text-red-400 font-semibold">
-                    ฿{mockUser.balance.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Menu */}
-              <nav className="space-y-1">
-                {menuItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-            </Card>
-          </motion.div>
+          <DashboardSidebar 
+            user={user} 
+            isSyncing={isSyncing}
+            calculateDaysAsMember={calculateDaysAsMember} 
+            menuItems={menuItems} 
+          />
 
           {/* Main Content */}
           <motion.div
@@ -130,98 +204,47 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-3 space-y-6"
           >
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { icon: ShoppingBag, label: "คำสั่งซื้อ", value: mockOrders.length },
-                { icon: Key, label: "License", value: mockLicenses.length },
-                { icon: Wallet, label: "ยอดเงิน", value: `฿${mockUser.balance.toLocaleString()}` },
-                { icon: Clock, label: "สมาชิกมา", value: "11 เดือน" },
-              ].map((stat, index) => (
-                <Card key={index} className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                      <stat.icon className="w-5 h-5 text-red-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-400">{stat.label}</p>
-                      <p className="text-lg font-bold text-white">{stat.value}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="text-2xl font-bold text-white tracking-tight">{t("dashboard.title")}</h1>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => fetchData(true)}
+                disabled={loading}
+                className="text-gray-400 hover:text-red-400 gap-2 bg-white/5 hover:bg-white/10 rounded-xl px-4 h-10 border border-white/5"
+              >
+                <Loader2 className={cn("w-4 h-4", loading && "animate-spin")} />
+                {t("dashboard.refresh")}
+              </Button>
             </div>
+            <p className="text-gray-400 mb-8 text-xs">{t("dashboard.welcome")}</p>
+
+            {/* Stats */}
+            <DashboardStats stats={stats} />
+
+            {/* Member Tier Progress */}
+            <TierProgress totalSpent={user?.totalSpent || 0} />
+
+            {/* Recent Top-ups */}
+            <RecentTopups 
+              topups={topups as any} 
+              onSelectTopup={setSelectedTopup as any} 
+            />
 
             {/* Recent Orders */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">คำสั่งซื้อล่าสุด</h3>
-                <Link href="/dashboard/orders">
-                  <Button variant="ghost" size="sm">ดูทั้งหมด</Button>
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {mockOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-red-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{order.productName}</p>
-                        <p className="text-sm text-gray-400">{order.id}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-red-400">{formatPrice(order.price)}</p>
-                      <Badge
-                        variant={order.status === "completed" ? "success" : "warning"}
-                      >
-                        {order.status === "completed" ? "สำเร็จ" : "รอดำเนินการ"}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <RecentOrders orders={orders} />
 
             {/* Licenses */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">License ของฉัน</h3>
-                <Link href="/dashboard/licenses">
-                  <Button variant="ghost" size="sm">ดูทั้งหมด</Button>
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {mockLicenses.map((license) => (
-                  <div
-                    key={license.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{license.productName}</p>
-                        <p className="text-sm text-gray-400 font-mono">{license.key}</p>
-                      </div>
-                    </div>
-                    <Button variant="secondary" size="sm">
-                      <Download className="w-4 h-4" />
-                      ดาวน์โหลด
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <MyLicenses licenses={licenses} />
           </motion.div>
         </div>
       </div>
+
+      {/* Top-up Detail Modal - Moved to root for better Portal reliability */}
+      <TopupDetailModal 
+        topup={selectedTopup} 
+        onClose={() => setSelectedTopup(null)} 
+      />
     </div>
   );
 }

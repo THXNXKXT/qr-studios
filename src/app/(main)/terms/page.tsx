@@ -3,74 +3,76 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui";
 
-const sections = [
-  {
-    title: "1. การยอมรับข้อกำหนด",
-    content: "โดยการเข้าถึงและใช้งานเว็บไซต์ QR Studio คุณยอมรับและตกลงที่จะปฏิบัติตามข้อกำหนดและเงื่อนไขเหล่านี้ หากคุณไม่เห็นด้วยกับส่วนใดส่วนหนึ่งของข้อกำหนดเหล่านี้ คุณไม่ควรใช้บริการของเรา",
-  },
-  {
-    title: "2. คำอธิบายบริการ",
-    content: "QR Studio ให้บริการจำหน่าย Script และ UI สำหรับ FiveM รวมถึงบริการรับทำ UI ตามความต้องการ สินค้าทั้งหมดเป็นผลิตภัณฑ์ดิจิทัลที่จะถูกส่งมอบผ่านระบบ License Key",
-  },
-  {
-    title: "3. บัญชีผู้ใช้",
-    content: "คุณต้องสร้างบัญชีผ่าน Discord เพื่อใช้บริการของเรา คุณมีหน้าที่รับผิดชอบในการรักษาความปลอดภัยของบัญชีและรหัสผ่านของคุณ QR Studio จะไม่รับผิดชอบต่อความสูญเสียหรือความเสียหายที่เกิดจากการไม่ปฏิบัติตามข้อกำหนดด้านความปลอดภัยนี้",
-  },
-  {
-    title: "4. การซื้อและการชำระเงิน",
-    content: "การซื้อทั้งหมดจะถูกดำเนินการผ่าน Stripe หรือยอดเงินในบัญชี ราคาทั้งหมดแสดงเป็นสกุลเงินบาท (THB) และรวมภาษีมูลค่าเพิ่มแล้ว เมื่อการชำระเงินสำเร็จ คุณจะได้รับ License Key ทางอีเมลและในหน้า Dashboard",
-  },
-  {
-    title: "5. License และการใช้งาน",
-    content: "License ที่ซื้อมีไว้สำหรับใช้งานส่วนบุคคลหรือในเซิร์ฟเวอร์เดียวเท่านั้น ห้ามแจกจ่าย ขายต่อ หรือแชร์ License Key กับผู้อื่น การละเมิดข้อกำหนดนี้อาจส่งผลให้ License ถูกยกเลิก",
-  },
-  {
-    title: "6. นโยบายการคืนเงิน",
-    content: "เนื่องจากสินค้าของเราเป็นผลิตภัณฑ์ดิจิทัล เราไม่รับคืนเงินหลังจากที่ License Key ถูกส่งมอบแล้ว อย่างไรก็ตาม หากสินค้ามีข้อบกพร่องหรือไม่ทำงานตามที่อธิบายไว้ กรุณาติดต่อฝ่ายสนับสนุนภายใน 7 วัน",
-  },
-  {
-    title: "7. ทรัพย์สินทางปัญญา",
-    content: "สินค้าทั้งหมดที่จำหน่ายบน QR Studio เป็นทรัพย์สินทางปัญญาของ QR Studio หรือผู้สร้างที่ได้รับอนุญาต ห้ามทำซ้ำ แจกจ่าย หรือดัดแปลงโดยไม่ได้รับอนุญาตเป็นลายลักษณ์อักษร",
-  },
-  {
-    title: "8. การจำกัดความรับผิดชอบ",
-    content: "QR Studio ไม่รับประกันว่าบริการจะไม่มีข้อผิดพลาดหรือไม่หยุดชะงัก เราจะไม่รับผิดชอบต่อความเสียหายทางอ้อม ความเสียหายพิเศษ หรือความเสียหายที่เป็นผลสืบเนื่อง",
-  },
-  {
-    title: "9. การเปลี่ยนแปลงข้อกำหนด",
-    content: "เราขอสงวนสิทธิ์ในการแก้ไขข้อกำหนดเหล่านี้ได้ตลอดเวลา การเปลี่ยนแปลงจะมีผลทันทีเมื่อโพสต์บนเว็บไซต์ การใช้งานต่อเนื่องหลังจากการเปลี่ยนแปลงถือว่าคุณยอมรับข้อกำหนดใหม่",
-  },
-  {
-    title: "10. การติดต่อ",
-    content: "หากคุณมีคำถามเกี่ยวกับข้อกำหนดเหล่านี้ กรุณาติดต่อเราผ่าน Discord หรืออีเมล support@qrstudio.com",
-  },
-];
-
 export default function TermsPage() {
+  const { t } = useTranslation("home");
+  const sections = [
+    {
+      title: t("legal.terms.sections.s1.title"),
+      content: t("legal.terms.sections.s1.content"),
+    },
+    {
+      title: t("legal.terms.sections.s2.title"),
+      content: t("legal.terms.sections.s2.content"),
+    },
+    {
+      title: t("legal.terms.sections.s3.title"),
+      content: t("legal.terms.sections.s3.content"),
+    },
+    {
+      title: t("legal.terms.sections.s4.title"),
+      content: t("legal.terms.sections.s4.content"),
+    },
+    {
+      title: t("legal.terms.sections.s5.title"),
+      content: t("legal.terms.sections.s5.content"),
+    },
+    {
+      title: t("legal.terms.sections.s6.title"),
+      content: t("legal.terms.sections.s6.content"),
+    },
+    {
+      title: t("legal.terms.sections.s7.title"),
+      content: t("legal.terms.sections.s7.content"),
+    },
+    {
+      title: t("legal.terms.sections.s8.title"),
+      content: t("legal.terms.sections.s8.content"),
+    },
+    {
+      title: t("legal.terms.sections.s9.title"),
+      content: t("legal.terms.sections.s9.content"),
+    },
+    {
+      title: t("legal.terms.sections.s10.title"),
+      content: t("legal.terms.sections.s10.content"),
+    },
+  ];
   return (
-    <div className="min-h-screen pt-20">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen pt-20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />
+      <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-12"
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
           >
-            <ArrowLeft className="w-4 h-4" />
-            กลับหน้าแรก
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            {t("legal.terms.back")}
           </Link>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-red-400" />
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-xl">
+              <FileText className="w-8 h-8 text-red-500" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">ข้อกำหนดการใช้งาน</h1>
-              <p className="text-gray-400">อัพเดทล่าสุด: 1 ธันวาคม 2024</p>
+              <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("legal.terms.title")}</h1>
+              <p className="text-gray-500 text-sm mt-1 uppercase tracking-widest font-bold">{t("legal.terms.subtitle")}</p>
             </div>
           </div>
         </motion.div>
@@ -80,28 +82,38 @@ export default function TermsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="p-6 md:p-8">
-            <p className="text-gray-400 mb-8">
-              กรุณาอ่านข้อกำหนดการใช้งานเหล่านี้อย่างละเอียดก่อนใช้บริการของ QR Studio
+          <Card className="p-8 md:p-12 border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
+            
+            <p className="text-gray-400 text-lg mb-12 leading-relaxed border-l-4 border-red-600 pl-6 py-2">
+              {t("legal.terms.hero_desc")}
             </p>
 
-            <div className="space-y-6">
+            <div className="space-y-10">
               {sections.map((section, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
                   transition={{ delay: 0.1 + index * 0.05 }}
-                  className="pb-6 border-b border-white/10 last:border-0"
+                  className="group"
                 >
-                  <h2 className="text-lg font-semibold text-white mb-3">
+                  <h2 className="text-xl font-black text-white mb-4 flex items-center gap-3 group-hover:text-red-400 transition-colors">
+                    <span className="w-1.5 h-6 bg-red-600 rounded-full" />
                     {section.title}
                   </h2>
-                  <p className="text-gray-400 leading-relaxed">
+                  <p className="text-gray-400 leading-relaxed pl-4.5">
                     {section.content}
                   </p>
                 </motion.div>
               ))}
+            </div>
+
+            <div className="mt-16 pt-8 border-t border-white/5 text-center">
+              <p className="text-sm text-gray-500">
+                {t("legal.terms.contact_hint")} <span className="text-red-400 font-bold">support@qrstudio.com</span>
+              </p>
             </div>
           </Card>
         </motion.div>

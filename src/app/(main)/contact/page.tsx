@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Mail,
   MessageCircle,
@@ -15,81 +16,95 @@ import {
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
-import { Button, Card, Input } from "@/components/ui";
-
-const contactMethods = [
-  {
-    icon: MessageCircle,
-    title: "Discord",
-    description: "ติดต่อผ่าน Discord Server",
-    value: "QR STUDIO",
-    link: "https://discord.gg/your-discord",
-    color: "bg-indigo-500/20",
-    iconColor: "text-indigo-400",
-    buttonText: "เข้าร่วม Discord",
-  },
-  {
-    icon: Mail,
-    title: "Email",
-    description: "ส่งอีเมลหาเรา",
-    value: "contact@qrstudio.com",
-    link: "mailto:contact@qrstudio.com",
-    color: "bg-red-500/20",
-    iconColor: "text-red-400",
-    buttonText: "ส่งอีเมล",
-  },
-  {
-    icon: Phone,
-    title: "LINE",
-    description: "แอดไลน์พูดคุย",
-    value: "@qrstudio",
-    link: "https://line.me/ti/p/@qrstudio",
-    color: "bg-green-500/20",
-    iconColor: "text-green-400",
-    buttonText: "แอดไลน์",
-  },
-];
-
-const faqs = [
-  {
-    question: "สามารถขอดูตัวอย่างก่อนซื้อได้ไหม?",
-    answer: "ได้ครับ สามารถติดต่อเราผ่าน Discord เพื่อขอดูตัวอย่างหรือสอบถามรายละเอียดเพิ่มเติมได้เลย",
-  },
-  {
-    question: "หลังซื้อแล้วมีการซัพพอร์ตไหม?",
-    answer: "มีครับ เรามีทีมซัพพอร์ตพร้อมช่วยเหลือตลอด และมีอัพเดทฟรีตลอดชีพ",
-  },
-  {
-    question: "รับชำระเงินผ่านช่องทางไหนบ้าง?",
-    answer: "รับชำระผ่านโอนธนาคาร, TrueMoney Wallet, และ PromptPay",
-  },
-  {
-    question: "ใช้เวลานานแค่ไหนในการทำ Commission?",
-    answer: "ขึ้นอยู่กับความซับซ้อนของงาน โดยทั่วไป UI ง่ายๆ 3-5 วัน, งานซับซ้อน 1-2 สัปดาห์",
-  },
-  {
-    question: "สามารถขอแก้ไขงานได้กี่ครั้ง?",
-    answer: "สำหรับ Commission สามารถแก้ไขได้ 3 ครั้งฟรี หลังจากนั้นคิดค่าแก้ไขเพิ่มเติม",
-  },
-];
-
-const businessHours = [
-  { day: "จันทร์ - ศุกร์", hours: "10:00 - 22:00" },
-  { day: "เสาร์ - อาทิตย์", hours: "12:00 - 20:00" },
-];
+import { useTranslation } from "react-i18next";
+import { Button, Card, Input, Badge } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 export default function ContactPage() {
+  const { t } = useTranslation("home");
+  const { user } = useAuth();
+
+  const faqs = [
+    {
+      question: t("misc.faq.items.preview.q", { defaultValue: "สามารถขอดูตัวอย่างก่อนซื้อได้ไหม?" }),
+      answer: t("misc.faq.items.preview.a", { defaultValue: "ได้ครับ สามารถติดต่อเราผ่าน Discord เพื่อขอดูตัวอย่างหรือสอบถามรายละเอียดเพิ่มเติมได้เลย" }),
+    },
+    {
+      question: t("misc.faq.items.support.q", { defaultValue: "หลังซื้อแล้วมีการซัพพอร์ตไหม?" }),
+      answer: t("misc.faq.items.support.a", { defaultValue: "มีครับ เรามีทีมซัพพอร์ตพร้อมช่วยเหลือตลอด และมีอัพเดทฟรีตลอดชีพ" }),
+    },
+    {
+      question: t("misc.faq.items.payment.q", { defaultValue: "รับชำระเงินผ่านช่องทางไหนบ้าง?" }),
+      answer: t("misc.faq.items.payment.a", { defaultValue: "รับชำระผ่านโอนธนาคาร, TrueMoney Wallet, และ PromptPay" }),
+    },
+    {
+      question: t("misc.faq.items.commission_time.q", { defaultValue: "ใช้เวลานานแค่ไหนในการทำ Commission?" }),
+      answer: t("misc.faq.items.commission_time.a", { defaultValue: "ขึ้นอยู่กับความซับซ้อนของงาน โดยทั่วไป UI ง่ายๆ 3-5 วัน, งานซับซ้อน 1-2 สัปดาห์" }),
+    },
+    {
+      question: t("misc.faq.items.revisions.q", { defaultValue: "สามารถขอแก้ไขงานได้กี่ครั้ง?" }),
+      answer: t("misc.faq.items.revisions.a", { defaultValue: "สำหรับ Commission สามารถแก้ไขได้ 3 ครั้งฟรี หลังจากนั้นคิดค่าแก้ไขเพิ่มเติม" }),
+    },
+  ];
+
+  const contactMethods = [
+    {
+      icon: MessageCircle,
+      title: t("misc.contact.methods.discord.title"),
+      description: t("misc.contact.methods.discord.desc"),
+      value: "QR STUDIO",
+      link: "https://discord.gg/rQxc8ZNYE6",
+      color: "bg-red-500/20",
+      iconColor: "text-red-400",
+      buttonText: t("misc.contact.methods.discord.btn"),
+    },
+    {
+      icon: Mail,
+      title: t("misc.contact.methods.email.title"),
+      description: t("misc.contact.methods.email.desc"),
+      value: "contact@qrstudio.com",
+      link: "mailto:contact@qrstudio.com",
+      color: "bg-red-500/20",
+      iconColor: "text-red-400",
+      buttonText: t("misc.contact.methods.email.btn"),
+    },
+    {
+      icon: Phone,
+      title: t("misc.contact.methods.line.title"),
+      description: t("misc.contact.methods.line.desc"),
+      value: "@qrstudio",
+      link: "https://line.me/ti/p/@qrstudio",
+      color: "bg-red-500/20",
+      iconColor: "text-red-400",
+      buttonText: t("misc.contact.methods.line.btn"),
+    },
+  ];
+
+  const businessHours = [
+    { day: t("common.mon_fri", { defaultValue: "จันทร์ - ศุกร์" }), hours: "10:00 - 22:00" },
+    { day: t("common.sat_sun", { defaultValue: "เสาร์ - อาทิตย์" }), hours: "12:00 - 20:00" },
+  ];
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
     message: "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: user.username || prev.name,
+        email: user.email || prev.email,
+      }));
+    }
+  }, [user]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -102,44 +117,54 @@ export default function ContactPage() {
 
     // Reset success message after 5 seconds
     setTimeout(() => setIsSubmitted(false), 5000);
-  };
+  }, []);
 
-  const handleChange = (
+  const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const toggleFaq = useCallback((index: number) => {
+    setOpenFaq(prev => prev === index ? null : index);
+  }, []);
 
   return (
     <div className="min-h-screen pt-20">
       {/* Hero Section */}
-      <section className="py-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-red-900/20 to-transparent" />
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-red-600/20 rounded-full blur-[128px]" />
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-br from-red-900/30 via-black to-black" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600/10 rounded-full blur-[128px] animate-pulse" />
 
-        <div className="container mx-auto relative">
+        <div className="container mx-auto px-4 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/20 flex items-center justify-center">
-              <Mail className="w-10 h-10 text-red-400" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              ติดต่อเรา
+            <Badge className="mb-6 bg-red-500/10 text-red-500 border-red-500/20 px-4 py-1.5 text-sm">
+              <Mail className="w-4 h-4 mr-2" />
+              {t("misc.contact.hero_badge")}
+            </Badge>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight tracking-tighter">
+              {t("misc.contact.title")}
+              <br />
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-red-500 via-red-400 to-red-700 animate-gradient">
+                {t("misc.contact.title_highlight")}
+              </span>
             </h1>
-            <p className="text-gray-400 text-lg">
-              มีคำถามหรือต้องการสอบถามข้อมูลเพิ่มเติม? ติดต่อเราได้ตลอด 24 ชั่วโมง
-              ทีมงานพร้อมให้บริการ
+            <p className="text-gray-400 text-base leading-relaxed max-w-2xl mx-auto">
+              {t("misc.contact.hero_desc")}
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Contact Methods */}
-      <section className="py-12">
-        <div className="container mx-auto">
+      <section className="py-12 relative z-10 -mt-12">
+        <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {contactMethods.map((method, index) => {
               const Icon = method.icon;
@@ -151,23 +176,23 @@ export default function ContactPage() {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="p-6 h-full text-center hover:border-red-500/50 transition-colors">
+                  <Card className="p-6 h-full text-center border-white/5 bg-black/40 backdrop-blur-xl hover:border-red-500/50 transition-all duration-500 group shadow-2xl">
                     <div
-                      className={`w-16 h-16 mx-auto rounded-2xl ${method.color} flex items-center justify-center mb-4`}
+                      className={`w-16 h-16 mx-auto rounded-3xl ${method.color} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-red-500/30 transition-all duration-500 border border-white/5`}
                     >
                       <Icon className={`w-8 h-8 ${method.iconColor}`} />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">
+                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-red-400 transition-colors">
                       {method.title}
                     </h3>
-                    <p className="text-gray-400 text-sm mb-2">
+                    <p className="text-gray-400 text-xs mb-4 leading-relaxed px-4">
                       {method.description}
                     </p>
-                    <p className="text-white font-medium mb-4">{method.value}</p>
-                    <Link href={method.link} target="_blank">
-                      <Button variant="secondary" className="w-full group">
-                        {method.buttonText}
-                        <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    <p className="text-white font-bold text-base mb-8 tracking-wide group-hover:text-red-200 transition-colors">{method.value}</p>
+                    <Link href={method.link} target="_blank" className="block mt-auto">
+                      <Button variant="secondary" className="w-full h-11 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white group/btn text-xs rounded-xl">
+                        <span>{method.buttonText}</span>
+                        <ExternalLink className="w-3.5 h-3.5 ml-2 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
                       </Button>
                     </Link>
                   </Card>
@@ -188,98 +213,113 @@ export default function ContactPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <Card className="p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  ส่งข้อความถึงเรา
+              <Card className="p-8 md:p-10 border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden h-full">
+                <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-red-600 to-transparent" />
+                
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-2 tracking-tight">
+                  {t("misc.contact.form.title")}
                 </h2>
+                <p className="text-gray-400 text-sm mb-8">
+                  {t("misc.contact.form.desc")}
+                </p>
 
                 {isSubmitted ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-12"
+                    className="text-center py-16"
                   >
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <CheckCircle className="w-8 h-8 text-green-400" />
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                      <CheckCircle className="w-10 h-10 text-red-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      ส่งข้อความสำเร็จ!
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      {t("misc.contact.form.success_title")}
                     </h3>
                     <p className="text-gray-400">
-                      เราจะติดต่อกลับโดยเร็วที่สุด
+                      {t("misc.contact.form.success_desc")}
                     </p>
+                    <Button 
+                      variant="secondary" 
+                      className="mt-8 bg-white/5 border-white/10"
+                      onClick={() => setIsSubmitted(false)}
+                    >
+                      {t("misc.contact.form.send_new")}
+                    </Button>
                   </motion.div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
-                          ชื่อ
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300 ml-1">
+                          {t("misc.contact.form.name")}
                         </label>
                         <Input
                           name="name"
                           value={formData.name}
                           onChange={handleChange}
-                          placeholder="ชื่อของคุณ"
+                          placeholder={t("misc.contact.form.name_placeholder")}
+                          className="bg-white/5 border-white/10 h-12 rounded-xl focus:border-red-500/50"
                           required
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
-                          อีเมล
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300 ml-1">
+                          {t("misc.contact.form.email")}
                         </label>
                         <Input
                           name="email"
                           type="email"
                           value={formData.email}
                           onChange={handleChange}
-                          placeholder="email@example.com"
+                          placeholder={t("misc.contact.form.email_placeholder")}
+                          className="bg-white/5 border-white/10 h-12 rounded-xl focus:border-red-500/50"
                           required
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        หัวข้อ
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300 ml-1">
+                        {t("misc.contact.form.subject")}
                       </label>
                       <Input
                         name="subject"
                         value={formData.subject}
                         onChange={handleChange}
-                        placeholder="หัวข้อที่ต้องการติดต่อ"
+                        placeholder={t("misc.contact.form.subject_placeholder")}
+                        className="bg-white/5 border-white/10 h-12 rounded-xl focus:border-red-500/50"
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        ข้อความ
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300 ml-1">
+                        {t("misc.contact.form.message")}
                       </label>
                       <textarea
                         name="message"
                         value={formData.message}
                         onChange={handleChange}
-                        placeholder="รายละเอียดที่ต้องการสอบถาม..."
-                        rows={5}
+                        placeholder={t("misc.contact.form.message_placeholder")}
+                        rows={6}
                         required
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all resize-none"
+                        className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500/50 transition-all resize-none"
                       />
                     </div>
                     <Button
                       type="submit"
-                      size="lg"
-                      className="w-full"
+                      size="xl"
+                      className="w-full bg-red-600 hover:bg-red-500 text-white font-black h-12 shadow-xl shadow-red-600/20 rounded-xl group text-sm"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
-                        <>
+                        <div className="flex items-center gap-2">
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          กำลังส่ง...
-                        </>
+                          <span>{t("misc.contact.form.submitting")}</span>
+                        </div>
                       ) : (
-                        <>
-                          <Send className="w-5 h-5" />
-                          ส่งข้อความ
-                        </>
+                        <div className="flex items-center gap-2">
+                          <span>{t("misc.contact.form.submit")}</span>
+                          <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </div>
                       )}
                     </Button>
                   </form>
@@ -295,70 +335,81 @@ export default function ContactPage() {
               className="space-y-6"
             >
               {/* Business Hours */}
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-red-400" />
+              <Card className="p-6 border-white/5 bg-black/40 backdrop-blur-xl hover:border-red-500/30 transition-all duration-500 shadow-2xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-red-500" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">
-                    เวลาทำการ
-                  </h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {t("misc.contact.info.hours_title")}
+                    </h3>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">{t("misc.contact.info.hours_badge")}</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {businessHours.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                      className="flex items-center justify-between py-3 border-b border-white/5 last:border-0 group"
                     >
-                      <span className="text-gray-400">{item.day}</span>
-                      <span className="text-white font-medium">{item.hours}</span>
+                      <span className="text-gray-400 group-hover:text-gray-300 transition-colors">{item.day}</span>
+                      <span className="text-white font-bold bg-white/5 px-3 py-1 rounded-lg border border-white/5 group-hover:border-red-500/30 transition-all">{item.hours}</span>
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500 mt-4">
-                  * นอกเวลาทำการสามารถฝากข้อความไว้ได้ เราจะติดต่อกลับโดยเร็วที่สุด
-                </p>
+                <div className="mt-8 p-4 rounded-xl bg-red-500/5 border border-red-500/10">
+                  <p className="text-xs text-red-400/80 leading-relaxed">
+                    {t("misc.contact.info.hours_hint")}
+                  </p>
+                </div>
               </Card>
 
               {/* Location */}
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-blue-400" />
+              <Card className="p-6 border-white/5 bg-black/40 backdrop-blur-xl hover:border-red-500/30 transition-all duration-500 shadow-2xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-red-500" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">ที่ตั้ง</h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{t("misc.contact.info.location_title")}</h3>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">{t("misc.contact.info.location_badge")}</p>
+                  </div>
                 </div>
-                <p className="text-gray-400">
-                  ให้บริการออนไลน์ทั่วประเทศไทย
-                  <br />
-                  สามารถติดต่อผ่านช่องทางออนไลน์ได้ตลอด
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {t("misc.contact.info.location_desc")}
                 </p>
               </Card>
 
               {/* Quick Links */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  ลิงก์ด่วน
+              <Card className="p-6 border-white/5 bg-black/40 backdrop-blur-xl hover:border-red-500/30 transition-all duration-500 shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                  <div className="w-1.5 h-5 bg-red-600 rounded-full" />
+                  {t("misc.contact.info.links_title")}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <Link href="/products">
-                    <Button variant="secondary" className="w-full justify-start">
-                      ดูสินค้าทั้งหมด
+                    <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
+                      <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
+                      {t("dashboard.menu.orders")}
                     </Button>
                   </Link>
                   <Link href="/commission">
-                    <Button variant="secondary" className="w-full justify-start">
-                      รับทำ UI
+                    <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
+                      <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
+                      {t("nav.ui_service")}
                     </Button>
                   </Link>
                   <Link href="/web-design">
-                    <Button variant="secondary" className="w-full justify-start">
-                      รับทำเว็บ
+                    <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
+                      <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
+                      {t("nav.web_service")}
                     </Button>
                   </Link>
                   <Link href="/dashboard">
-                    <Button variant="secondary" className="w-full justify-start">
-                      Dashboard
+                    <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
+                      <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
+                      {t("nav.dashboard")}
                     </Button>
                   </Link>
                 </div>
@@ -369,23 +420,24 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-12">
-        <div className="container mx-auto">
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute top-1/2 left-0 w-72 h-72 bg-red-600/5 rounded-full blur-[100px]" />
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              คำถามที่พบบ่อย
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
+              {t("misc.faq.subtitle")}
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              รวมคำถามที่ลูกค้าถามบ่อย หากไม่พบคำตอบสามารถติดต่อเราได้เลย
+            <p className="text-gray-400 text-sm max-w-2xl mx-auto">
+              {t("misc.faq.desc")}
             </p>
           </motion.div>
 
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="max-w-3xl mx-auto space-y-4 relative z-10">
             {faqs.map((faq, index) => (
               <motion.div
                 key={index}
@@ -395,31 +447,42 @@ export default function ContactPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card
-                  className={`overflow-hidden cursor-pointer transition-all ${
-                    openFaq === index ? "border-red-500/50" : ""
-                  }`}
-                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  className={cn(
+                    "overflow-hidden cursor-pointer transition-all duration-300 border-white/5 bg-white/2 hover:border-red-500/30",
+                    openFaq === index ? "border-red-500/50 bg-red-500/5 ring-1 ring-red-500/10" : ""
+                  )}
+                  onClick={() => toggleFaq(index)}
                 >
-                  <div className="p-4 flex items-center justify-between">
-                    <h3 className="font-medium text-white">{faq.question}</h3>
+                  <div className="p-6 flex items-center justify-between gap-4">
+                    <h3 className={cn(
+                      "font-bold transition-colors",
+                      openFaq === index ? "text-red-400" : "text-white"
+                    )}>
+                      {faq.question}
+                    </h3>
                     <div
-                      className={`w-6 h-6 rounded-full bg-white/10 flex items-center justify-center transition-transform ${
-                        openFaq === index ? "rotate-45" : ""
-                      }`}
+                      className={cn(
+                        "w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center transition-all duration-300",
+                        openFaq === index ? "rotate-45 bg-red-500 text-white" : "text-gray-400"
+                      )}
                     >
-                      <span className="text-white text-lg">+</span>
+                      <span className="text-xl leading-none">+</span>
                     </div>
                   </div>
-                  {openFaq === index && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="px-4 pb-4"
-                    >
-                      <p className="text-gray-400">{faq.answer}</p>
-                    </motion.div>
-                  )}
+                  <AnimatePresence>
+                    {openFaq === index && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                      >
+                        <div className="px-6 pb-6 pt-2 border-t border-white/5 mt-2">
+                          <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </Card>
               </motion.div>
             ))}
@@ -428,29 +491,31 @@ export default function ContactPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-12">
-        <div className="container mx-auto">
+      <section className="py-24">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Card className="p-8 md:p-12 text-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-linear-to-r from-red-600/20 to-orange-600/20" />
-              <div className="relative">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                  ยังมีคำถามอยู่?
+            <Card className="p-10 md:p-16 text-center relative overflow-hidden border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl">
+              <div className="absolute inset-0 bg-linear-to-r from-red-600/10 to-transparent" />
+              <div className="relative z-10">
+                <h2 className="text-2xl md:text-4xl font-black text-white mb-6 leading-tight tracking-tight">
+                  {t("misc.faq.no_answer_title")}
                 </h2>
-                <p className="text-gray-400 max-w-xl mx-auto mb-6">
-                  ทีมงานของเราพร้อมให้บริการและตอบคำถามทุกข้อสงสัย
+                <p className="text-gray-400 max-w-xl mx-auto mb-10 text-base leading-relaxed">
+                  {t("misc.faq.no_answer_desc")}
                 </p>
-                <Link href="https://discord.gg/your-discord" target="_blank">
-                  <Button size="xl" className="group">
-                    <MessageCircle className="w-5 h-5" />
-                    เข้าร่วม Discord
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Link href="https://discord.gg/rQxc8ZNYE6" target="_blank">
+                    <Button size="xl" className="group bg-red-600 hover:bg-red-500 text-white font-black h-12 px-8 rounded-xl shadow-xl shadow-red-600/20 text-sm">
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      {t("misc.faq.join_discord")}
+                      <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </Card>
           </motion.div>

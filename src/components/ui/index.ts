@@ -6,6 +6,7 @@ export { Modal } from "./modal";
 export { ScrollProgress } from "./scroll-progress";
 export { BackToTop } from "./back-to-top";
 export { PageTransition } from "./page-transition";
+export * from "./pagination";
 export { Skeleton, ProductCardSkeleton, TableRowSkeleton, ProfileSkeleton } from "./skeleton";
 export { Confetti, useConfetti } from "./confetti";
 export { WishlistButton } from "./wishlist-button";

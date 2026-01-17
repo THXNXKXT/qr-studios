@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 interface WishlistButtonProps {
   item: WishlistItem;
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 export function WishlistButton({ item, className, size = "md" }: WishlistButtonProps) {
@@ -40,12 +40,14 @@ export function WishlistButton({ item, className, size = "md" }: WishlistButtonP
     sm: "w-8 h-8",
     md: "w-10 h-10",
     lg: "w-12 h-12",
+    xl: "w-14 h-14",
   };
 
   const iconSizes = {
     sm: "w-4 h-4",
     md: "w-5 h-5",
     lg: "w-6 h-6",
+    xl: "w-7 h-7",
   };
 
   return (
@@ -76,7 +78,7 @@ export function WishlistButton({ item, className, size = "md" }: WishlistButtonP
       <AnimatePresence>
         {showAnimation && (
           <>
-            {[...Array(6)].map((_, i) => (
+            {[...Array(Math.max(0, 6))].map((_, i) => (
               <motion.div
                 key={i}
                 initial={{ scale: 0, opacity: 1 }}

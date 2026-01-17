@@ -1,0 +1,1003 @@
+"use client";
+
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Package,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  Tag,
+  Clock,
+  Shield,
+  Loader2,
+  Globe,
+  Zap,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Card, Button, Badge } from "@/components/ui";
+import { formatPrice, cn } from "@/lib/utils";
+import { adminApi } from "@/lib/api";
+
+type TimeRange = "7d" | "30d" | "90d" | "1y";
+
+export default function AdminAnalyticsPage() {
+  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAnalytics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: res } = await adminApi.getAnalytics();
+      if (res && (res as any).success) {
+        setData((res as any).data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  const stats = useMemo(() => [
+    {
+      label: "รายได้รวม",
+      value: formatPrice(data?.summary?.totalRevenue || 0),
+      change: "+18.2%",
+      trend: "up",
+      icon: DollarSign,
+      color: "text-red-400",
+      bg: "bg-red-500/20",
+    },
+    {
+      label: "คำสั่งซื้อ",
+      value: (data?.summary?.totalOrders || 0).toLocaleString(),
+      change: "+12.5%",
+      trend: "up",
+      icon: ShoppingCart,
+      color: "text-red-400",
+      bg: "bg-red-500/20",
+    },
+    {
+      label: "ผู้ใช้ทั้งหมด",
+      value: (data?.summary?.totalUsers || 0).toLocaleString(),
+      change: `+${data?.summary?.newUsersLast30Days || 0} (30d)`,
+      trend: "up",
+      icon: Users,
+      color: "text-red-400",
+      bg: "bg-red-500/20",
+    },
+    {
+      label: "ยอดขายเฉลี่ย",
+      value: formatPrice(data?.summary?.avgOrderValue || 0),
+      change: "-3.2%",
+      trend: "down",
+      icon: Package,
+      color: "text-red-300",
+      bg: "bg-red-500/10",
+    },
+  ], [data]);
+
+  const handleTimeRangeChange = useCallback((range: TimeRange) => {
+    setTimeRange(range);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[600px]">
+        <Loader2 className="w-10 h-10 animate-spin text-red-600" />
+      </div>
+    );
+  }
+
+  const {
+    revenueData = [],
+    dailyRevenueData = [],
+    categoryData = [],
+    userGrowthData = [],
+    hourlyOrdersData = [],
+    paymentMethodData = [],
+    promoPerformance = [],
+    productSales = [],
+    categoryRevenueData = [],
+    customerInsightsData = { newVsReturning: [], avgOrdersByCustomerType: [], topBuyers: [] },
+    geographicData = [],
+    conversionData = []
+  } = data?.charts || {};
+
+  return (
+    <div className="space-y-10 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
+      
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">System Analytics</h1>
+          <p className="text-gray-400 mt-1">วิเคราะห์ข้อมูลเชิงลึกและประสิทธิภาพการดำเนินงานของ QR Studio</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
+          {(["7d", "30d", "90d", "1y"] as TimeRange[]).map((range) => (
+            <button
+              key={range}
+              onClick={() => handleTimeRangeChange(range)}
+              className={cn(
+                "px-5 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
+                timeRange === range 
+                  ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  : "text-gray-500 hover:text-white hover:bg-white/5"
+              )}
+            >
+              {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : range === "90d" ? "90 Days" : "1 Year"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-md hover:border-red-500/30 transition-all duration-500 group shadow-xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-linear-to-br from-red-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-red-500/20 transition-all duration-500 shadow-inner">
+                  <stat.icon className="w-7 h-7 text-red-500 group-hover:text-red-400 transition-colors" />
+                </div>
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black transition-all duration-500",
+                    stat.trend === "up" 
+                      ? "bg-red-500/10 text-red-400 border border-red-500/20" 
+                      : "bg-red-900/10 text-red-500/50 border border-red-900/20"
+                  )}
+                >
+                  {stat.trend === "up" ? (
+                    <TrendingUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5" />
+                  )}
+                  {stat.change}
+                </div>
+              </div>
+              
+              <div className="relative z-10">
+                <p className={cn(
+                  "text-3xl font-black tracking-tighter mb-1 transition-colors duration-500",
+                  (stat.label.includes("รายได้") || stat.label.includes("ยอดขาย") || stat.value.toString().startsWith("฿")) 
+                    ? "text-red-500" 
+                    : "text-white group-hover:text-red-400"
+                )}>
+                  {stat.value}
+                </p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-black">{stat.label}</p>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Revenue Chart */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+            <div>
+              <h2 className="text-xl font-black text-white uppercase tracking-tight">รายได้และจำนวนคำสั่งซื้อ</h2>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Monthly Revenue vs Order Count</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-red-500/10 text-red-400 border-none px-3 font-bold">+18.2% <TrendingUp className="w-3 h-3 ml-1 inline" /></Badge>
+              <Badge className="bg-white/5 text-gray-400 border-none px-3">ปี 2024</Badge>
+            </div>
+          </div>
+          
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#666" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                  dy={10}
+                />
+                <YAxis 
+                  stroke="#666" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`} 
+                />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
+                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                  cursor={{ stroke: '#ef4444', strokeWidth: 1 }}
+                  formatter={(value: number, name: string) => [
+                    name === "revenue" ? formatPrice(value) : value,
+                    name === "revenue" ? "รายได้" : "คำสั่งซื้อ",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  name="revenue"
+                  stroke="#ef4444"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorRevenue)"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="orders" 
+                  name="orders" 
+                  stroke="#fff" 
+                  strokeWidth={2} 
+                  dot={{ r: 4, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Daily Revenue */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl h-full relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">รายได้รายวัน</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-8">Daily Revenue (Last 14 Days)</p>
+            
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailyRevenueData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#666" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis 
+                    stroke="#666" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`} 
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                    itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                    cursor={{ fill: '#ef444405' }}
+                    formatter={(value: number) => [formatPrice(value), "รายได้"]}
+                  />
+                  <Bar dataKey="revenue" fill="#ef4444" radius={[6, 6, 0, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Category Distribution */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">สัดส่วนยอดขาย</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-8">Sales by Category</p>
+            
+            <div className="h-72 flex items-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={8}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {categoryData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                    itemStyle={{ color: "#fff", fontSize: '12px', fontWeight: 'bold' }}
+                    formatter={(value: number) => [`${value}%`, "สัดส่วน"]}
+                  />
+                  <Legend 
+                    verticalAlign="middle" 
+                    align="right" 
+                    layout="vertical"
+                    formatter={(value) => <span className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-2">{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* User Growth */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+      >
+        <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-xl font-black text-white uppercase tracking-tight">การเติบโตของผู้ใช้</h2>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">User Base Evolution</p>
+            </div>
+          </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={userGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "16px" }}
+                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="users"
+                  name="ผู้ใช้ทั้งหมด"
+                  stroke="#ef4444"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="newUsers"
+                  name="ผู้ใช้ใหม่"
+                  stroke="#fff"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={{ r: 4, fill: "#fff", strokeWidth: 2, stroke: "#ef4444" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Hourly Orders */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">คำสั่งซื้อตามช่วงเวลา</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-8">Hourly Traffic Activity</p>
+            
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={hourlyOrdersData}>
+                  <defs>
+                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                  <XAxis dataKey="hour" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                    formatter={(value: number) => [value, "คำสั่งซื้อ"]}
+                    labelFormatter={(label) => `${label}:00 น.`}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="orders"
+                    stroke="#ef4444"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorOrders)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Payment Methods */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">วิธีการชำระเงิน</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-8">Preferred Payment Gateways</p>
+            
+            <div className="h-72 flex items-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={paymentMethodData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={8}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {paymentMethodData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                    itemStyle={{ color: "#fff", fontSize: '12px', fontWeight: 'bold' }}
+                    formatter={(value: number) => [`${value}%`, "สัดส่วน"]}
+                  />
+                  <Legend 
+                    verticalAlign="middle" 
+                    align="right" 
+                    layout="vertical"
+                    formatter={(value) => <span className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-2">{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Detailed Product Sales Table */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.0 }}
+      >
+        <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+            <div>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tight">รายละเอียดยอดขายสินค้า</h2>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">In-depth Sales Analytics per Product</p>
+            </div>
+            <Badge className="bg-white/5 text-gray-400 border-none px-4 py-1.5 font-bold">อัพเดทล่าสุด: วันนี้</Badge>
+          </div>
+
+          <div className="overflow-x-auto -mx-8">
+            <table className="w-full min-w-[1000px]">
+              <thead>
+                <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
+                  <th className="px-8 py-5 text-left border-b border-white/5">#</th>
+                  <th className="px-8 py-5 text-left border-b border-white/5">สินค้า</th>
+                  <th className="px-8 py-5 text-left border-b border-white/5">หมวดหมู่</th>
+                  <th className="px-8 py-5 text-right border-b border-white/5">ราคา</th>
+                  <th className="px-8 py-5 text-right border-b border-white/5">ขายได้ (ชิ้น)</th>
+                  <th className="px-8 py-5 text-right border-b border-white/5">รายได้</th>
+                  <th className="px-8 py-5 text-right border-b border-white/5">% รายได้รวม</th>
+                  <th className="px-8 py-5 text-right border-b border-white/5">การเติบโต</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {productSales.map((product: any, index: number) => {
+                  const totalRevenue = productSales.reduce((sum: number, p: any) => sum + p.revenue, 0);
+                  const revenuePercentage = totalRevenue > 0 ? ((product.revenue / totalRevenue) * 100).toFixed(1) : "0";
+                  return (
+                    <tr key={product.name} className="hover:bg-white/2 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className={cn(
+                          "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black transition-all duration-500 shadow-lg",
+                          index === 0 ? "bg-red-600 text-white" :
+                          index === 1 ? "bg-red-500/20 text-red-300" :
+                          index === 2 ? "bg-red-400/20 text-red-200" :
+                          "bg-white/5 text-gray-500"
+                        )}>
+                          {index + 1}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="font-bold text-white group-hover:text-red-400 transition-colors">{product.name}</p>
+                      </td>
+                      <td className="px-8 py-6">
+                        <Badge className={cn(
+                          "px-3 py-0.5 rounded-lg border-none font-black text-[10px] uppercase tracking-widest",
+                          product.category === "SCRIPT" ? "bg-red-600 text-white shadow-red-600/20" :
+                          product.category === "UI" ? "bg-white/10 text-gray-300" : "bg-red-900/40 text-red-400"
+                        )}>
+                          {product.category}
+                        </Badge>
+                      </td>
+                      <td className="px-8 py-6 text-right font-mono text-sm text-gray-400">{formatPrice(product.price)}</td>
+                      <td className="px-8 py-6 text-right">
+                        <span className="font-bold text-white">{product.sales}</span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <p className="font-black text-red-500">{formatPrice(product.revenue)}</p>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <span className="text-xs font-bold text-gray-500">{revenuePercentage}%</span>
+                          <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-red-600" 
+                              style={{ width: `${revenuePercentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black transition-all duration-500",
+                          product.growth >= 0 ? "bg-red-500/10 text-red-400" : "bg-red-900/10 text-red-500/50"
+                        )}>
+                          {product.growth >= 0 ? (
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowDownRight className="w-3.5 h-3.5" />
+                          )}
+                          {Math.abs(product.growth)}%
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="bg-black/40">
+                <tr>
+                  <td colSpan={4} className="px-8 py-6 font-black text-white uppercase tracking-widest text-sm">Grand Totals</td>
+                  <td className="px-8 py-6 text-right">
+                    <span className="font-black text-white text-lg">{productSales.reduce((sum: number, p: any) => sum + p.sales, 0)}</span>
+                  </td>
+                  <td className="px-8 py-6 text-right font-black text-red-500 text-2xl">
+                    {formatPrice(productSales.reduce((sum: number, p: any) => sum + p.revenue, 0))}
+                  </td>
+                  <td className="px-8 py-6 text-right text-gray-500 font-mono text-sm">100.0%</td>
+                  <td className="px-8 py-6 text-right">
+                    <Badge className="bg-red-500/10 text-red-400 border-none font-bold uppercase">+12.8%</Badge>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Card>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Category Revenue Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">รายได้ตามหมวดหมู่</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-8">Revenue Stream by Product Type</p>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={categoryRevenueData}>
+                  <defs>
+                    <linearGradient id="colorScript" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorUI" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#dc2626" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorBundle" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#991b1b" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#991b1b" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                  <XAxis dataKey="month" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                    formatter={(value: number) => [formatPrice(value), ""]}
+                  />
+                  <Legend />
+                  <Area type="monotone" dataKey="Script" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorScript)" />
+                  <Area type="monotone" dataKey="UI" stroke="#dc2626" strokeWidth={3} fillOpacity={1} fill="url(#colorUI)" />
+                  <Area type="monotone" dataKey="Bundle" stroke="#991b1b" strokeWidth={3} fillOpacity={1} fill="url(#colorBundle)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Top Products Bar Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">สินค้าขายดี (กราฟ)</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-8">Sales vs Revenue Comparison</p>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={productSales.slice(0, 5)} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" horizontal={false} />
+                  <XAxis type="number" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis dataKey="name" type="category" stroke="#fff" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                    formatter={(value: number, name: string) => [
+                      name === "sales" ? `${value} ชิ้น` : formatPrice(value),
+                      name === "sales" ? "ยอดขาย" : "รายได้",
+                    ]}
+                  />
+                  <Legend />
+                  <Bar dataKey="sales" name="ยอดขาย" fill="#ef4444" radius={[0, 6, 6, 0]} barSize={12} />
+                  <Bar dataKey="revenue" name="รายได้" fill="#991b1b" radius={[0, 6, 6, 0]} barSize={12} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Customer Insights */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.3 }}
+      >
+        <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+          <h2 className="text-2xl font-black text-white mb-10 uppercase tracking-tight">Customer Insights</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {/* New vs Returning */}
+            <div className="space-y-6">
+              <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest">New vs Returning</h3>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={customerInsightsData.newVsReturning}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={8}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {customerInsightsData.newVsReturning.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#000", border: "1px solid #ffffff10", borderRadius: "12px" }}
+                      formatter={(value: number) => [`${value}%`, ""]}
+                    />
+                    <Legend verticalAlign="bottom" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Customer Type Stats */}
+            <div className="space-y-6">
+              <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest">Customer Behavior</h3>
+              <div className="space-y-4">
+                {customerInsightsData.avgOrdersByCustomerType.map((item: any) => (
+                  <div key={item.type} className="p-5 rounded-2xl bg-white/5 border border-white/5 group hover:border-red-500/20 transition-all duration-500">
+                    <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mb-3">{item.type}</p>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <p className="text-[10px] text-gray-600 uppercase font-black mb-1">Avg. Orders</p>
+                        <p className="text-xl font-black text-white group-hover:text-red-400 transition-colors">{item.avgOrders}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-600 uppercase font-black mb-1">Avg. Spending</p>
+                        <p className="text-xl font-black text-red-500 group-hover:scale-110 transition-transform origin-right">{formatPrice(item.avgSpend)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Buyers */}
+            <div className="space-y-6">
+              <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest">Top Contributors</h3>
+              <div className="space-y-2">
+                {customerInsightsData.topBuyers.map((buyer: any, index: number) => (
+                  <div key={buyer.name} className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all group/buyer">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg",
+                        index === 0 ? "bg-red-600 text-white" : "bg-white/5 text-gray-500"
+                      )}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white group-hover/buyer:text-red-400 transition-colors">{buyer.name}</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-tighter opacity-60">{buyer.orders} ออเดอร์</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-red-500">{formatPrice(buyer.spent)}</p>
+                      <p className="text-[10px] text-gray-600 font-bold uppercase">{buyer.lastOrder}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Geographic Distribution */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.4 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Geo Distribution</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-10">Sales Concentration by Region</p>
+            
+            <div className="space-y-6">
+              {geographicData.map((item: any, index: number) => (
+                <div key={item.country} className="flex items-center gap-6 group/geo">
+                  <div className="w-24 text-sm font-bold text-gray-400 group-hover/geo:text-white transition-colors">{item.country}</div>
+                  <div className="flex-1 relative h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${item.percentage}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, delay: index * 0.1, ease: "easeOut" }}
+                      className="h-full bg-linear-to-r from-red-600 via-red-500 to-red-400 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.3)]"
+                    />
+                  </div>
+                  <div className="w-24 text-right">
+                    <p className="text-sm font-black text-white">{item.percentage}%</p>
+                    <p className="text-[10px] text-gray-600 uppercase font-black tracking-tighter">{item.orders} Sales</p>
+                  </div>
+                  <div className="w-28 text-right">
+                    <p className="text-lg font-black text-red-500 group-hover/geo:scale-110 transition-transform origin-right">{formatPrice(item.revenue)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Promo Code Performance */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5 }}
+        >
+          <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+            <h2 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Marketing ROI</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-10">Promo Code Campaign Performance</p>
+            
+            <div className="space-y-4">
+              {promoPerformance.map((promo: any) => (
+                <div key={promo.code} className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-500 group relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex items-center justify-between mb-4 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-inner">
+                        <Tag className="w-5 h-5 text-red-500" />
+                      </div>
+                      <code className="text-red-400 font-mono font-black text-lg tracking-tighter group-hover:text-red-300 transition-colors">{promo.code}</code>
+                    </div>
+                    <Badge className="bg-white/5 text-gray-400 border-none px-3 font-bold">{promo.uses} Uses</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 relative z-10">
+                    <div>
+                      <p className="text-[10px] text-gray-600 uppercase font-black mb-1">Conversion</p>
+                      <p className="font-black text-white text-lg group-hover:text-red-400 transition-colors">{formatPrice(promo.revenue)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-600 uppercase font-black mb-1">Avg Discount</p>
+                      <p className="font-bold text-gray-300 text-lg">{formatPrice(promo.avgDiscount)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-gray-600 uppercase font-black mb-1">Efficiency</p>
+                      <div className="flex items-center justify-end gap-2 text-red-400 font-black text-xl group-hover:scale-110 transition-transform origin-right">
+                        <TrendingUp className="w-5 h-5" />
+                        {promo.uses > 0 && promo.avgDiscount > 0 
+                          ? ((promo.revenue / (promo.uses * promo.avgDiscount)) * 100).toFixed(0) 
+                          : "0"}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {promoPerformance.length === 0 && <p className="text-center text-gray-500 py-4">ยังไม่มีการใช้งานโค้ดส่วนลด</p>}
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Conversion Funnel */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.6 }}
+      >
+        <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+          <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Conversion Funnel</h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-12">User Journey Drop-off Visualization</p>
+          
+          <div className="space-y-10 relative">
+            {conversionData.map((item: any, index: number) => {
+              const percentage = index === 0 ? 100 : (item.value / conversionData[0].value) * 100;
+              const prevPercentage = index === 0 ? 100 : (conversionData[index - 1].value / conversionData[0].value) * 100;
+              const dropOff = index === 0 ? 0 : prevPercentage - percentage;
+              
+              return (
+                <div key={item.name} className="relative group/funnel">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center font-black text-gray-500 group-hover/funnel:bg-red-600 group-hover/funnel:text-white transition-all duration-500 shadow-lg">
+                        {index + 1}
+                      </div>
+                      <span className="text-white font-black uppercase tracking-widest text-sm group-hover/funnel:text-red-400 transition-colors">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <p className="text-lg font-black text-white group-hover/funnel:text-red-500 transition-colors">{item.value.toLocaleString()}</p>
+                        <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest">Sessions</p>
+                      </div>
+                      <div className="w-20 text-right">
+                        <p className="text-lg font-black text-white">{percentage.toFixed(1)}%</p>
+                        <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest">Retention</p>
+                      </div>
+                      {dropOff > 0 && (
+                        <div className="w-24 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                          <p className="text-red-500 font-black text-sm">-{dropOff.toFixed(1)}%</p>
+                          <p className="text-[8px] text-red-500/60 uppercase font-black tracking-widest">Loss</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${percentage}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, ease: "easeOut", delay: index * 0.2 }}
+                      className="h-full rounded-full shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                      style={{ backgroundColor: item.fill }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="mt-16 p-8 rounded-3xl bg-linear-to-br from-red-600/10 via-transparent to-transparent border border-red-500/20 shadow-2xl relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-3xl -mr-32 -mt-32 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+              <div className="w-24 h-24 rounded-4xl bg-red-600 flex items-center justify-center shadow-2xl shadow-red-600/40 border-4 border-white/10 shrink-0">
+                <span className="text-3xl font-black text-white">12%</span>
+              </div>
+              <div className="text-center md:text-left">
+                <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2">Overall System Conversion</h4>
+                <p className="text-gray-400 leading-relaxed">
+                  จากผู้เข้าชมทั้งหมด <span className="text-white font-bold">10,000</span> ราย มีสัดส่วนผู้ที่ดำเนินการจนถึงขั้นตอนชำระเงินสำเร็จคิดเป็น <span className="text-red-500 font-black">1,200</span> ราย 
+                  ถือเป็นประสิทธิภาพที่อยู่ในระดับ <span className="text-red-400 font-bold">สูงกว่าค่าเฉลี่ย</span> ของแพลตฟอร์มประเภทเดียวกัน
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Additional Metrics */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.7 }}
+      >
+        <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+          <h2 className="text-xl font-black text-white mb-10 uppercase tracking-tight">Key Performance Indicators</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {[
+              { label: "Avg. Order Value", value: formatPrice(data?.summary?.avgOrderValue || 0), change: "+5.2%", positive: true },
+              { label: "Cart Abandonment", value: "57%", change: "-3.1%", positive: true },
+              { label: "Repeat Customers", value: "34%", change: "+8.5%", positive: true },
+              { label: "Refund Rate", value: "2.1%", change: "-0.5%", positive: true },
+              { label: "License Activations", value: data?.summary?.totalOrders || 0, change: "+12.3%", positive: true },
+              { label: "Support Tickets", value: "45", change: "-15.2%", positive: true },
+            ].map((metric) => (
+              <div key={metric.label} className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/20 transition-all duration-500 group/metric">
+                <p className="text-[10px] text-gray-600 uppercase font-black mb-3 tracking-widest">{metric.label}</p>
+                <p className="text-2xl font-black text-white group-hover:text-red-400 transition-colors mb-2">{metric.value}</p>
+                <div className={cn(
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase",
+                  metric.positive ? "bg-red-500/10 text-red-400" : "bg-red-900/10 text-red-500/50"
+                )}>
+                  {metric.change.startsWith("+") ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {metric.change}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}

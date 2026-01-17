@@ -39,7 +39,8 @@ const promoCodes: PromoCode[] = [
 
 interface PromoStore {
   appliedCode: PromoCode | null;
-  applyCode: (code: string, cartTotal: number) => { success: boolean; message: string };
+  code: string | null;
+  setAppliedCode: (promo: PromoCode | null) => void;
   removeCode: () => void;
   calculateDiscount: (total: number) => number;
 }
@@ -48,37 +49,17 @@ export const usePromoStore = create<PromoStore>()(
   persist(
     (set, get) => ({
       appliedCode: null,
+      code: null,
 
-      applyCode: (code, cartTotal) => {
-        const promo = promoCodes.find(
-          (p) => p.code.toUpperCase() === code.toUpperCase()
-        );
-
-        if (!promo) {
-          return { success: false, message: "รหัสโปรโมชั่นไม่ถูกต้อง" };
-        }
-
-        if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) {
-          return { success: false, message: "รหัสโปรโมชั่นหมดอายุแล้ว" };
-        }
-
-        if (promo.usageLimit && promo.usedCount >= promo.usageLimit) {
-          return { success: false, message: "รหัสโปรโมชั่นถูกใช้งานครบแล้ว" };
-        }
-
-        if (promo.minPurchase && cartTotal < promo.minPurchase) {
-          return {
-            success: false,
-            message: `ยอดสั่งซื้อขั้นต่ำ ฿${promo.minPurchase.toLocaleString()}`,
-          };
-        }
-
-        set({ appliedCode: promo });
-        return { success: true, message: "ใช้รหัสโปรโมชั่นสำเร็จ!" };
+      setAppliedCode: (promo) => {
+        set({ 
+          appliedCode: promo,
+          code: promo ? promo.code : null
+        });
       },
 
       removeCode: () => {
-        set({ appliedCode: null });
+        set({ appliedCode: null, code: null });
       },
 
       calculateDiscount: (total) => {
@@ -86,16 +67,39 @@ export const usePromoStore = create<PromoStore>()(
         if (!promo) return 0;
 
         let discount = 0;
-        if (promo.type === "percentage") {
-          discount = (total * promo.discount) / 100;
+        // Backend uses uppercase 'PERCENTAGE' and 'FIXED' or lowercase
+        const type = promo.type.toLowerCase();
+        
+        // Safety check for legacy buggy data
+        // If it's a percentage but the discount value is very high (e.g., > 100),
+        // it's likely the old buggy absolute value stored in localStorage.
+        let discountValue = promo.discount;
+        if (type === "percentage" && discountValue > 100) {
+          // This is definitely old buggy data.
+          // We don't clear here to avoid side effects in a getter, 
+          // but returning 0 prevents the ฿1 total issue.
+          return 0;
+        }
+        
+        if (type === "percentage") {
+          discount = Math.round((total * discountValue) / 100 * 100) / 100;
           if (promo.maxDiscount) {
             discount = Math.min(discount, promo.maxDiscount);
           }
         } else {
-          discount = promo.discount;
+          discount = discountValue;
         }
 
-        return Math.min(discount, total);
+        // Final safety: discount cannot exceed total
+        const finalDiscount = Math.round(Math.min(discount, total) * 100) / 100;
+        
+        // If the discount is exactly total - 1 and it's a percentage, 
+        // it's very suspicious (likely the bug from the screenshot).
+        if (type === "percentage" && total > 1 && finalDiscount === total - 1) {
+          return 0;
+        }
+
+        return finalDiscount;
       },
     }),
     {

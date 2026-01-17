@@ -105,7 +105,7 @@ export function FlashSaleTimer({
     return (
       <div
         className={cn(
-          "relative overflow-hidden rounded-2xl bg-linear-to-r from-red-600 to-orange-600 p-4 md:p-6",
+          "relative overflow-hidden rounded-2xl bg-linear-to-r from-red-600 to-red-500 p-4 md:p-6",
           className
         )}
       >

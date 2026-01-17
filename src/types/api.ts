@@ -1,6 +1,7 @@
 // API Response Types
 
 export interface ApiResponse<T> {
+  success: boolean;
   data: T | null;
   error: string | null;
   message?: string;
@@ -37,7 +38,7 @@ export interface ProductResponse {
   description: string;
   price: number;
   originalPrice?: number;
-  category: "script" | "ui" | "bundle";
+  category: "SCRIPT" | "UI" | "BUNDLE";
   images: string[];
   features: string[];
   tags: string[];
@@ -49,6 +50,7 @@ export interface ProductResponse {
   isFlashSale: boolean;
   flashSalePrice?: number;
   flashSaleEnds?: string;
+  rewardPoints?: number;
   version: string;
   createdAt: string;
   updatedAt: string;
@@ -195,12 +197,13 @@ export interface CommissionCreateRequest {
 export interface TransactionResponse {
   id: string;
   userId: string;
-  type: "topup" | "purchase" | "refund" | "bonus";
+  type: "TOPUP" | "PURCHASE" | "REFUND" | "BONUS" | "POINTS_EARNED" | "POINTS_REDEEMED";
   amount: number;
   bonus: number;
+  points: number;
   paymentMethod?: string;
   paymentRef?: string;
-  status: "pending" | "completed" | "failed";
+  status: "PENDING" | "COMPLETED" | "FAILED" | "CANCELLED";
   createdAt: string;
 }
 
@@ -230,6 +233,14 @@ export interface AnnouncementResponse {
   createdAt: string;
 }
 
+export interface AdminUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  tier?: string;
+}
+
 // User API Types
 export interface UserResponse {
   id: string;
@@ -238,6 +249,7 @@ export interface UserResponse {
   email: string;
   avatar?: string;
   balance: number;
+  points: number;
   role: "user" | "admin" | "moderator";
   createdAt: string;
   updatedAt: string;
@@ -261,3 +273,95 @@ export interface DashboardStats {
     totalSold: number;
   }[];
 }
+
+// Admin Stats Types
+export interface AdminStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  pendingOrders: number;
+  pendingCommissions: number;
+  todayRevenue: number;
+  todayOrders: number;
+  monthlyRevenue: number;
+  monthlyOrders: number;
+}
+
+export interface RevenueChartData {
+  date: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface LowStockProduct {
+  id: string;
+  name: string;
+  stock: number;
+  category: string;
+}
+
+export interface AnalyticsData {
+  visitors: {
+    today: number;
+    week: number;
+    month: number;
+  };
+  sales: {
+    today: number;
+    week: number;
+    month: number;
+  };
+  topCategories: {
+    category: string;
+    count: number;
+    revenue: number;
+  }[];
+}
+
+export interface SystemSetting {
+  id: string;
+  key: string;
+  value: unknown;
+  description?: string;
+  updatedAt: string;
+}
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  username?: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  oldData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+// Lucky Wheel Types
+export interface LuckyWheelReward {
+  id: string;
+  type: 'POINTS' | 'BALANCE';
+  amount: number;
+  probability: number;
+  label: string;
+  color?: string;
+  isActive: boolean;
+}
+
+export interface LuckyWheelSpinResult {
+  reward: LuckyWheelReward;
+  message: string;
+}
+
+export interface LuckyWheelHistory {
+  id: string;
+  userId: string;
+  rewardId: string;
+  reward: LuckyWheelReward;
+  createdAt: string;
+}
+

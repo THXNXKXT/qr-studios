@@ -1,231 +1,295 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { getAuthToken } from "@/lib/auth-helper";
 import {
   Package,
   Search,
   ArrowLeft,
+  ArrowRight,
   Eye,
-  Download,
-  CheckCircle,
   Clock,
-  XCircle,
+  Loader2,
+  ImageOff,
 } from "lucide-react";
-import { Card, Button, Badge, Input } from "@/components/ui";
-import { formatPrice } from "@/lib/utils";
+import { Badge, Button, Card, Input, Pagination } from "@/components/ui";
+import { useTranslation } from "react-i18next";
+import { OrderSkeleton } from "@/components/dashboard/order-skeleton";
+import { formatPrice, cn } from "@/lib/utils";
+import { ordersApi } from "@/lib/api";
+import { AnimatePresence } from "framer-motion";
 
-// Mock orders
-const mockOrders = [
-  {
-    id: "ORD-20241209-001",
-    products: [{ name: "Advanced Inventory System", price: 599 }],
-    total: 599,
-    status: "completed",
-    paymentMethod: "Stripe",
-    date: new Date("2024-12-09T14:30:00"),
-  },
-  {
-    id: "ORD-20241201-002",
-    products: [{ name: "Modern HUD UI", price: 399 }],
-    total: 399,
-    status: "completed",
-    paymentMethod: "Stripe",
-    date: new Date("2024-12-01T10:15:00"),
-  },
-  {
-    id: "ORD-20241128-003",
-    products: [
-      { name: "Vehicle Shop UI", price: 299 },
-      { name: "Phone UI", price: 349 },
-    ],
-    total: 648,
-    status: "completed",
-    paymentMethod: "Balance",
-    date: new Date("2024-11-28T16:45:00"),
-  },
-  {
-    id: "ORD-20241115-004",
-    products: [{ name: "Admin Panel", price: 799 }],
-    total: 799,
-    status: "pending",
-    paymentMethod: "Stripe",
-    date: new Date("2024-11-15T09:00:00"),
-  },
-];
-
-const statusConfig = {
-  completed: { icon: CheckCircle, label: "สำเร็จ", color: "success" },
-  pending: { icon: Clock, label: "รอดำเนินการ", color: "warning" },
-  cancelled: { icon: XCircle, label: "ยกเลิก", color: "destructive" },
-};
+interface Order {
+  id: string;
+  total: number;
+  status: string;
+  paymentMethod: string;
+  createdAt: string;
+  items: Array<{
+    product: {
+      name: string;
+      images?: string[];
+    };
+    price: number;
+  }>;
+}
 
 export default function OrdersPage() {
+  const { t } = useTranslation("common");
+  const { user, loading: authLoading, isSynced } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [mounted, setMounted] = useState(false);
 
-  const filteredOrders = mockOrders.filter((order) => {
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.products.some((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    const matchesStatus =
-      filterStatus === "all" || order.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
-    <div className="min-h-screen pt-20">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            กลับไปหน้า Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">คำสั่งซื้อของฉัน</h1>
-          <p className="text-gray-400">ดูประวัติการสั่งซื้อทั้งหมด</p>
-        </motion.div>
+  const renderTranslation = (key: string, options?: any): string => {
+    if (!mounted) return "";
+    const result = t(key, options);
+    return typeof result === "string" ? result : key;
+  };
 
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row gap-4 mb-6"
-        >
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-            <Input
-              placeholder="ค้นหาคำสั่งซื้อ..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+  const fetchOrders = useCallback(async () => {
+    const token = getAuthToken();
+    
+    // If auth is still working, wait for it
+    if (!isSynced && !user?.id && token) return;
+
+    // If we finished syncing and still no user, or no token at all
+    if (!user?.id && !token) {
+      setLoading(false);
+      return;
+    }
+
+    // If we have a user, fetch their data
+    if (user?.id) {
+      // Only show full-page loading if we don't have any data yet
+      if (orders.length === 0) setLoading(true);
+      
+      try {
+        const { data } = await ordersApi.getAll();
+        if (data && typeof data === 'object' && 'data' in data) {
+          setOrders((data as any).data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    } else if (isSynced) {
+      // Auth finished but no user (probably guest or error)
+      setLoading(false);
+    }
+  }, [user?.id, isSynced]); // Dependencies for callback
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const filteredOrders = useMemo(() => 
+    orders.filter(order =>
+      order.id.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [orders, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredOrders, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
+  if (authLoading || (loading && (user || getAuthToken()))) {
+    return (
+      <div className="min-h-screen pt-32 px-4 pb-20">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center gap-4 mb-8">
+            <Button variant="ghost" size="sm" disabled>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {renderTranslation("dashboard.orders.back")}
+            </Button>
+            <h1 className="text-3xl font-bold text-white">{renderTranslation("dashboard.orders.title")}</h1>
           </div>
-          <div className="flex items-center gap-2">
-            {["all", "completed", "pending", "cancelled"].map((status) => (
-              <Button
-                key={status}
-                variant={filterStatus === status ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setFilterStatus(status)}
-              >
-                {status === "all"
-                  ? "ทั้งหมด"
-                  : statusConfig[status as keyof typeof statusConfig]?.label}
-              </Button>
+
+          <Card className="p-6 mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input placeholder={renderTranslation("dashboard.orders.search_placeholder")} disabled className="pl-10" />
+            </div>
+          </Card>
+
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <OrderSkeleton key={i} />
             ))}
           </div>
-        </motion.div>
+        </div>
+      </div>
+    );
+  }
 
-        {/* Orders List */}
+  // Robust redirect logic
+  if (!user && !authLoading && !getAuthToken()) {
+    if (typeof window !== 'undefined') {
+      window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
+    }
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen pt-32 px-4 pb-20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />
+      <div className="container max-w-6xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="space-y-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 group"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              {renderTranslation("dashboard.orders.back")}
+            </Link>
+            <h1 className="text-4xl font-bold text-white tracking-tight">{renderTranslation("dashboard.orders.title")}</h1>
+            <p className="text-gray-400">{renderTranslation("dashboard.orders.desc")}</p>
+          </div>
+          
+          <Card className="p-2 border-white/5 bg-white/2 backdrop-blur-md w-full md:w-80">
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />
+              <Input
+                placeholder={renderTranslation("dashboard.orders.search_placeholder")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-transparent border-none focus:ring-0 h-10"
+              />
+            </div>
+          </Card>
+        </div>
+
         <div className="space-y-4">
-          {filteredOrders.length > 0 ? (
-            filteredOrders.map((order, index) => {
-              const status = statusConfig[order.status as keyof typeof statusConfig];
-              const StatusIcon = status.icon;
-              return (
+          <AnimatePresence mode="popLayout">
+            {filteredOrders.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                key="empty"
+              >
+                <Card className="p-20 text-center border-white/5 bg-white/2 backdrop-blur-sm">
+                  <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6 border border-white/5">
+                    <Package className="w-10 h-10 text-gray-700 opacity-20" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">{renderTranslation("dashboard.orders.no_orders")}</h3>
+                  <p className="text-gray-500 max-w-xs mx-auto">{renderTranslation("dashboard.orders.no_orders_desc")}</p>
+                  <Link href="/products" className="mt-8 inline-block">
+                    <Button className="bg-red-600 hover:bg-red-500 rounded-xl px-8">{renderTranslation("dashboard.orders.shop_now")}</Button>
+                  </Link>
+                </Card>
+              </motion.div>
+            ) : (
+              paginatedOrders.map((order, index) => (
                 <motion.div
                   key={order.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="p-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                            order.status === "completed"
-                              ? "bg-green-500/20"
-                              : order.status === "pending"
-                              ? "bg-yellow-500/20"
-                              : "bg-red-500/20"
-                          }`}
-                        >
-                          <StatusIcon
-                            className={`w-6 h-6 ${
-                              order.status === "completed"
-                                ? "text-green-400"
-                                : order.status === "pending"
-                                ? "text-yellow-400"
-                                : "text-red-400"
-                            }`}
-                          />
+                  <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-sm hover:border-red-500/30 transition-all duration-500 group overflow-hidden relative">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-red-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          <span className="text-sm font-mono text-gray-500 uppercase tracking-tighter bg-white/5 px-2 py-1 rounded">#{order.id?.substring(0, 12).toUpperCase() || 'N/A'}</span>
+                          <Badge
+                            variant={
+                              order.status === "COMPLETED"
+                                ? "success"
+                                : order.status === "PENDING"
+                                ? "warning"
+                                : "default"
+                            }
+                            className={cn(
+                              "px-3 py-0.5 rounded-lg border-none font-bold text-[10px] uppercase tracking-wider",
+                              order.status === "COMPLETED" ? "bg-red-500/20 text-red-400" : order.status === "PENDING" ? "bg-red-900/20 text-red-500/50" : "bg-white/10 text-gray-400"
+                            )}
+                          >
+                            {order.status === "COMPLETED" ? renderTranslation("dashboard.orders.status.completed") : order.status === "PENDING" ? renderTranslation("dashboard.orders.status.pending") : order.status}
+                          </Badge>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-white">
-                              {order.id}
-                            </h3>
-                            <Badge
-                              variant={status.color as any}
-                            >
-                              {status.label}
-                            </Badge>
-                          </div>
-                          <div className="space-y-1">
-                            {order.products.map((product, i) => (
-                              <p key={i} className="text-sm text-gray-400">
-                                {product.name} - {formatPrice(product.price)}
+                        
+                        <div className="space-y-2 mt-2">
+                          {order.items?.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center overflow-hidden shrink-0">
+                                {item.product?.images?.[0] ? (
+                                  <img src={item.product.images[0]} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <ImageOff className="w-4 h-4 text-gray-600" />
+                                )}
+                              </div>
+                              <p className="text-white font-bold group-hover:text-red-400 transition-colors line-clamp-1">
+                                {item.product?.name || renderTranslation('common.product')}
                               </p>
-                            ))}
-                          </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {order.date.toLocaleDateString("th-TH", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}{" "}
-                            • {order.paymentMethod}
-                          </p>
+                            </div>
+                          ))}
                         </div>
+                        
+                        <p className="text-xs text-gray-500 mt-3 flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5" />
+                          {new Date(order.createdAt).toLocaleDateString(renderTranslation('common.date_locale') === 'th' ? 'th-TH' : 'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-4 ml-16 md:ml-0">
-                        <div className="text-right">
-                          <p className="text-sm text-gray-400">ยอดรวม</p>
-                          <p className="text-xl font-bold text-red-400">
+
+                      <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4">
+                        <div className="text-left md:text-right">
+                          <p className="text-2xl font-black text-white group-hover:text-red-500 transition-colors">
                             {formatPrice(order.total)}
                           </p>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1 font-bold">{order.paymentMethod}</p>
                         </div>
-                        <Button variant="secondary" size="sm">
-                          <Eye className="w-4 h-4" />
-                          ดูรายละเอียด
-                        </Button>
+                        <Link href={`/dashboard/orders/${order.id}`}>
+                          <Button variant="secondary" className="bg-white/5 border-white/10 hover:bg-white/10 hover:text-white group/btn rounded-xl px-6 h-11">
+                            <span>{renderTranslation("dashboard.orders.details")}</span>
+                            <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover/btn:translate-x-1" />
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </Card>
                 </motion.div>
-              );
-            })
-          ) : (
-            <Card className="p-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 flex items-center justify-center">
-                <Package className="w-8 h-8 text-gray-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                ไม่พบคำสั่งซื้อ
-              </h3>
-              <p className="text-gray-400 mb-6">
-                คุณยังไม่มีคำสั่งซื้อ หรือไม่พบคำสั่งซื้อที่ค้นหา
-              </p>
-              <Link href="/products">
-                <Button>เลือกซื้อสินค้า</Button>
-              </Link>
-            </Card>
-          )}
+              ))
+            )}
+          </AnimatePresence>
         </div>
+
+        {totalPages > 1 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

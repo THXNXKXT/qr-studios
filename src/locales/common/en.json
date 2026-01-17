@@ -1,0 +1,689 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "services": "Services",
+    "ui_service": "UI Service",
+    "web_service": "Web Design",
+    "announcements": "Announcements",
+    "contact": "Contact Us",
+    "login": "Login",
+    "login_discord": "Login with Discord",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "wishlist": "Wishlist",
+    "notifications": "Notifications",
+    "read_all": "Mark all as read",
+    "no_notifications": "No new notifications",
+    "view_all_notifications": "View all notifications",
+    "membership": "Membership",
+    "balance": "Balance"
+  },
+  "footer": {
+    "brand_desc": "High-quality Script and UI hub for FiveM servers, with custom UI services available upon request.",
+    "sections": {
+      "products": "Products",
+      "support": "Support",
+      "legal": "Legal"
+    },
+    "links": {
+      "products": {
+        "script": "Game Scripts",
+        "ui": "UI Design",
+        "bundle": "Bundles",
+        "commission": "Custom UI"
+      },
+      "support": {
+        "contact": "Contact Us",
+        "faq": "FAQ",
+        "payment": "Payment Guide",
+        "refund": "Refund Policy"
+      },
+      "legal": {
+        "terms": "Terms of Service",
+        "privacy": "Privacy Policy",
+        "license": "License Policy"
+      }
+    },
+    "rights_reserved": "All rights reserved.",
+    "made_with": "Made with",
+    "in_thailand": "in Thailand"
+  },
+  "hero": {
+    "badge": "Premium FiveM Scripts & UI",
+    "title_1": "Elevate Your",
+    "title_2": "FiveM Server",
+    "description": "Premium scripts and UI designs crafted for performance and player experience.",
+    "cta_shop": "Shop Now",
+    "cta_ui": "Custom UI",
+    "features": {
+      "script": {
+        "title": "High Quality Scripts",
+        "desc": "Performance-optimized scripts for your server."
+      },
+      "ui": {
+        "title": "Clean UI Design",
+        "desc": "Modern and user-friendly interfaces."
+      },
+      "update": {
+        "title": "Regular Updates",
+        "desc": "Lifetime updates and dedicated support."
+      }
+    }
+  },
+  "flash_sale": {
+    "title": "Flash Sale",
+    "up_to": "Up to",
+    "desc": "Don't miss out on our limited-time deals! Grab your favorite scripts and UI at unbeatable prices.",
+    "ends_in": "Ends in",
+    "reviews": "reviews",
+    "in_stock": "In Stock",
+    "limited_stock": "Only {{count}} left",
+    "unlimited": "Unlimited",
+    "limited": "Limited",
+    "add_to_cart": "Add to Cart",
+    "view_all_promotions": "View All Promotions"
+  },
+  "featured": {
+    "title": "Featured Products",
+    "desc": "Explore our handpicked collection of top-rated scripts and UI designs.",
+    "handpicked": "Handpicked",
+    "view_all_products": "View All Products"
+  },
+  "team": {
+    "creative_force": "Creative Force",
+    "title_1": "The Talented Team",
+    "title_2": "Behind",
+    "desc": "Our team of experts is dedicated to bringing you the best scripts and UI designs for your FiveM server."
+  },
+  "commission": {
+    "badge": "Custom Solutions",
+    "title": "Need a Custom UI?",
+    "desc": "Turn your ideas into reality with our professional design team. We are ready to create a unique UI that perfectly fits your server.",
+    "cta": "Start Your Project",
+    "benefits": {
+      "custom": "Custom Design",
+      "framework": "Supports All Frameworks",
+      "unlimited": "Unlimited Revisions",
+      "ontime": "On-time Delivery",
+      "receive": "Get the UI you want"
+    }
+  },
+  "commission_page": {
+    "hero": {
+      "badge": "Custom UI Development",
+      "title1": "Crafting Your",
+      "title2": "Dream UI",
+      "title3": "For Your Server",
+      "desc": "Premium FiveM UI design and development. Meets every function with modern and unique designs.",
+      "cta_details": "Send Details",
+      "cta_discord": "Chat on Discord"
+    },
+    "process": {
+      "section_title": "Work Process",
+      "section_desc": "Clear and systematic process for the best results for you.",
+      "step1": { "title": "Send Details", "desc": "Tell us your needs and attach references." },
+      "step2": { "title": "Price Evaluation", "desc": "We will evaluate price and timeline." },
+      "step3": { "title": "Payment", "desc": "50% deposit payment." },
+      "step4": { "title": "Implementation", "desc": "Start design and development." },
+      "step5": { "title": "Delivery", "desc": "Deliver work and pay remaining." }
+    },
+    "pricing": {
+      "section_title": "Starting Packages",
+      "section_desc": "Choose the package that fits your project scale. Price may vary based on complexity.",
+      "popular_badge": "Popular",
+      "per_project": "/project",
+      "cta_start": "Start This Project",
+      "basic": {
+        "name": "Basic",
+        "desc": "For small UI",
+        "f1": "1 small UI page",
+        "f2": "2 Revisions",
+        "f3": "3 days delivery",
+        "f4": "7 days support"
+      },
+      "standard": {
+        "name": "Standard",
+        "desc": "For medium UI",
+        "f1": "3 medium UI pages",
+        "f2": "Unlimited Revisions",
+        "f3": "5 days delivery",
+        "f4": "14 days support",
+        "f5": "Source Code"
+      },
+      "premium": {
+        "name": "Premium",
+        "desc": "For large UI",
+        "f1": "Unlimited large UI pages",
+        "f2": "Unlimited Revisions",
+        "f3": "7 days delivery",
+        "f4": "Lifetime support",
+        "f5": "Source Code",
+        "f6": "Priority Support"
+      }
+    },
+    "form": {
+      "section_title": "Tell Us Your Needs",
+      "section_desc": "Fill out the form below to start project consultation. Free!",
+      "name": "Full Name *",
+      "name_placeholder": "Enter your name",
+      "discord": "Discord ID *",
+      "discord_placeholder": "username#0000",
+      "email": "Contact Email",
+      "email_placeholder": "example@email.com",
+      "budget": "Budget (THB)",
+      "budget_placeholder": "Specify your budget",
+      "details": "Project Details *",
+      "details_placeholder": "Describe what you need, e.g. design direction, functions...",
+      "files": "Reference Files (optional)",
+      "upload_hint": "Click to upload images",
+      "upload_limit": "PNG, JPG, GIF up to 10MB",
+      "submit": "Send Evaluation Request",
+      "direct_chat": "Or talk to us directly at"
+    }
+  },
+  "web_design": {
+    "hero": {
+      "badge": "Premium Web Development",
+      "title1": "Custom Design & Development",
+      "title2": "Professional Websites",
+      "desc": "Elevate your business with a modern, fast, and responsive website that meets your needs. From Landing Pages to large-scale Web Applications.",
+      "cta_consult": "Consult Project",
+      "cta_portfolio": "View Portfolio"
+    },
+    "services": {
+      "section_title": "Our Services",
+      "section_desc": "Choose the service that fits your needs.",
+      "business": {
+        "title": "Business Website",
+        "desc": "Website for business, company, shop with back-office system.",
+        "price": "15,000",
+        "f1": "UI/UX Design",
+        "f2": "Responsive Design",
+        "f3": "Basic SEO",
+        "f4": "3 Revisions"
+      },
+      "ecommerce": {
+        "title": "E-Commerce",
+        "desc": "Full-featured online store with payment and product management.",
+        "price": "35,000",
+        "f1": "Cart System",
+        "f2": "Online Payment",
+        "f3": "Stock Management",
+        "f4": "Sales Report"
+      },
+      "app": {
+        "title": "Web Application",
+        "desc": "Custom web application systems like Booking, CRM, ERP.",
+        "price": "50,000",
+        "f1": "Custom Design",
+        "f2": "Auth System",
+        "f3": "API Integration",
+        "f4": "Database Design"
+      },
+      "landing": {
+        "title": "Landing Page",
+        "desc": "Promo page for products/services focused on high conversion.",
+        "price": "8,000",
+        "f1": "Beautiful Design",
+        "f2": "Fast Loading",
+        "f3": "Mobile First",
+        "f4": "Call-to-Action"
+      }
+    },
+    "process": {
+      "section_title": "Work Process",
+      "section_desc": "Clear, transparent, and trackable process for the best results.",
+      "step1": { "title": "Requirement Gathering", "desc": "Discuss needs and analyze project." },
+      "step2": { "title": "UI/UX Design", "desc": "Design user interface and experience." },
+      "step3": { "title": "Development", "desc": "Code and develop features." },
+      "step4": { "title": "Testing & Delivery", "desc": "Test system and deliver project." }
+    },
+    "tech": {
+      "section_title": "Global Technologies",
+      "section_desc": "We use modern tech stacks for performance, security, and future-proofing."
+    },
+    "portfolios": {
+      "section_title": "Our Proud Works",
+      "section_desc": "Some samples of projects we have delivered.",
+      "view_details": "View Project Details",
+      "p1": { "title": "Fashion Online Store", "cat": "E-Commerce" },
+      "p2": { "title": "Meeting Room Booking", "cat": "Web Application" },
+      "p3": { "title": "Construction Corporate", "cat": "Corporate Website" }
+    },
+    "why": {
+      "code": { "title": "Quality Code", "desc": "Clean, standard code, easy to maintain." },
+      "speed": { "title": "Fast Loading", "desc": "Fast, high-performance, Core Web Vitals passed." },
+      "security": { "title": "Secure", "desc": "Standard security systems to prevent attacks." },
+      "time": { "title": "On-time Delivery", "desc": "Deliver on schedule with progress updates." }
+    },
+    "cta": {
+      "title": "Ready to Start Your Online Presence?",
+      "desc": "We are ready to turn your ideas into a professional website with the best design and technology. Contact us today for a free consultation.",
+      "btn_project": "Start Project with Us",
+      "btn_email": "Contact via Email"
+    }
+  },
+  "products": {
+    "detail": {
+      "breadcrumb_home": "Home",
+      "breadcrumb_products": "Products",
+      "no_image": "No Image",
+      "reviews_count": "reviews",
+      "earn_points": "Earn Points",
+      "features_title": "Key Features",
+      "downloading": "Downloading...",
+      "download_btn": "Download Now",
+      "buy_now_btn": "Buy Now",
+      "add_to_cart_btn": "Add to Cart",
+      "related_products": "Related Products",
+      "mock_reviews": {
+        "r1": "Great script, easy to use, and support is very fast. Highly recommended!",
+        "r2": "Clean code and well optimized, but would love to see more features.",
+        "r3": "Very worth it, been using for months without any issues."
+      },
+      "trust": {
+        "secure": "Secure Payment",
+        "secure_desc": "SSL encrypted transactions",
+        "instant": "Instant Delivery",
+        "instant_desc": "Get your product immediately",
+        "update": "Free Updates",
+        "update_desc": "Lifetime product updates",
+        "support": "Expert Support",
+        "support_desc": "24/7 technical assistance"
+      },
+      "errors": {
+        "not_found": "Product not found",
+        "back_to_products": "Back to Products",
+        "download_failed": "Download failed",
+        "download_error": "An error occurred during download",
+        "review_failed": "Failed to submit review",
+        "review_error": "An error occurred while submitting review"
+      }
+    },
+    "card": {
+      "new": "New",
+      "view_detail": "View Details"
+    }
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "items_count": "You have {{count}} items in cart",
+    "empty_title": "Your cart is empty",
+    "empty_desc": "There are no products in your cart yet.",
+    "shop_now": "Shop Now",
+    "continue_shopping": "Continue Shopping",
+    "clear_cart": "Clear Cart",
+    "notifications": {
+      "price_changed_title": "Prices have changed",
+      "price_changed_desc": "The product <1>{{names}}</1> has ended its Flash Sale period. The price has been adjusted to normal."
+    },
+    "summary": {
+      "title": "Order Summary",
+      "promo_code": "Promo Code",
+      "subtotal": "Subtotal",
+      "tier_discount": "{{tier}} Discount",
+      "promo_discount": "Discount ({{code}})",
+      "total": "Grand Total",
+      "points_receive": "You will receive <1>{{points}}</1> points",
+      "checkout": "Proceed to Checkout",
+      "trust_instant": "Instant delivery after successful payment",
+      "trust_payment": "Supports Stripe & Account Balance"
+    }
+  },
+  "checkout": {
+    "title": "Checkout",
+    "back_to_cart": "Back to Cart",
+    "order_summary": "Order Summary",
+    "quantity": "Qty",
+    "total_payment": "Total Payment",
+    "subtotal": "Subtotal",
+    "points_receive": "You will receive {{points}} points from this order",
+    "secure_payment_msg": "Secure payment with SSL Encryption",
+    "payment_method_title": "Select Payment Method",
+    "pay_with_balance": "Pay with Balance",
+    "balance_label": "Balance",
+    "pay_with_stripe": "Pay with Credit/Debit (Stripe)",
+    "insufficient_balance": "Insufficient balance. Please top up first.",
+    "verifying": "Verifying Payment",
+    "verifying_desc": "Please wait, the system is checking your transaction...",
+    "success": {
+      "title": "Payment Successful!",
+      "desc": "Thank you for your purchase. Your payment has been processed successfully. You can view your licenses and download products in the dashboard.",
+      "payment_status": "Payment Status:",
+      "status_success": "Success",
+      "remaining_balance": "Current Remaining Balance:",
+      "view_my_licenses": "View My Licenses",
+      "shop_more": "Shop More"
+    },
+    "cancel": {
+      "title": "Payment Cancelled",
+      "desc": "Your payment transaction was cancelled. The items remain in your cart. You can go back to review or choose another payment method.",
+      "back_to_cart": "Back to Shopping Cart",
+      "shop_more": "Browse Other Products",
+      "back_dashboard": "Back to Dashboard"
+    },
+    "confirm_dialog": {
+      "title": "Confirm Payment",
+      "desc": "Do you want to pay using your account balance?",
+      "current_balance": "Current Balance:",
+      "amount_to_pay": "Amount to Pay:",
+      "remaining_after": "Remaining after payment:",
+      "confirm_btn": "Confirm and Pay",
+      "cancel_btn": "Cancel"
+    },
+    "errors": {
+      "invalid_items": "Error in cart item data (Invalid ID). Please clear cart and try again.",
+      "session_failed": "Failed to create payment session",
+      "insufficient_balance": "Insufficient balance",
+      "balance_failed": "Payment with balance failed",
+      "order_failed": "Failed to create order",
+      "products_not_found": "Some products in cart are invalid (may be old data). Clearing your cart...",
+      "general": "An error occurred during payment",
+      "verify_failed": "Could not verify payment",
+      "contact_support": "Could not verify payment. Please contact support."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "refresh": "Refresh Data",
+    "welcome": "Welcome back! Here is an overview of your recent activity.",
+    "menu": {
+      "profile": "Profile",
+      "orders": "Orders",
+      "licenses": "My Licenses",
+      "points": "Reward Points",
+      "topup": "Top Up",
+      "topup_history": "Top Up History",
+      "settings": "Settings"
+    },
+    "stats": {
+      "orders": "Orders",
+      "licenses": "Licenses",
+      "total_spent": "Total Spent",
+      "points": "Total Points",
+      "balance": "Balance"
+    },
+    "sidebar": {
+      "member_since": "Member since",
+      "today": "Today",
+      "days": "days"
+    },
+    "recent": {
+      "topups": "Recent Top-ups",
+      "orders": "Recent Orders",
+      "licenses": "My Licenses"
+    },
+    "tier": {
+      "progress_title": "Membership Progress",
+      "current_tier": "Current Tier:",
+      "next_tier_prefix": "Spent another",
+      "next_tier_suffix": "to become",
+      "progress": "Progress",
+      "discount": "Discount {{percent}}%",
+      "no_discount": "No discount"
+    },
+    "wishlist": {
+      "empty_title": "Your wishlist is empty",
+      "empty_desc": "Add items you like to your wishlist to view them later.",
+      "shop_now": "Browse Products",
+      "items_count": "You have {{count}} items in your wishlist",
+      "clear_all": "Clear All"
+    },
+    "orders": {
+      "title": "Order History",
+      "back": "Back to Dashboard",
+      "desc": "Check and track the status of all your orders.",
+      "search_placeholder": "Search with Order ID...",
+      "no_orders": "No orders found",
+      "no_orders_desc": "You don't have any orders yet, or try another search term.",
+      "shop_now": "Shop Now",
+      "details": "Details",
+      "total": "Total",
+      "status": {
+        "completed": "Success",
+        "pending": "Pending",
+        "cancelled": "Cancelled"
+      }
+    },
+    "licenses": {
+      "title": "My Licenses",
+      "back": "Back to Dashboard",
+      "desc": "Manage, copy, and download license keys for your products.",
+      "search_placeholder": "Search by product name...",
+      "no_licenses": "No licenses found",
+      "no_licenses_desc": "You don't have any licenses yet, or try another search term.",
+      "shop_now": "Shop Now",
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "download": "Download",
+      "view_product": "View Product Details",
+      "ip_whitelist": "IP Whitelist (for server usage)",
+      "ip_placeholder": "Enter IP Address (e.g. 1.2.3.4, 5.6.7.8)",
+      "edit_ip": "Edit IP",
+      "save_ip": "Save",
+      "reset_ip": "Reset IP",
+      "ip_limit_hint": "* You can specify up to 5 IPs separated by commas (,)",
+      "confirm_reset_title": "Confirm IP Reset",
+      "confirm_reset_msg": "Are you sure you want to clear the IP Whitelist? This action cannot be undone.",
+      "hide_key": "Hide",
+      "show_key": "Show",
+      "copy_key": "Copy License Key",
+      "errors": {
+        "update_ip_failed": "Failed to update IP Whitelist",
+        "reset_ip_failed": "Failed to reset IP Whitelist",
+        "download_failed": "Failed to get download link"
+      }
+    },
+    "points_page": {
+      "title": "Point History",
+      "back": "Back to Dashboard",
+      "desc": "Check all your earned and redeemed points.",
+      "search_placeholder": "Search transaction ID...",
+      "stats": {
+        "balance": "Current Balance",
+        "total_earned": "Total Earned",
+        "total_redeemed": "Total Redeemed"
+      },
+      "no_transactions": "No transactions found",
+      "no_transactions_desc": "You don't have any point transaction history yet.",
+      "types": {
+        "earned": "Points from purchase",
+        "redeemed": "Points used as discount",
+        "bonus": "Bonus points",
+        "default": "Point transaction"
+      },
+      "status": {
+        "earned": "EARNED",
+        "redeemed": "REDEEMED"
+      },
+      "payment_amount": "Payment: {{amount}}"
+    },
+    "topup_page": {
+      "title": "Top Up",
+      "back": "Back to Dashboard",
+      "desc": "Top up your account balance to start shopping.",
+      "min_amount": "Minimum top up is ฿100",
+      "custom_amount_placeholder": "Enter amount you want to top up",
+      "bonus_msg": "You will receive extra ฿{{amount}} bonus! (Total ฿{{total}})",
+      "payment_method_title": "Select Payment Method",
+      "payment_method_desc": "Supports Credit Card, Debit Card, and PromptPay",
+      "summary": "Summary",
+      "amount_to_topup": "Amount to top up",
+      "amount_to_receive": "Amount to be received",
+      "special_bonus": "Special Bonus",
+      "total_receive": "Total to receive",
+      "pay_now": "Pay {{amount}}",
+      "processing": "Processing...",
+      "secure_msg": "Secure payment processing by Stripe",
+      "errors": {
+        "min_amount": "Minimum top up is 100 THB",
+        "session_failed": "Failed to create top up session",
+        "general": "An error occurred during top up"
+      }
+    },
+    "topup_history": {
+      "title": "Top Up History",
+      "back": "Back to Dashboard",
+      "desc": "All your top-up transactions.",
+      "search_placeholder": "Search transaction ID...",
+      "no_transactions": "No transactions found",
+      "no_transactions_desc": "You don't have any top-up history yet.",
+      "topup_more": "Top Up More"
+    },
+    "settings_page": {
+      "title": "Account Settings",
+      "back": "Back to Dashboard",
+      "desc": "Manage your profile and account settings.",
+      "profile": {
+        "title": "Profile",
+        "avatar_hint": "Profile picture from Discord",
+        "username": "Username",
+        "email": "Email",
+        "discord_id": "Discord ID",
+        "sync_hint": "Synced from Discord, cannot be changed"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "items": {
+          "orderUpdates": {
+            "label": "Order Updates",
+            "desc": "Receive notifications when order status changes"
+          },
+          "promotions": {
+            "label": "Promotions",
+            "desc": "Receive special offers and discounts"
+          },
+          "newProducts": {
+            "label": "New Products",
+            "desc": "Receive notifications for new product releases"
+          },
+          "newsletter": {
+            "label": "Newsletter",
+            "desc": "Receive news and updates from us"
+          }
+        }
+      },
+      "security": {
+        "title": "Security",
+        "discord_connected": "Discord Connected",
+        "discord_status": "Your account is connected to Discord",
+        "connected": "Connected",
+        "member_since": "Member since"
+      },
+      "danger_zone": {
+        "title": "Danger Zone",
+        "delete_account": "Delete Account",
+        "delete_desc": "Permanently delete your account and all data"
+      },
+      "save_success": "Saved successfully",
+      "saving": "Saving...",
+      "save_changes": "Save Changes",
+      "error_saving": "Failed to save settings"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "mon_fri": "Mon - Fri",
+    "sat_sun": "Sat - Sun",
+    "no_results": "No results found",
+    "start_at": "Starting at",
+    "receive": "Receive",
+    "product": "Product",
+    "date_locale": "en",
+    "view_all": "View All",
+    "see_more": "See More",
+    "try_again": "Try Again"
+  },
+  "notifications_page": {
+    "title": "Notifications",
+    "desc": "Stay updated with latest news and your account activity.",
+    "read_all": "Mark all as read",
+    "empty_title": "No notifications yet",
+    "empty_desc": "You will receive notifications when there are new updates or orders.",
+    "mark_as_read": "Mark as read"
+  },
+  "payment_guide": {
+    "title": "Payment Guide",
+    "desc": "How to order and pay for products",
+    "back": "Back to Home",
+    "methods_title": "Payment Methods",
+    "support_msg": "If you encounter any issues with payment or need further assistance, please contact our <1>Support</1>",
+    "steps": {
+      "step1": {
+        "title": "1. Select Products",
+        "content": "Browse our shop and add the items you want to your shopping cart."
+      },
+      "step2": {
+        "title": "2. Check Your Cart",
+        "content": "Go to the cart page to review your items and total, or apply a discount code if you have one."
+      },
+      "step3": {
+        "title": "3. Choose Payment Method",
+        "content": "We offer various payment methods for your convenience, including Stripe (Credit Card), PromptPay, and Account Balance."
+      },
+      "step4": {
+        "title": "4. Confirm Payment",
+        "content": "After successful payment, the system will automatically process your order. You will receive your License Key immediately in the Dashboard."
+      }
+    }
+  },
+  "misc": {
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know about our services",
+      "back_home": "Back to Home",
+      "no_answer_title": "Still have questions?",
+      "no_answer_desc": "If you cannot find the answer you are looking for, our team is always ready to help. Join our Discord or contact us via email.",
+      "join_discord": "Join Discord",
+      "contact_support": "Contact Support",
+      "categories": {
+        "general": "General",
+        "licensing": "Licensing",
+        "payment": "Payment"
+      },
+      "items": {
+        "scripts": {
+          "q": "Which frameworks do QR Studio scripts support?",
+          "a": "Most of our scripts support both ESX and QB-Core, which is clearly stated in each product's details."
+        },
+        "updates": {
+          "q": "Do purchased products get free updates?",
+          "a": "Yes! Once you purchase a product, you will receive lifetime updates for free through your Dashboard."
+        },
+        "install": {
+          "q": "Is installation service provided?",
+          "a": "We provide detailed documentation for all products. If you encounter any installation issues, you can ask for help via Discord Support for free."
+        },
+        "license_limit": {
+          "q": "How many servers can one License Key be used on?",
+          "a": "Typically, a License Key is tied to a single IP address. If you need to move or change the IP, you can do it yourself through the Dashboard according to the specified quota."
+        },
+        "license_security": {
+          "q": "How does the license security system work?",
+          "a": "We use an IP Whitelist system to verify usage rights and prevent unauthorized use of the scripts."
+        },
+        "delivery": {
+          "q": "When will I receive my product after payment?",
+          "a": "Our system is 100% automated. After successful payment, you will receive your License Key and download link immediately."
+        },
+        "payment_methods": {
+          "q": "Which payment methods are supported?",
+          "a": "We support Stripe (Credit/Debit Card), PromptPay QR Code, and using your account balance."
+        }
+      }
+    }
+  }
+}

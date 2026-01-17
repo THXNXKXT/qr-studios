@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { 
   MessageCircle, 
   Mail, 
@@ -9,27 +11,36 @@ import {
   ExternalLink
 } from "lucide-react";
 
-const footerLinks = {
-  products: [
-    { label: "Script เกม", href: "/products?category=script" },
-    { label: "UI Design", href: "/products?category=ui" },
-    { label: "Bundle", href: "/products?category=bundle" },
-    { label: "รับทำ UI", href: "/commission" },
-  ],
-  support: [
-    { label: "ติดต่อเรา", href: "/contact" },
-    { label: "คำถามที่พบบ่อย", href: "/faq" },
-    { label: "วิธีการชำระเงิน", href: "/payment-guide" },
-    { label: "นโยบายการคืนเงิน", href: "/refund-policy" },
-  ],
-  legal: [
-    { label: "ข้อกำหนดการใช้งาน", href: "/terms" },
-    { label: "นโยบายความเป็นส่วนตัว", href: "/privacy" },
-    { label: "นโยบาย License", href: "/license-policy" },
-  ],
-};
-
 export function Footer() {
+  const { t } = useTranslation("common");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const footerLinks = {
+    products: [
+      { label: t("footer.links.products.script"), href: "/products?category=SCRIPT" },
+      { label: t("footer.links.products.ui"), href: "/products?category=UI" },
+      { label: t("footer.links.products.bundle"), href: "/products?category=BUNDLE" },
+      { label: t("footer.links.products.commission"), href: "/commission" },
+    ],
+    support: [
+      { label: t("footer.links.support.contact"), href: "/contact" },
+      { label: t("footer.links.support.faq"), href: "/faq" },
+      { label: t("footer.links.support.payment"), href: "/payment-guide" },
+      { label: t("footer.links.support.refund"), href: "/refund-policy" },
+    ],
+    legal: [
+      { label: t("footer.links.legal.terms"), href: "/terms" },
+      { label: t("footer.links.legal.privacy"), href: "/privacy" },
+      { label: t("footer.links.legal.license"), href: "/license-policy" },
+    ],
+  };
+
+  if (!mounted) return null;
+
   return (
     <footer className="relative mt-20 border-t border-white/10 bg-black/50 backdrop-blur-xl">
       {/* Gradient overlay */}
@@ -50,12 +61,11 @@ export function Footer() {
               <span className="text-xl font-bold text-white">QR STUDIO</span>
             </Link>
             <p className="text-gray-400 text-sm">
-              แหล่งรวม Script และ UI คุณภาพสูงสำหรับเซิร์ฟเวอร์ FiveM 
-              พร้อมบริการรับทำ UI ตามความต้องการ
+              {t("footer.brand_desc")}
             </p>
             <div className="flex items-center gap-3">
               <a
-                href="https://discord.gg/qrstudio"
+                href="https://discord.gg/rQxc8ZNYE6"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-red-400 hover:border-red-500/50 transition-all"
@@ -73,7 +83,7 @@ export function Footer() {
 
           {/* Products */}
           <div>
-            <h3 className="text-white font-semibold mb-4">สินค้า</h3>
+            <h3 className="text-white font-semibold mb-4">{t("footer.sections.products")}</h3>
             <ul className="space-y-2">
               {footerLinks.products.map((link) => (
                 <li key={link.href}>
@@ -90,7 +100,7 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="text-white font-semibold mb-4">ช่วยเหลือ</h3>
+            <h3 className="text-white font-semibold mb-4">{t("footer.sections.support")}</h3>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
@@ -107,7 +117,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="text-white font-semibold mb-4">ข้อกำหนด</h3>
+            <h3 className="text-white font-semibold mb-4">{t("footer.sections.legal")}</h3>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
@@ -126,10 +136,10 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} QR STUDIO. All rights reserved.
+            © {new Date().getFullYear()} QR STUDIO. {t("footer.rights_reserved")}
           </p>
           <p className="text-gray-500 text-sm flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> in Thailand
+            {t("footer.made_with")} <Heart className="w-4 h-4 text-red-500 fill-red-500" /> {t("footer.in_thailand")}
           </p>
         </div>
       </div>

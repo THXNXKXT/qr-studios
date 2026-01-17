@@ -1,0 +1,308 @@
+{
+  "common": {
+    "search": "ค้นหา...",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "view": "ดูรายละเอียด",
+    "loading": "กำลังโหลด...",
+    "no_data": "ไม่พบข้อมูล",
+    "confirm": "ยืนยัน",
+    "actions": "การจัดการ",
+    "status": "สถานะ"
+  },
+  "sidebar": {
+    "dashboard": "แดชบอร์ด",
+    "products": "จัดการสินค้า",
+    "users": "จัดการผู้ใช้",
+    "orders": "จัดการคำสั่งซื้อ",
+    "analytics": "วิเคราะห์ข้อมูล",
+    "licenses": "ทะเบียนไลเซนส์",
+    "settings": "ตั้งค่า",
+    "logout_admin": "ออกจากระบบแอดมิน"
+  },
+  "dashboard": {
+    "title": "แดชบอร์ดผู้ดูแลระบบ",
+    "subtitle": "ภาพรวมระบบและสถิติการดำเนินงานของ QR Studio",
+    "live_status": "สถานะระบบสด",
+    "stats": {
+      "total_revenue": "รายได้ทั้งหมด",
+      "total_orders": "คำสั่งซื้อทั้งหมด",
+      "total_users": "ผู้ใช้ทั้งหมด",
+      "active_licenses": "ไลเซนส์ที่ใช้งาน",
+      "revenue_summary": "ยอดรวม",
+      "pending_orders": "รอดำเนินการ {{count}}",
+      "new_today": "ใหม่วันนี้ {{count}}",
+      "active": "ใช้งานอยู่"
+    },
+    "recent_orders": {
+      "title": "คำสั่งซื้อล่าสุด",
+      "subtitle": "5 รายการล่าสุด",
+      "view_all": "ดูทั้งหมด",
+      "no_orders": "ไม่มีคำสั่งซื้อล่าสุด",
+      "status_completed": "สำเร็จ"
+    },
+    "best_sellers": {
+      "title": "สินค้าขายดี",
+      "subtitle": "สินค้าที่มีผลงานดีที่สุด",
+      "no_data": "ไม่มีข้อมูลสินค้า",
+      "sales": "ยอดขาย"
+    },
+    "low_stock": {
+      "title": "สินค้าใกล้หมด",
+      "subtitle": "คำเตือนสต็อกสินค้าต่ำ",
+      "remaining": "เหลือ {{count}}"
+    },
+    "quick_links": {
+      "products": "สินค้า",
+      "orders": "คำสั่งซื้อ",
+      "users": "ผู้ใช้งาน",
+      "unlimited": "ไม่จำกัด"
+    }
+  },
+  "products": {
+    "title": "จัดการสินค้า",
+    "subtitle": "บริหารจัดการสินค้าและคลังสินค้าทั้งหมดของ QR Studio",
+    "add_new": "เพิ่มสินค้าใหม่",
+    "search_placeholder": "ค้นหาด้วยชื่อสินค้า หรือ ID...",
+    "all_items": "สินค้าทั้งหมด",
+    "table": {
+      "info": "ข้อมูลสินค้า",
+      "category": "หมวดหมู่",
+      "price": "ราคา",
+      "points": "แต้มสะสม",
+      "inventory": "สต็อก",
+      "status": "สถานะ",
+      "actions": "การจัดการ",
+      "no_image": "ไม่มีรูปภาพ",
+      "flash_sale": "FLASH SALE",
+      "unlimited": "ไม่จำกัด",
+      "active": "เปิดใช้งาน",
+      "archived": "เก็บถาวร",
+      "featured": "แนะนำ",
+      "loading": "กำลังโหลดข้อมูลสินค้า...",
+      "no_products": "ไม่พบสินค้า",
+      "no_products_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือเพิ่มสินค้าใหม่"
+    },
+    "modals": {
+      "archive": {
+        "title": "เก็บถาวรสินค้า",
+        "message": "คุณแน่ใจหรือไม่ว่าต้องการเก็บถาวร \"{{name}}\"? สินค้าจะถูกซ่อนจากหน้าร้าน แต่ลูกค้าที่ซื้อไปแล้วยังสามารถเข้าถึงได้",
+        "confirm": "เก็บถาวรสินค้า"
+      },
+      "delete": {
+        "title": "ลบถาวร",
+        "warning": "คำเตือน: การลบถาวร",
+        "message": "คุณแน่ใจหรือไม่ว่าต้องการลบ \"{{name}}\" อย่างถาวร?",
+        "list": {
+          "licenses": "คีย์ไลเซนส์ทั้งหมดที่เกี่ยวข้องจะใช้งานไม่ได้",
+          "access": "ลูกค้าที่ซื้อสินค้านี้จะสูญเสียการเข้าถึง",
+          "storage": "ไฟล์และรูปภาพในที่จัดเก็บจะถูกลบ",
+          "undo": "การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        },
+        "confirm": "ลบถาวร"
+      }
+    }
+  },
+  "analytics": {
+    "title": "วิเคราะห์ข้อมูล",
+    "subtitle": "เจาะลึกข้อมูลการขายและพฤติกรรมผู้ใช้งาน",
+    "loading": "กำลังประมวลผลข้อมูลวิเคราะห์...",
+    "stats": {
+      "revenue": "รายได้รวม",
+      "orders": "คำสั่งซื้อ",
+      "users": "ผู้ใช้งาน",
+      "avg_order": "เฉลี่ยต่อออเดอร์"
+    },
+    "charts": {
+      "revenue_monthly": "รายได้รายเดือน",
+      "user_growth": "การเติบโตของผู้ใช้",
+      "hourly_orders": "คำสั่งซื้อรายชั่วโมง",
+      "category_revenue": "รายได้ตามหมวดหมู่",
+      "payment_methods": "ช่องทางการชำระเงิน",
+      "customer_type": "ประเภทลูกค้า",
+      "top_buyers": "ลูกค้ายอดเยี่ยม",
+      "conversion": "อัตราการสั่งซื้อ (Conversion)",
+      "promo_performance": "ประสิทธิภาพโปรโมโค้ด",
+      "geo": "ข้อมูลภูมิศาสตร์"
+    },
+    "table": {
+      "best_sellers": "สินค้าขายดี",
+      "product": "สินค้า",
+      "category": "หมวดหมู่",
+      "price": "ราคา",
+      "sold": "ขายแล้ว",
+      "revenue": "รายได้"
+    }
+  },
+  "licenses": {
+    "title": "ทะเบียนไลเซนส์",
+    "subtitle": "ตรวจสอบและจัดการกุญแจไลเซนส์ทั้งหมดในระบบ",
+    "grant_btn": "ออกไลเซนส์ใหม่",
+    "all": "ทั้งหมด",
+    "search_placeholder": "ค้นหาด้วยคีย์, ชื่อสินค้า หรือชื่อผู้ใช้...",
+    "stats": {
+      "total": "ทั้งหมด",
+      "active": "ใช้งานอยู่",
+      "expired": "หมดอายุ",
+      "revoked": "ถูกระงับ"
+    },
+    "table": {
+      "details": "รายละเอียดคีย์",
+      "product": "สินค้า",
+      "owner": "เจ้าของ",
+      "node": "โหนด/ไอพี",
+      "status": "สถานะ",
+      "issued": "วันที่ออก",
+      "actions": "การจัดการ",
+      "unrestricted": "ไม่จำกัดไอพี",
+      "loading": "กำลังโหลดข้อมูลไลเซนส์...",
+      "no_data": "ไม่พบข้อมูลไลเซนส์",
+      "no_data_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหา"
+    },
+    "modals": {
+      "grant": {
+        "title": "ออกไลเซนส์ใหม่",
+        "subtitle": "มอบสิทธิ์การใช้งานสินค้าให้ผู้ใช้โดยตรง",
+        "assignment": "การมอบหมาย",
+        "user_label": "ผู้ใช้งาน",
+        "user_placeholder": "เลือกผู้ใช้งาน",
+        "product_label": "สินค้า",
+        "product_placeholder": "เลือกสินค้า",
+        "expiration": "การหมดอายุ",
+        "exp_label": "วันหมดอายุ (เว้นว่างไว้หากไม่จำกัด)",
+        "issuing": "กำลังดำเนินการ...",
+        "submit": "ยืนยันการออกไลเซนส์"
+      },
+      "revoke": {
+        "title": "ระงับไลเซนส์",
+        "message": "คุณแน่ใจหรือไม่ว่าต้องการระงับไลเซนส์นี้? ผู้ใช้จะไม่สามารถใช้งานสินค้าได้อีกต่อไป",
+        "confirm": "ยืนยันการระงับ"
+      }
+    }
+  },
+  "lucky_wheel": {
+    "title": "จัดการวงล้อเสี่ยงโชค",
+    "subtitle": "ตั้งค่าของรางวัลและความน่าจะเป็นสำหรับวงล้อ",
+    "status_label": "สถานะระบบ",
+    "status_active": "เปิดใช้งาน",
+    "status_inactive": "ปิดใช้งาน",
+    "add_reward": "เพิ่มรางวัล",
+    "total_prob_warning": "คำเตือน: ผลรวมความน่าจะเป็นไม่ถูกต้อง",
+    "total_prob_subtitle": "ผลรวมปัจจุบันคือ {{total}} ควรตั้งค่าให้รวมกันได้เท่ากับ 1.0 (100%) เพื่อความแม่นยำ",
+    "reward_type_points": "แต้ม",
+    "reward_type_balance": "เงิน",
+    "probability_label": "ความน่าจะเป็น",
+    "errors": {
+      "name_required": "กรุณากรอกชื่อรางวัล",
+      "value_invalid": "กรุณากรอกมูลค่าที่ถูกต้อง (ต้องไม่น้อยกว่า 0)",
+      "prob_invalid": "ความน่าจะเป็นต้องอยู่ระหว่าง 0 ถึง 1 (เช่น 0.1 สำหรับ 10%)",
+      "color_invalid": "กรุณาเลือกสีที่ถูกต้อง",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึกรางวัล"
+    },
+    "modals": {
+      "add_title": "เพิ่มรางวัลใหม่",
+      "edit_title": "แก้ไขรางวัล",
+      "info_section": "ข้อมูลของรางวัล",
+      "name_label": "ชื่อรางวัล *",
+      "name_placeholder": "เช่น 50 แต้ม, แจ็คพอต",
+      "type_label": "ประเภท",
+      "type_points": "แต้ม (Points)",
+      "type_balance": "เงิน (Balance)",
+      "value_label": "มูลค่า *"
+    }
+  },
+  "export": {
+    "title": "Export Data",
+    "subtitle": "ส่งออกข้อมูลในระบบเป็นไฟล์ CSV เพื่อนำไปใช้งานต่อ",
+    "options": {
+      "orders": "คำสั่งซื้อ",
+      "orders_desc": "ข้อมูลรายการสั่งซื้อทั้งหมด สถานะการชำระเงิน และยอดรวม",
+      "products": "สินค้า",
+      "products_desc": "รายชื่อสินค้า ราคา คลังสินค้า และหมวดหมู่",
+      "users": "ผู้ใช้งาน",
+      "users_desc": "รายชื่อผู้ใช้ อีเมล บทบาท และยอดเงินคงเหลือ",
+      "commissions": "รายการจ้างทำ",
+      "commissions_desc": "ข้อมูลการจ้างทำสคริปต์/UI และสถานะการดำเนินงาน",
+      "licenses": "ลิขสิทธิ์ (Licenses)",
+      "licenses_desc": "ข้อมูล License Key และการผูก IP ของลูกค้า",
+      "reviews": "รีวิวสินค้า",
+      "reviews_desc": "คะแนนและข้อคิดเห็นจากลูกค้าต่อสินค้าต่างๆ"
+    },
+    "guide_title": "คำแนะนำการส่งออก",
+    "guide_desc": "การส่งออกข้อมูลจะดึงข้อมูลล่าสุดจากฐานข้อมูลโดยตรง ไฟล์ที่ได้จะเป็นรูปแบบ CSV ซึ่งสามารถเปิดได้ด้วย Excel, Google Sheets หรือโปรแกรม Spreadsheet อื่นๆ หากคุณมีข้อมูลจำนวนมาก (มากกว่า 5,000 รายการ) อาจใช้เวลาในการเตรียมไฟล์สักครู่",
+    "btn_export": "ส่งออกข้อมูล",
+    "btn_exporting": "กำลังส่งออก...",
+    "coming_soon_filter": "กรองตามช่วงเวลา (Coming Soon)",
+    "coming_soon_formats": "รูปแบบไฟล์เพิ่มเติม (Coming Soon)",
+    "time_options": ["7 วัน", "30 วัน", "ทั้งหมด"],
+    "errors": {
+      "no_data": "ไม่พบข้อมูลที่จะส่งออก หรือเกิดข้อผิดพลาดในการดึงข้อมูล",
+      "failed": "เกิดข้อผิดพลาดในการส่งออกข้อมูล"
+    }
+  },
+  "flash_sale": {
+    "title": "Flash Sale Management",
+    "subtitle": "บริหารจัดการโปรโมชั่น Flash Sale และสินค้าลดราคาแบบจำกัดเวลา",
+    "add_btn": "สร้าง Flash Sale ใหม่",
+    "setup_title": "Setup Flash Sale",
+    "setup_subtitle": "กำหนดราคาและเวลาสิ้นสุดโปรโมชั่น",
+    "select_product_title": "Select Product",
+    "select_product_subtitle": "เลือกสินค้าที่ต้องการเข้าร่วม Flash Sale",
+    "search_placeholder": "ค้นหาสินค้า...",
+    "price_section": "การตั้งค่าราคาพิเศษ",
+    "price_label": "ราคา Flash Sale (บาท) *",
+    "discount_label": "ลด {{percent}}%",
+    "save_amount": "ประหยัด: {{amount}}",
+    "period_section": "ระยะเวลาโปรโมชั่น",
+    "end_time_label": "วันเวลาที่สิ้นสุด *",
+    "btn_saving": "กำลังบันทึก...",
+    "btn_save": "บันทึกการตั้งค่า",
+    "errors": {
+      "price_invalid": "กรุณากรอกราคา Flash Sale ที่ถูกต้อง",
+      "price_too_high": "ราคาต้องถูกกว่าราคาปกติ ({{price}})",
+      "ends_required": "กรุณาระบุเวลาสิ้นสุด",
+      "ends_future": "เวลาสิ้นสุดต้องเป็นเวลาในอนาคต",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึก"
+    },
+    "modals": {
+      "remove": {
+        "title": "ยกเลิก Flash Sale",
+        "message": "คุณต้องการยกเลิกสถานะ Flash Sale ของสินค้า \"{{name}}\" ใช่หรือไม่? ราคาสินค้าจะกลับไปเป็นราคาปกติ",
+        "confirm": "ยืนยันการยกเลิก"
+      }
+    }
+  },
+  "orders": {
+    "title": "Order Management",
+    "subtitle": "ติดตามและบริหารจัดการรายการสั่งซื้อทั้งหมดในระบบ",
+    "search_placeholder": "ค้นหา Order ID, ชื่อลูกค้า หรืออีเมล...",
+    "no_orders": "No orders found",
+    "no_orders_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือรอคำสั่งซื้อใหม่",
+    "status": {
+      "completed": "สำเร็จ",
+      "pending": "รอชำระ",
+      "processing": "กำลังดำเนินการ",
+      "cancelled": "ยกเลิก",
+      "refunded": "คืนเงิน"
+    }
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle": "บริหารจัดการบัญชีผู้ใช้งาน สิทธิ์การใช้งาน และตรวจสอบสถานะทั้งหมด",
+    "search_placeholder": "ค้นหาด้วย Username, Email หรือ Discord ID...",
+    "no_users": "No users found",
+    "no_users_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือนำเข้าข้อมูลใหม่",
+    "modals": {
+      "ban": {
+        "title": "แบนผู้ใช้",
+        "unban_title": "ปลดแบนผู้ใช้",
+        "message": "คุณต้องการแบน \"{{name}}\" หรือไม่?",
+        "unban_message": "คุณต้องการปลดแบน \"{{name}}\" หรือไม่?",
+        "confirm": "แบน",
+        "unban_confirm": "ปลดแบน"
+      }
+    }
+  }
+}

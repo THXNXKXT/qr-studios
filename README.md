@@ -129,7 +129,3 @@ bun run lint     # Run ESLint
 - **API:** Next.js API Routes หรือ Separate Backend
 - **File Storage:** AWS S3 / Cloudflare R2
 - **Email:** Resend / SendGrid
-
-## License
-
-MIT License

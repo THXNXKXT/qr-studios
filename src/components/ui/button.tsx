@@ -20,7 +20,7 @@ const buttonVariants = cva(
         destructive:
           "bg-red-600 text-white hover:bg-red-500 shadow-lg shadow-red-500/25",
         success:
-          "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-500/25",
+          "bg-red-600 text-white hover:bg-red-500 shadow-lg shadow-red-500/25",
       },
       size: {
         default: "h-11 px-6 py-2",

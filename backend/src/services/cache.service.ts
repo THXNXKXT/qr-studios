@@ -1,0 +1,290 @@
+/**
+ * Redis/Cache Service
+ * 
+ * Provides caching and rate limiting storage for production use.
+ * Uses Redis when REDIS_URL is configured, falls back to in-memory otherwise.
+ */
+
+import { env } from '../config/env';
+import Redis from 'ioredis';
+
+interface CacheEntry {
+    value: string;
+    expiresAt: number;
+}
+
+class CacheService {
+    private memoryCache: Map<string, CacheEntry> = new Map();
+    private redis: Redis | null = null;
+    private isRedisEnabled: boolean = false;
+
+    constructor() {
+        this.initializeRedis();
+
+        // Cleanup expired entries every minute (for in-memory fallback)
+        const cleanupInterval = setInterval(() => this.cleanup(), 60 * 1000);
+        if (typeof cleanupInterval.unref === 'function') {
+            cleanupInterval.unref();
+        }
+    }
+
+    private async initializeRedis(): Promise<void> {
+        if (env.REDIS_URL) {
+            try {
+                this.redis = new Redis(env.REDIS_URL, {
+                    maxRetriesPerRequest: 3,
+                    retryStrategy: (times) => Math.min(times * 100, 3000),
+                    enableReadyCheck: true,
+                    connectTimeout: 10000,
+                    lazyConnect: true,
+                });
+
+                this.redis.on('connect', () => {
+                    console.log('[Cache] ✅ Redis connected successfully');
+                    this.isRedisEnabled = true;
+                });
+
+                this.redis.on('error', (err) => {
+                    console.error('[Cache] ❌ Redis error:', err.message);
+                    // Fall back to in-memory on connection error
+                    this.isRedisEnabled = false;
+                });
+
+                this.redis.on('close', () => {
+                    console.warn('[Cache] ⚠️ Redis connection closed, falling back to in-memory');
+                    this.isRedisEnabled = false;
+                });
+
+                this.redis.on('reconnecting', () => {
+                    console.log('[Cache] 🔄 Redis reconnecting...');
+                });
+
+                // Try to connect
+                await this.redis.connect();
+                this.isRedisEnabled = true;
+
+            } catch (error) {
+                console.error('[Cache] ❌ Failed to initialize Redis:', error);
+                console.log('[Cache] Using in-memory cache as fallback');
+                this.isRedisEnabled = false;
+            }
+        } else {
+            console.log('[Cache] No REDIS_URL configured. Using in-memory cache.');
+        }
+    }
+
+    /**
+     * Get a value from cache
+     */
+    async get(key: string): Promise<string | null> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                return await this.redis.get(key);
+            } catch (error) {
+                console.error('[Cache] Redis get error, falling back to memory:', error);
+                // Fall back to memory cache
+            }
+        }
+
+        const entry = this.memoryCache.get(key);
+        if (!entry) return null;
+
+        if (entry.expiresAt < Date.now()) {
+            this.memoryCache.delete(key);
+            return null;
+        }
+
+        return entry.value;
+    }
+
+    /**
+     * Set a value in cache with expiration
+     */
+    async set(key: string, value: string, ttlSeconds: number): Promise<void> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                await this.redis.setex(key, ttlSeconds, value);
+                return;
+            } catch (error) {
+                console.error('[Cache] Redis set error, falling back to memory:', error);
+            }
+        }
+
+        this.memoryCache.set(key, {
+            value,
+            expiresAt: Date.now() + (ttlSeconds * 1000),
+        });
+    }
+
+    /**
+     * Delete a key from cache
+     */
+    async del(key: string): Promise<void> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                await this.redis.del(key);
+                return;
+            } catch (error) {
+                console.error('[Cache] Redis del error:', error);
+            }
+        }
+
+        this.memoryCache.delete(key);
+    }
+
+    /**
+     * Increment a counter with expiration
+     */
+    async incr(key: string, ttlSeconds?: number): Promise<number> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                const result = await this.redis.incr(key);
+                if (ttlSeconds) {
+                    await this.redis.expire(key, ttlSeconds);
+                }
+                return result;
+            } catch (error) {
+                console.error('[Cache] Redis incr error, falling back to memory:', error);
+            }
+        }
+
+        const entry = this.memoryCache.get(key);
+        const now = Date.now();
+
+        if (!entry || entry.expiresAt < now) {
+            this.memoryCache.set(key, {
+                value: '1',
+                expiresAt: ttlSeconds ? now + (ttlSeconds * 1000) : now + (60 * 60 * 1000),
+            });
+            return 1;
+        }
+
+        const newValue = parseInt(entry.value, 10) + 1;
+        entry.value = newValue.toString();
+        return newValue;
+    }
+
+    /**
+     * Get TTL of a key in seconds
+     */
+    async ttl(key: string): Promise<number> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                return await this.redis.ttl(key);
+            } catch (error) {
+                console.error('[Cache] Redis ttl error:', error);
+            }
+        }
+
+        const entry = this.memoryCache.get(key);
+        if (!entry) return -2;
+
+        const remaining = Math.ceil((entry.expiresAt - Date.now()) / 1000);
+        return remaining > 0 ? remaining : -1;
+    }
+
+    /**
+     * Check if a key exists
+     */
+    async exists(key: string): Promise<boolean> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                return (await this.redis.exists(key)) === 1;
+            } catch (error) {
+                console.error('[Cache] Redis exists error:', error);
+            }
+        }
+
+        const entry = this.memoryCache.get(key);
+        if (!entry) return false;
+        return entry.expiresAt >= Date.now();
+    }
+
+    /**
+     * Set multiple values at once
+     */
+    async mset(entries: Record<string, string>, ttlSeconds: number): Promise<void> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                const pipeline = this.redis.pipeline();
+                for (const [key, value] of Object.entries(entries)) {
+                    pipeline.setex(key, ttlSeconds, value);
+                }
+                await pipeline.exec();
+                return;
+            } catch (error) {
+                console.error('[Cache] Redis mset error, falling back to memory:', error);
+            }
+        }
+
+        const expiresAt = Date.now() + (ttlSeconds * 1000);
+        for (const [key, value] of Object.entries(entries)) {
+            this.memoryCache.set(key, { value, expiresAt });
+        }
+    }
+
+    /**
+     * Check if Redis is enabled and connected
+     */
+    isEnabled(): boolean {
+        return this.isRedisEnabled;
+    }
+
+    /**
+     * Get cache stats
+     */
+    getStats(): { isRedis: boolean; memorySize: number } {
+        return {
+            isRedis: this.isRedisEnabled,
+            memorySize: this.memoryCache.size,
+        };
+    }
+
+    /**
+     * Health check
+     */
+    async healthCheck(): Promise<{ status: 'ok' | 'degraded' | 'error'; backend: string }> {
+        if (this.isRedisEnabled && this.redis) {
+            try {
+                await this.redis.ping();
+                return { status: 'ok', backend: 'redis' };
+            } catch {
+                return { status: 'degraded', backend: 'memory (redis unavailable)' };
+            }
+        }
+        return { status: 'ok', backend: 'memory' };
+    }
+
+    /**
+     * Graceful shutdown
+     */
+    async shutdown(): Promise<void> {
+        if (this.redis) {
+            console.log('[Cache] Closing Redis connection...');
+            await this.redis.quit();
+        }
+        this.memoryCache.clear();
+    }
+
+    /**
+     * Cleanup expired entries (for in-memory cache)
+     */
+    private cleanup(): void {
+        if (this.isRedisEnabled) return;
+
+        const now = Date.now();
+        let cleaned = 0;
+        for (const [key, entry] of this.memoryCache.entries()) {
+            if (entry.expiresAt < now) {
+                this.memoryCache.delete(key);
+                cleaned++;
+            }
+        }
+        if (cleaned > 0 && env.NODE_ENV === 'development') {
+            console.log(`[Cache] Cleaned ${cleaned} expired entries`);
+        }
+    }
+}
+
+// Singleton instance
+export const cacheService = new CacheService();

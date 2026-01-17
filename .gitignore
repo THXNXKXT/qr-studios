@@ -30,8 +30,21 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Environment files - NEVER commit these!
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+!env.example
+
+# Backend environment files
+backend/.env
+backend/.env.*
+!backend/env.example
+!backend/env.docker.example
 
 # vercel
 .vercel
@@ -39,3 +52,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Private folders
+/API License
+
+# Temporary/Debug files (should not be in repo)
+*.sql
+debug-*.ts
+fix-*.ts
+upgrade-*.ts
+test-*.ts
+test-*.html
+*.new
+*_suspicious_ops.csv
+old_*.txt
+temp_*.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db

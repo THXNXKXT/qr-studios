@@ -35,6 +35,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).accessToken = token.accessToken;
       }
+      // Attach to session root for AuthStore compatibility
+      (session as any).accessToken = token.accessToken;
       return session;
     },
   },

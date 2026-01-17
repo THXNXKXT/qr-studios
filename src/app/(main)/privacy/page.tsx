@@ -3,74 +3,76 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui";
 
-const sections = [
-  {
-    title: "1. ข้อมูลที่เราเก็บรวบรวม",
-    content: "เราเก็บรวบรวมข้อมูลที่คุณให้โดยตรง เช่น ชื่อผู้ใช้ อีเมล และข้อมูลจาก Discord เมื่อคุณสร้างบัญชี รวมถึงข้อมูลการทำธุรกรรมเมื่อคุณซื้อสินค้า",
-  },
-  {
-    title: "2. วิธีการใช้ข้อมูล",
-    content: "เราใช้ข้อมูลของคุณเพื่อ: ให้บริการและปรับปรุงแพลตฟอร์ม, ดำเนินการธุรกรรม, ส่งการแจ้งเตือนและอัพเดท, ตอบคำถามและให้การสนับสนุน, ป้องกันการฉ้อโกงและรักษาความปลอดภัย",
-  },
-  {
-    title: "3. การแชร์ข้อมูล",
-    content: "เราไม่ขายหรือให้เช่าข้อมูลส่วนบุคคลของคุณ เราอาจแชร์ข้อมูลกับผู้ให้บริการที่เชื่อถือได้ (เช่น Stripe สำหรับการชำระเงิน) เพื่อดำเนินการบริการของเรา",
-  },
-  {
-    title: "4. ความปลอดภัยของข้อมูล",
-    content: "เราใช้มาตรการรักษาความปลอดภัยที่เหมาะสมเพื่อปกป้องข้อมูลของคุณ รวมถึงการเข้ารหัส SSL, การจัดเก็บรหัสผ่านแบบ hash และการควบคุมการเข้าถึง",
-  },
-  {
-    title: "5. คุกกี้และเทคโนโลยีติดตาม",
-    content: "เราใช้คุกกี้เพื่อปรับปรุงประสบการณ์ของคุณ รักษาเซสชันการเข้าสู่ระบบ และวิเคราะห์การใช้งานเว็บไซต์ คุณสามารถปิดการใช้งานคุกกี้ในเบราว์เซอร์ได้ แต่อาจส่งผลต่อฟังก์ชันบางอย่าง",
-  },
-  {
-    title: "6. สิทธิ์ของคุณ",
-    content: "คุณมีสิทธิ์: เข้าถึงข้อมูลส่วนบุคคลของคุณ, แก้ไขข้อมูลที่ไม่ถูกต้อง, ขอให้ลบข้อมูล, ยกเลิกการรับข่าวสารทางการตลาด",
-  },
-  {
-    title: "7. การเก็บรักษาข้อมูล",
-    content: "เราเก็บรักษาข้อมูลของคุณตราบเท่าที่จำเป็นสำหรับวัตถุประสงค์ที่เก็บรวบรวม หรือตามที่กฎหมายกำหนด ข้อมูลการทำธุรกรรมจะถูกเก็บรักษาเพื่อวัตถุประสงค์ทางบัญชีและภาษี",
-  },
-  {
-    title: "8. บริการของบุคคลที่สาม",
-    content: "เว็บไซต์ของเราอาจมีลิงก์ไปยังบริการของบุคคลที่สาม เราไม่รับผิดชอบต่อนโยบายความเป็นส่วนตัวของเว็บไซต์เหล่านั้น กรุณาอ่านนโยบายของพวกเขาก่อนใช้บริการ",
-  },
-  {
-    title: "9. การเปลี่ยนแปลงนโยบาย",
-    content: "เราอาจอัพเดทนโยบายความเป็นส่วนตัวนี้เป็นครั้งคราว การเปลี่ยนแปลงจะถูกโพสต์บนหน้านี้พร้อมวันที่อัพเดท การใช้งานต่อเนื่องหลังจากการเปลี่ยนแปลงถือว่าคุณยอมรับนโยบายใหม่",
-  },
-  {
-    title: "10. ติดต่อเรา",
-    content: "หากคุณมีคำถามเกี่ยวกับนโยบายความเป็นส่วนตัวนี้ กรุณาติดต่อเราที่ privacy@qrstudio.com หรือผ่าน Discord",
-  },
-];
-
 export default function PrivacyPage() {
+  const { t } = useTranslation("home");
+  const sections = [
+    {
+      title: t("legal.privacy.sections.s1.title"),
+      content: t("legal.privacy.sections.s1.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s2.title"),
+      content: t("legal.privacy.sections.s2.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s3.title"),
+      content: t("legal.privacy.sections.s3.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s4.title"),
+      content: t("legal.privacy.sections.s4.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s5.title"),
+      content: t("legal.privacy.sections.s5.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s6.title"),
+      content: t("legal.privacy.sections.s6.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s7.title"),
+      content: t("legal.privacy.sections.s7.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s8.title"),
+      content: t("legal.privacy.sections.s8.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s9.title"),
+      content: t("legal.privacy.sections.s9.content"),
+    },
+    {
+      title: t("legal.privacy.sections.s10.title"),
+      content: t("legal.privacy.sections.s10.content"),
+    },
+  ];
   return (
-    <div className="min-h-screen pt-20">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen pt-20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />
+      <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-12"
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
           >
-            <ArrowLeft className="w-4 h-4" />
-            กลับหน้าแรก
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            {t("legal.terms.back")}
           </Link>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-green-400" />
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-xl">
+              <Shield className="w-8 h-8 text-red-500" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">นโยบายความเป็นส่วนตัว</h1>
-              <p className="text-gray-400">อัพเดทล่าสุด: 1 ธันวาคม 2024</p>
+              <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("legal.privacy.title")}</h1>
+              <p className="text-gray-500 text-sm mt-1 uppercase tracking-widest font-bold">{t("legal.privacy.subtitle")}</p>
             </div>
           </div>
         </motion.div>
@@ -80,28 +82,38 @@ export default function PrivacyPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="p-6 md:p-8">
-            <p className="text-gray-400 mb-8">
-              QR Studio ให้ความสำคัญกับความเป็นส่วนตัวของคุณ นโยบายนี้อธิบายวิธีที่เราเก็บรวบรวม ใช้ และปกป้องข้อมูลของคุณ
+          <Card className="p-8 md:p-12 border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
+            
+            <p className="text-gray-400 text-lg mb-12 leading-relaxed border-l-4 border-red-600 pl-6 py-2">
+              {t("legal.privacy.hero_desc")}
             </p>
 
-            <div className="space-y-6">
+            <div className="space-y-10">
               {sections.map((section, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
                   transition={{ delay: 0.1 + index * 0.05 }}
-                  className="pb-6 border-b border-white/10 last:border-0"
+                  className="group"
                 >
-                  <h2 className="text-lg font-semibold text-white mb-3">
+                  <h2 className="text-xl font-black text-white mb-4 flex items-center gap-3 group-hover:text-red-400 transition-colors">
+                    <span className="w-1.5 h-6 bg-red-600 rounded-full" />
                     {section.title}
                   </h2>
-                  <p className="text-gray-400 leading-relaxed">
+                  <p className="text-gray-400 leading-relaxed pl-4.5">
                     {section.content}
                   </p>
                 </motion.div>
               ))}
+            </div>
+
+            <div className="mt-16 pt-8 border-t border-white/5 text-center">
+              <p className="text-sm text-gray-500">
+                {t("legal.privacy.contact_hint")} <span className="text-red-400 font-bold">privacy@qrstudio.com</span>
+              </p>
             </div>
           </Card>
         </motion.div>

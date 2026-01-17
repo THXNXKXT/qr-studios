@@ -44,9 +44,9 @@ interface OrderDetailModalProps {
 }
 
 const statusConfig = {
-  pending: { icon: Clock, label: "รอชำระเงิน", color: "warning", bg: "bg-yellow-500/20", text: "text-yellow-400" },
-  processing: { icon: Clock, label: "กำลังดำเนินการ", color: "warning", bg: "bg-blue-500/20", text: "text-blue-400" },
-  completed: { icon: CheckCircle, label: "สำเร็จ", color: "success", bg: "bg-green-500/20", text: "text-green-400" },
+  pending: { icon: Clock, label: "รอชำระเงิน", color: "warning", bg: "bg-red-500/10", text: "text-red-400" },
+  processing: { icon: Clock, label: "กำลังดำเนินการ", color: "warning", bg: "bg-red-500/20", text: "text-red-400" },
+  completed: { icon: CheckCircle, label: "สำเร็จ", color: "success", bg: "bg-red-500/20", text: "text-red-400" },
   cancelled: { icon: XCircle, label: "ยกเลิก", color: "destructive", bg: "bg-red-500/20", text: "text-red-400" },
   refunded: { icon: XCircle, label: "คืนเงินแล้ว", color: "secondary", bg: "bg-gray-500/20", text: "text-gray-400" },
 };
@@ -101,7 +101,7 @@ export function OrderDetailModal({ order, isOpen, onClose, onDownload }: OrderDe
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-red-400">{formatPrice(item.price)}</p>
+                  <p className="font-bold text-red-400">{formatPrice(item.price)}</p>
                   {item.licenseKey && order.status === "completed" && (
                     <Button
                       variant="ghost"
@@ -129,13 +129,13 @@ export function OrderDetailModal({ order, isOpen, onClose, onDownload }: OrderDe
                 .map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-green-500/10 border border-green-500/20"
+                    className="flex items-center justify-between p-3 rounded-xl bg-red-500/10 border border-red-500/20"
                   >
                     <div className="flex items-center gap-2">
-                      <Key className="w-4 h-4 text-green-400" />
+                      <Key className="w-4 h-4 text-red-400" />
                       <span className="text-sm text-white">{item.productName}</span>
                     </div>
-                    <code className="text-sm text-green-400 font-mono">{item.licenseKey}</code>
+                    <code className="text-sm text-red-400 font-mono">{item.licenseKey}</code>
                   </div>
                 ))}
             </div>
@@ -162,7 +162,7 @@ export function OrderDetailModal({ order, isOpen, onClose, onDownload }: OrderDe
                 <span className="text-gray-400">
                   ส่วนลด {order.promoCode && `(${order.promoCode})`}
                 </span>
-                <span className="text-green-400">-{formatPrice(order.discount)}</span>
+                <span className="text-red-400 font-bold">-{formatPrice(order.discount)}</span>
               </div>
             )}
             <div className="flex items-center justify-between pt-2 border-t border-white/10">

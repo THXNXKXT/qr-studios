@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 interface ReviewStarsProps {
   rating: number;
   maxRating?: number;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   showValue?: boolean;
   interactive?: boolean;
   onChange?: (rating: number) => void;
@@ -26,13 +26,18 @@ export function ReviewStars({
 }: ReviewStarsProps) {
   const [hoverRating, setHoverRating] = useState(0);
 
+  const safeRating = Math.max(0, rating || 0);
+  const safeMaxRating = Math.min(10, Math.max(1, Math.floor(maxRating || 5)));
+
   const sizeClasses = {
+    xs: "w-2.5 h-2.5",
     sm: "w-3 h-3",
     md: "w-4 h-4",
     lg: "w-5 h-5",
   };
 
   const gapClasses = {
+    xs: "gap-0.5",
     sm: "gap-0.5",
     md: "gap-1",
     lg: "gap-1.5",
@@ -44,12 +49,12 @@ export function ReviewStars({
     }
   };
 
-  const displayRating = hoverRating || rating;
+  const displayRating = hoverRating || safeRating;
 
   return (
     <div className={cn("flex items-center", gapClasses[size], className)}>
       <div className={cn("flex", gapClasses[size])}>
-        {[...Array(maxRating)].map((_, index) => {
+        {[...Array(safeMaxRating)].map((_, index) => {
           const value = index + 1;
           const isFilled = value <= displayRating;
           const isHalf = value - 0.5 === displayRating;
@@ -74,7 +79,7 @@ export function ReviewStars({
                   sizeClasses[size],
                   "transition-colors",
                   isFilled || isHalf
-                    ? "fill-yellow-400 text-yellow-400"
+                    ? "fill-red-500 text-red-500"
                     : "text-gray-600"
                 )}
               />
@@ -85,7 +90,7 @@ export function ReviewStars({
 
       {showValue && (
         <span className="text-sm text-gray-400 ml-1">
-          {rating.toFixed(1)}
+          {safeRating.toFixed(1)}
         </span>
       )}
     </div>
@@ -105,14 +110,16 @@ export function ReviewSummary({
   distribution,
   className,
 }: ReviewSummaryProps) {
+  const safeAverageRating = Math.max(0, averageRating || 0);
+  
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center gap-4">
         <div className="text-center">
           <div className="text-4xl font-bold text-white">
-            {averageRating.toFixed(1)}
+            {safeAverageRating.toFixed(1)}
           </div>
-          <ReviewStars rating={averageRating} size="sm" />
+          <ReviewStars rating={safeAverageRating} size="sm" />
           <p className="text-sm text-gray-400 mt-1">
             {totalReviews.toLocaleString()} รีวิว
           </p>
@@ -127,13 +134,13 @@ export function ReviewSummary({
               return (
                 <div key={stars} className="flex items-center gap-2">
                   <span className="text-xs text-gray-400 w-3">{stars}</span>
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-3 h-3 fill-red-500 text-red-500" />
                   <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${percentage}%` }}
                       transition={{ duration: 0.5, delay: (5 - stars) * 0.1 }}
-                      className="h-full bg-yellow-400 rounded-full"
+                      className="h-full bg-red-500 rounded-full"
                     />
                   </div>
                   <span className="text-xs text-gray-500 w-8">

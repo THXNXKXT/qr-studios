@@ -1,0 +1,111 @@
+services:
+  # ===================
+  # PostgreSQL Database
+  # ===================
+  postgres:
+    image: postgres:16-alpine
+    container_name: qr-studios-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-qrstudios}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-qrstudios_password}
+      POSTGRES_DB: ${DB_NAME:-qrstudios}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-qrstudios}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - qr-network
+
+  # ===================
+  # Redis (Cache & Rate Limiting)
+  # ===================
+  redis:
+    image: redis:7-alpine
+    container_name: qr-studios-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - qr-network
+
+  # ===================
+  # Backend (Hono + Bun)
+  # ===================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qr-studios-backend
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4001
+      DATABASE_URL: postgresql://${DB_USER:-qrstudios}:${DB_PASSWORD:-qrstudios_password}@postgres:5432/${DB_NAME:-qrstudios}
+      REDIS_URL: redis://redis:6379
+      # Secrets (load from .env)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      # Discord OAuth
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      ADMIN_DISCORD_IDS: ${ADMIN_DISCORD_IDS}
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      # Cloudflare R2
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL}
+      # Email (optional)
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@qrstudio.com}
+      # URLs
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      API_URL: http://localhost:4001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "bun", "run", "-e", "fetch('http://localhost:4001/health').then(r => r.ok ? process.exit(0) : process.exit(1))" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - qr-network
+
+# ===================
+# Networks
+# ===================
+networks:
+  qr-network:
+    driver: bridge
+
+# ===================
+# Volumes
+# ===================
+volumes:
+  postgres_data:
+  redis_data:

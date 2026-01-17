@@ -1,0 +1,308 @@
+{
+  "common": {
+    "search": "Search...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View Details",
+    "loading": "Loading...",
+    "no_data": "No data found",
+    "confirm": "Confirm",
+    "actions": "Actions",
+    "status": "Status"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "users": "Users",
+    "orders": "Orders",
+    "analytics": "Analytics",
+    "licenses": "Licenses",
+    "settings": "Settings",
+    "logout_admin": "Logout Admin"
+  },
+  "dashboard": {
+    "title": "Admin Dashboard",
+    "subtitle": "Overview and operational statistics of QR Studio",
+    "live_status": "Live System Status",
+    "stats": {
+      "total_revenue": "Total Revenue",
+      "total_orders": "Total Orders",
+      "total_users": "Total Users",
+      "active_licenses": "Active Licenses",
+      "revenue_summary": "Revenue Summary",
+      "pending_orders": "Pending {{count}}",
+      "new_today": "New Today {{count}}",
+      "active": "Active"
+    },
+    "recent_orders": {
+      "title": "Recent Orders",
+      "subtitle": "Latest 5 transactions",
+      "view_all": "View All",
+      "no_orders": "No recent orders",
+      "status_completed": "Completed"
+    },
+    "best_sellers": {
+      "title": "Best Sellers",
+      "subtitle": "Top Performing Products",
+      "no_data": "No product data",
+      "sales": "Sales"
+    },
+    "low_stock": {
+      "title": "Low Stock",
+      "subtitle": "Low Stock Warning",
+      "remaining": "Remaining {{count}}"
+    },
+    "quick_links": {
+      "products": "Products",
+      "orders": "Orders",
+      "users": "Users",
+      "licenses": "Licenses"
+    }
+  },
+  "products": {
+    "title": "Product Management",
+    "subtitle": "Manage all products and inventory for QR Studio",
+    "add_new": "Add New Product",
+    "search_placeholder": "Search by product name or ID...",
+    "all_items": "All Items",
+    "table": {
+      "info": "Product Info",
+      "category": "Category",
+      "price": "Price",
+      "points": "Points",
+      "inventory": "Inventory",
+      "status": "Status",
+      "actions": "Actions",
+      "no_image": "No Image",
+      "flash_sale": "FLASH SALE",
+      "unlimited": "UNLIMITED",
+      "active": "Active",
+      "archived": "Archived",
+      "featured": "Featured",
+      "loading": "Loading products...",
+      "no_products": "No products found",
+      "no_products_subtitle": "Try changing your search terms or add a new product"
+    },
+    "modals": {
+      "archive": {
+        "title": "Archive Product",
+        "message": "Are you sure you want to archive \"{{name}}\"? It will be hidden from the store but remain accessible to existing customers.",
+        "confirm": "Archive Product"
+      },
+      "delete": {
+        "title": "Delete Permanently",
+        "warning": "WARNING: PERMANENT DELETION",
+        "message": "Are you sure you want to PERMANENTLY delete \"{{name}}\"?",
+        "list": {
+          "licenses": "All associated license keys will be invalid",
+          "access": "Customers who purchased this will LOSE ACCESS",
+          "storage": "Files and images in storage will be DELETED",
+          "undo": "This action CANNOT be undone"
+        },
+        "confirm": "Permanently Delete"
+      }
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Deep dive into sales data and user behavior",
+    "loading": "Processing analytics data...",
+    "stats": {
+      "revenue": "Total Revenue",
+      "orders": "Total Orders",
+      "users": "Total Users",
+      "avg_order": "Avg Order Value"
+    },
+    "charts": {
+      "revenue_monthly": "Monthly Revenue",
+      "user_growth": "User Growth",
+      "hourly_orders": "Hourly Orders",
+      "category_revenue": "Revenue by Category",
+      "payment_methods": "Payment Methods",
+      "customer_type": "Customer Types",
+      "top_buyers": "Top Buyers",
+      "conversion": "Conversion Rate",
+      "promo_performance": "Promo Performance",
+      "geo": "Geographic Data"
+    },
+    "table": {
+      "best_sellers": "Best Sellers",
+      "product": "Product",
+      "category": "Category",
+      "price": "Price",
+      "sold": "Sold",
+      "revenue": "Revenue"
+    }
+  },
+  "licenses": {
+    "title": "License Registry",
+    "subtitle": "Monitor and manage all license keys in the system",
+    "grant_btn": "Grant New License",
+    "all": "All",
+    "search_placeholder": "Search by key, product, or username...",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "table": {
+      "details": "Key Details",
+      "product": "Product",
+      "owner": "Owner",
+      "node": "Node/IP",
+      "status": "Status",
+      "issued": "Issued Date",
+      "actions": "Actions",
+      "unrestricted": "Unrestricted IP",
+      "loading": "Loading licenses...",
+      "no_data": "No licenses found",
+      "no_data_subtitle": "Try changing your search terms"
+    },
+    "modals": {
+      "grant": {
+        "title": "Grant New License",
+        "subtitle": "Grant product access directly to a user",
+        "assignment": "Assignment",
+        "user_label": "User",
+        "user_placeholder": "Select user",
+        "product_label": "Product",
+        "product_placeholder": "Select product",
+        "expiration": "Expiration",
+        "exp_label": "Expiration Date (Leave blank for unlimited)",
+        "issuing": "Processing...",
+        "submit": "Confirm Grant"
+      },
+      "revoke": {
+        "title": "Revoke License",
+        "message": "Are you sure you want to revoke this license? The user will lose access immediately.",
+        "confirm": "Confirm Revoke"
+      }
+    }
+  },
+  "lucky_wheel": {
+    "title": "Lucky Wheel Management",
+    "subtitle": "Configure rewards and probabilities for the lucky wheel",
+    "status_label": "System Status",
+    "status_active": "Active",
+    "status_inactive": "Inactive",
+    "add_reward": "Add Reward",
+    "total_prob_warning": "Warning: Total probability is incorrect",
+    "total_prob_subtitle": "Current total is {{total}}. It should sum up to 1.0 (100%) for accuracy.",
+    "reward_type_points": "Points",
+    "reward_type_balance": "Balance",
+    "probability_label": "Probability",
+    "errors": {
+      "name_required": "Reward name is required",
+      "value_invalid": "Please enter a valid value (must be 0 or more)",
+      "prob_invalid": "Probability must be between 0 and 1 (e.g., 0.1 for 10%)",
+      "color_invalid": "Please select a valid color",
+      "save_failed": "Error saving reward"
+    },
+    "modals": {
+      "add_title": "Add New Reward",
+      "edit_title": "Edit Reward",
+      "info_section": "Reward Information",
+      "name_label": "Reward Name *",
+      "name_placeholder": "e.g., 50 Points, Jackpot",
+      "type_label": "Type",
+      "type_points": "Points",
+      "type_balance": "Balance",
+      "value_label": "Value *"
+    }
+  },
+  "export": {
+    "title": "Export Data",
+    "subtitle": "Export system data as CSV files for further use",
+    "options": {
+      "orders": "Orders",
+      "orders_desc": "All order data, payment status, and totals",
+      "products": "Products",
+      "products_desc": "Product list, prices, inventory, and categories",
+      "users": "Users",
+      "users_desc": "User list, emails, roles, and balances",
+      "commissions": "Commissions",
+      "commissions_desc": "Script/UI commission data and progress status",
+      "licenses": "Licenses",
+      "licenses_desc": "License key data and customer IP bindings",
+      "reviews": "Product Reviews",
+      "reviews_desc": "Customer ratings and feedback for various products"
+    },
+    "guide_title": "Export Guide",
+    "guide_desc": "Exporting data will pull the latest information directly from the database. The resulting file will be in CSV format, which can be opened with Excel, Google Sheets, or other spreadsheet programs. If you have a large amount of data (more than 5,000 items), it may take a moment to prepare the file.",
+    "btn_export": "Export Data",
+    "btn_exporting": "Exporting...",
+    "coming_soon_filter": "Filter by time (Coming Soon)",
+    "coming_soon_formats": "Additional formats (Coming Soon)",
+    "time_options": ["7 Days", "30 Days", "All Time"],
+    "errors": {
+      "no_data": "No data found to export, or an error occurred while fetching data",
+      "failed": "Error exporting data"
+    }
+  },
+  "flash_sale": {
+    "title": "Flash Sale Management",
+    "subtitle": "Manage Flash Sale promotions and time-limited discounted products",
+    "add_btn": "Create New Flash Sale",
+    "setup_title": "Setup Flash Sale",
+    "setup_subtitle": "Define price and promotion end time",
+    "select_product_title": "Select Product",
+    "select_product_subtitle": "Choose a product to join Flash Sale",
+    "search_placeholder": "Search products...",
+    "price_section": "Special Price Settings",
+    "price_label": "Flash Sale Price (THB) *",
+    "discount_label": "{{percent}}% OFF",
+    "save_amount": "Save: {{amount}}",
+    "period_section": "Promotion Period",
+    "end_time_label": "End Date & Time *",
+    "btn_saving": "Saving...",
+    "btn_save": "Save Settings",
+    "errors": {
+      "price_invalid": "Please enter a valid Flash Sale price",
+      "price_too_high": "Price must be lower than regular price ({{price}})",
+      "ends_required": "Please specify end time",
+      "ends_future": "End time must be in the future",
+      "save_failed": "Error saving settings"
+    },
+    "modals": {
+      "remove": {
+        "title": "Remove Flash Sale",
+        "message": "Are you sure you want to remove Flash Sale status from \"{{name}}\"? The price will revert to normal.",
+        "confirm": "Confirm Removal"
+      }
+    }
+  },
+  "orders": {
+    "title": "Order Management",
+    "subtitle": "Track and manage all orders in the system",
+    "search_placeholder": "Search Order ID, Customer Name, or Email...",
+    "no_orders": "No orders found",
+    "no_orders_subtitle": "Try changing your search terms or wait for new orders",
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "processing": "Processing",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    }
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle": "Manage user accounts, permissions, and monitor statuses",
+    "search_placeholder": "Search by Username, Email, or Discord ID...",
+    "no_users": "No users found",
+    "no_users_subtitle": "Try changing your search terms or import new data",
+    "modals": {
+      "ban": {
+        "title": "Ban User",
+        "unban_title": "Unban User",
+        "message": "Are you sure you want to ban \"{{name}}\"?",
+        "unban_message": "Are you sure you want to unban \"{{name}}\"?",
+        "confirm": "Ban",
+        "unban_confirm": "Unban"
+      }
+    }
+  }
+}

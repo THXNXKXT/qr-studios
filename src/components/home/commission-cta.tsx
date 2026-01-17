@@ -1,18 +1,33 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Palette, CheckCircle, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui";
-
-const benefits = [
-  "ออกแบบตามความต้องการ",
-  "รองรับทุก Framework",
-  "แก้ไขฟรีไม่จำกัด",
-  "ส่งมอบงานตรงเวลา",
-];
+import { useTranslation } from "react-i18next";
+import { Button, Badge } from "@/components/ui";
 
 export function CommissionCTA() {
+  const { t } = useTranslation("common");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const benefits = [
+    t("commission.benefits.custom"),
+    t("commission.benefits.framework"),
+    t("commission.benefits.unlimited"),
+    t("commission.benefits.ontime"),
+  ];
+  const renderTranslation = (key: string) => {
+    if (!mounted) return "";
+    return t(key);
+  };
+
+  if (!mounted) return null;
+
   return (
     <section className="py-20 relative overflow-hidden">
       {/* Background */}
@@ -29,36 +44,41 @@ export function CommissionCTA() {
           >
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* Icon */}
-              <div className="shrink-0">
-                <div className="w-24 h-24 rounded-2xl bg-linear-to-br from-red-600 to-red-400 flex items-center justify-center">
-                  <Palette className="w-12 h-12 text-white" />
+              <div className="shrink-0 relative group">
+                <div className="absolute -inset-4 bg-red-600/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative w-24 h-20 rounded-3xl bg-linear-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl shadow-red-600/40 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 border border-white/10">
+                  <Palette className="w-10 h-10 text-white" />
                 </div>
               </div>
 
               {/* Content */}
               <div className="flex-1 text-center md:text-left">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                  ต้องการ UI แบบเฉพาะ?
+                <Badge className="bg-red-500/10 text-red-500 border-red-500/20 mb-4 px-3 py-1 text-[10px] uppercase font-black tracking-widest">
+                  {renderTranslation("commission.badge")}
+                </Badge>
+                <h2 className="text-2xl md:text-4xl font-black text-white mb-4 tracking-tighter">
+                  {renderTranslation("commission.title")}
                 </h2>
-                <p className="text-gray-400 mb-6">
-                  เราพร้อมออกแบบและพัฒนา UI ตามความต้องการของคุณ 
-                  ด้วยทีมงานมืออาชีพที่มีประสบการณ์
+                <p className="text-gray-400 text-base mb-8 leading-relaxed">
+                  {renderTranslation("commission.desc")}
                 </p>
 
                 {/* Benefits */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
                   {benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
-                      <span className="text-sm text-gray-300">{benefit}</span>
+                    <div key={index} className="flex items-center gap-3 group/item">
+                      <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 group-hover/item:bg-red-500 group-hover/item:border-red-500 transition-all duration-300">
+                        <CheckCircle className="w-3.5 h-3.5 text-red-500 group-hover/item:text-white transition-colors" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-300 group-hover/item:text-white transition-colors">{benefit}</span>
                     </div>
                   ))}
                 </div>
 
                 <Link href="/commission">
-                  <Button size="lg" className="group">
-                    สั่งทำ UI เลย
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  <Button size="xl" className="group bg-red-600 hover:bg-red-500 text-white font-black h-12 px-8 rounded-xl shadow-xl shadow-red-600/20 transition-all text-sm">
+                    <span>{renderTranslation("commission.cta")}</span>
+                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
               </div>

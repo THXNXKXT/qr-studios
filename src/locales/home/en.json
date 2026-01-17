@@ -1,0 +1,543 @@
+{
+  "hero": {
+    "badge": "High-Quality Script & UI Hub",
+    "title_1": "Elevate",
+    "title_2": "Your Server",
+    "description": "Premium collection of Scripts and UI for FiveM, curated by professionals for a superior gaming experience.",
+    "cta_shop": "Start Shopping",
+    "cta_ui": "UI Services",
+    "handpicked": "Handpicked Selection",
+    "featured_products": "Featured Products",
+    "featured_desc": "Popular Scripts and UI designed with care. Guaranteed quality and satisfaction from real users.",
+    "view_all_products": "View All Products",
+    "flash_sale": {
+      "title": "Big Sale",
+      "up_to": "Up to",
+      "desc": "Exclusive offers for members only! Grab premium scripts and UI at prices you won't find anywhere else.",
+      "ends_in": "Ends In:",
+      "reviews": "Reviews",
+      "in_stock": "In Stock",
+      "limited_stock": "Only {{count}} left",
+      "unlimited": "UNLIMITED",
+      "limited": "LIMITED STOCK",
+      "add_to_cart": "Add to Cart",
+      "view_all_promotions": "View All Promotions"
+    },
+    "stats": {
+      "visitors": "Visitors",
+      "products": "Products",
+      "licenses": "Licenses",
+      "members": "Members"
+    },
+    "team": {
+      "creative_force": "The Creative Force",
+      "title_1": "The Minds Behind",
+      "title_2": "The Success of",
+      "desc": "We are a high-quality team combining creativity and international development skills, dedicated to delivering the best results for all our clients."
+    },
+    "commission": {
+      "badge": "Custom Solutions",
+      "title": "Need a Custom UI?",
+      "desc": "Turn your ideas into reality with our professional design team. We are ready to create unique UI that perfectly fits your server's needs.",
+      "cta": "Start Your Project",
+      "benefits": {
+        "custom": "Custom Design",
+        "framework": "All Frameworks Supported",
+        "unlimited": "Unlimited Revisions",
+        "ontime": "On-time Delivery"
+      }
+    },
+    "announcement": {
+      "auto_play": "Auto Play",
+      "pause_auto_play": "Pause Auto Play",
+      "check_now": "Check Now",
+      "dont_show_today": "Don't show again today"
+    }
+  },
+  "products": {
+    "title_1": "Discover",
+    "title_2": "Script & UI",
+    "title_3": "Elevate Your Server",
+    "hero_badge": "Premium Quality Products",
+    "hero_desc": "The best solutions for your FiveM server. Guaranteed quality with professional updates and support.",
+    "search_placeholder": "Search for products...",
+    "featured_badge": "Special Recommendation",
+    "start_at": "Starting at",
+    "buy_now": "Buy Now",
+    "no_products": "No products found",
+    "no_products_desc": "Try searching with different keywords or change categories.",
+    "view_all": "View All Products",
+    "categories": {
+      "all": "All",
+      "script": "Script",
+      "ui": "UI",
+      "bundle": "Bundle"
+    },
+    "sort": {
+      "newest": "Newest",
+      "popular": "Popular",
+      "price_low": "Price: Low to High",
+      "price_high": "Price: High to Low"
+    },
+    "card": {
+      "new": "New",
+      "add_to_cart": "Add to Cart"
+    },
+    "recently_viewed": "Recently Viewed",
+    "reviews": {
+      "title": "User Reviews",
+      "write_review": "Write Review",
+      "verified_purchase": "Verified Purchase",
+      "helpful": "Helpful",
+      "no_reviews": "No reviews yet",
+      "be_first": "Be the first to review",
+      "review_hint": "Only customers who purchased this product can leave a review.",
+      "form_title": "Write Your Review",
+      "rating_label": "Rating",
+      "comment_label": "Comment",
+      "comment_placeholder": "Share your experience...",
+      "submitting": "Submitting...",
+      "submit": "Submit Review",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "breadcrumb_home": "Home",
+      "breadcrumb_products": "Products",
+      "no_image": "No Product Image Available",
+      "reviews_count": "Reviews",
+      "earn_points": "Earn Points",
+      "features_title": "Features:",
+      "downloading": "Preparing files...",
+      "download_btn": "Download Product",
+      "buy_now_btn": "Buy Now",
+      "add_to_cart_btn": "Add to Cart",
+      "related_products": "Related Products",
+      "trust": {
+        "secure": "100% Secure",
+        "secure_desc": "Payment via Stripe",
+        "instant": "Instant Delivery",
+        "instant_desc": "After successful payment",
+        "update": "Free Updates",
+        "update_desc": "Lifetime access",
+        "support": "Support",
+        "support_desc": "Via Discord 24/7"
+      },
+      "errors": {
+        "download_failed": "Cannot download file",
+        "download_error": "An error occurred during download",
+        "review_failed": "Cannot submit review",
+        "review_error": "An error occurred while submitting review",
+        "not_found": "Product not found",
+        "back_to_products": "Back to products"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "refresh": "Refresh Data",
+    "welcome": "Welcome back! Here's an overview of your latest activity.",
+    "menu": {
+      "profile": "Profile",
+      "orders": "Orders",
+      "licenses": "Licenses",
+      "points": "Points",
+      "topup": "Top Up",
+      "topup_history": "Top Up History",
+      "settings": "Settings"
+    },
+    "stats": {
+      "orders": "Orders",
+      "licenses": "Licenses",
+      "total_spent": "Total Spent",
+      "points": "Points"
+    },
+    "sidebar": {
+      "member_since": "Member for",
+      "today": "Today",
+      "days": "days"
+    },
+    "tier": {
+      "progress_title": "Membership Progress",
+      "current_tier": "Current Tier:",
+      "next_tier_prefix": "Spend",
+      "next_tier_suffix": "more to become",
+      "progress": "Progress",
+      "discount": "{{percent}}% Off",
+      "no_discount": "No Disc."
+    },
+    "recent": {
+      "topups": "Recent Top Ups",
+      "orders": "Recent Orders",
+      "licenses": "My Licenses"
+    },
+    "orders": {
+      "title": "Order History",
+      "back": "Back to Dashboard",
+      "desc": "Check and track the status of all your orders",
+      "search_placeholder": "Search by order ID...",
+      "no_orders": "No orders found",
+      "no_orders_desc": "You don't have any orders yet, or try another search term.",
+      "shop_now": "Shop Now",
+      "order_id": "Order ID",
+      "status": {
+        "completed": "Completed",
+        "pending": "Pending",
+        "cancelled": "Cancelled"
+      },
+      "details": "Details",
+      "total": "Total",
+      "items_count": "{{count}} items"
+    },
+    "licenses": {
+      "title": "My Licenses",
+      "back": "Back to Dashboard",
+      "desc": "Manage and download your owned scripts",
+      "search_placeholder": "Search by product name or License Key...",
+      "no_licenses": "No licenses found",
+      "no_licenses_desc": "You don't own any licenses yet, or try another search term.",
+      "shop_now": "Shop Now",
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "download": "Download",
+      "view_product": "View Product Details",
+      "ip_whitelist": "IP Whitelist (For Server Usage)",
+      "ip_placeholder": "Enter IP Address (e.g. 1.2.3.4, 5.6.7.8)",
+      "edit_ip": "Edit IP",
+      "save_ip": "Save",
+      "reset_ip": "Reset IP",
+      "ip_limit_hint": "* Up to 5 IPs allowed, separated by commas (,)",
+      "confirm_reset_title": "Confirm IP Reset",
+      "confirm_reset_msg": "Are you sure you want to clear the IP Whitelist? This action cannot be undone.",
+      "copy_key": "Copy License Key",
+      "show_key": "Show",
+      "hide_key": "Hide"
+    },
+    "topup_page": {
+      "title": "Top Up",
+      "back": "Back to Dashboard",
+      "desc": "Add credits to your account to start shopping",
+      "min_amount": "Minimum top up is 100 THB",
+      "custom_amount_placeholder": "Enter amount to top up",
+      "bonus_msg": "You will receive a bonus of ฿{{amount}}! (Total ฿{{total}})",
+      "payment_method_title": "Select Payment Method",
+      "payment_method_desc": "Supports Credit/Debit cards and PromptPay",
+      "summary": "Transaction Summary",
+      "amount_to_topup": "Top up amount",
+      "special_bonus": "Special Bonus",
+      "total_receive": "Total to receive",
+      "pay_now": "Pay {{amount}}",
+      "processing": "Processing...",
+      "secure_msg": "Secure payment processing by Stripe"
+    },
+    "points_page": {
+      "title": "Points History",
+      "back": "Back to Dashboard",
+      "desc": "Check all your earned and redeemed points history",
+      "search_placeholder": "Search by transaction ID...",
+      "stats": {
+        "balance": "Current Balance",
+        "total_earned": "Total Earned",
+        "total_redeemed": "Total Redeemed"
+      },
+      "no_transactions": "No point transactions found",
+      "no_transactions_desc": "You don't have any points history yet.",
+      "types": {
+        "earned": "Earned from purchase",
+        "redeemed": "Redeemed for discount",
+        "bonus": "System bonus",
+        "default": "Points transaction"
+      },
+      "status": {
+        "earned": "EARNED",
+        "redeemed": "REDEEMED"
+      },
+      "payment_amount": "Payment: {{amount}}"
+    },
+    "settings_page": {
+      "title": "Account Settings",
+      "back": "Back to Dashboard",
+      "desc": "Manage your account info and settings",
+      "profile": {
+        "title": "Profile",
+        "avatar_hint": "Profile picture from Discord",
+        "username": "Username",
+        "email": "Email",
+        "discord_id": "Discord ID",
+        "sync_hint": "Synced from Discord, cannot be edited"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "items": {
+          "orderUpdates": {
+            "label": "Order Updates",
+            "desc": "Receive notifications when order status changes"
+          },
+          "promotions": {
+            "label": "Promotions",
+            "desc": "Receive special offers and discounts"
+          },
+          "newProducts": {
+            "label": "New Products",
+            "desc": "Receive notifications when new products are added"
+          },
+          "newsletter": {
+            "label": "Newsletter",
+            "desc": "Receive news and updates from us"
+          }
+        }
+      },
+      "security": {
+        "title": "Security",
+        "discord_connected": "Discord Connected",
+        "discord_status": "Your account is connected to Discord",
+        "connected": "Connected",
+        "member_since": "Member since"
+      },
+      "danger_zone": {
+        "title": "Danger Zone",
+        "delete_account": "Delete Account",
+        "delete_desc": "Permanently delete account and all data"
+      },
+      "save_success": "Saved successfully",
+      "saving": "Saving...",
+      "save_changes": "Save Changes",
+      "error_saving": "Error saving settings"
+    }
+  },
+  "misc": {
+    "contact": {
+      "title": "Ready to Consult",
+      "title_highlight": "and Help You",
+      "hero_badge": "Get in Touch",
+      "hero_desc": "Have questions or need more info? Our professional team is ready to serve you 24/7.",
+      "methods": {
+        "discord": {
+          "title": "Discord",
+          "desc": "Contact via Discord Server",
+          "btn": "Join Discord"
+        },
+        "email": {
+          "title": "Email",
+          "desc": "Send us an email",
+          "btn": "Send Email"
+        },
+        "line": {
+          "title": "LINE",
+          "desc": "Chat on LINE",
+          "btn": "Add LINE"
+        }
+      },
+      "form": {
+        "title": "Send us a Message",
+        "desc": "Questions or issues? Our team is here to support you.",
+        "name": "Your Name",
+        "name_placeholder": "Enter your full name",
+        "email": "Contact Email",
+        "email_placeholder": "example@email.com",
+        "subject": "Subject",
+        "subject_placeholder": "e.g. Product Inquiry, Technical Issue",
+        "message": "Message Details",
+        "message_placeholder": "Describe your inquiry...",
+        "submit": "Send Message",
+        "submitting": "Sending...",
+        "success_title": "Message Sent!",
+        "success_desc": "Thank you for contacting us. We will review and get back to you via email as soon as possible.",
+        "send_new": "Send New Message"
+      },
+      "info": {
+        "hours_title": "Business Hours",
+        "hours_badge": "Available Hours",
+        "hours_hint": "* Outside business hours, feel free to leave a message on Discord or via the contact form. We'll get back to you as soon as we're open.",
+        "location_title": "Location & Coverage",
+        "location_badge": "Location & Coverage",
+        "location_desc": "We provide full online services, covering both Thailand and internationally. Consult and follow up on tasks digitally 24/7.",
+        "links_title": "Quick Links"
+      }
+    },
+    "faq": {
+      "title": "FAQ",
+      "subtitle": "Frequently Asked Questions",
+      "desc": "Common questions about our services. If you have other inquiries, feel free to ask.",
+      "back_home": "Back to Home",
+      "no_answer_title": "Can't find what you're looking for?",
+      "no_answer_desc": "Our support team is always ready to help via Discord 24/7.",
+      "join_discord": "Join Our Discord",
+      "contact_support": "Contact Support"
+    },
+    "announcements": {
+      "title": "Announcements",
+      "desc": "Follow the latest news and updates from QR STUDIO",
+      "no_announcements": "No announcements at this time",
+      "badge": "Announcement",
+      "read_more": "Read More"
+    }
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "subtitle": "Last Updated: December 1, 2024",
+      "back": "Back to Home",
+      "hero_desc": "Please read these terms and conditions carefully before using QR Studio services. By accessing or using our website, you agree to be bound by these terms.",
+      "contact_hint": "If you have any questions about the Terms of Service, contact us at",
+      "sections": {
+        "s1": {
+          "title": "1. Acceptance of Terms",
+          "content": "By accessing and using the QR Studio website, you accept and agree to be bound by these terms and conditions. If you do not agree with any part of these terms, you should not use our services."
+        },
+        "s2": {
+          "title": "2. Description of Service",
+          "content": "QR Studio provides Script and UI sales for FiveM, including custom UI services. All products are digital goods delivered via a License Key system."
+        },
+        "s3": {
+          "title": "3. User Account",
+          "content": "You must create an account via Discord to use our services. You are responsible for maintaining the security of your account and password. QR Studio is not liable for any loss or damage resulting from your failure to comply with this security obligation."
+        },
+        "s4": {
+          "title": "4. Purchase and Payment",
+          "content": "All purchases are processed via Stripe or account balance. All prices are in Thai Baht (THB) and include VAT. Upon successful payment, you will receive your License Key via email and in your Dashboard."
+        },
+        "s5": {
+          "title": "5. License and Usage",
+          "content": "Purchased licenses are for personal use or single server use only. Redistribution, resale, or sharing of License Keys is strictly prohibited. Violation may result in license termination."
+        },
+        "s6": {
+          "title": "6. Refund Policy",
+          "content": "As our products are digital, we do not offer refunds once the License Key has been delivered. However, if a product is defective or does not function as described, please contact support within 7 days."
+        },
+        "s7": {
+          "title": "7. Intellectual Property",
+          "content": "All products sold on QR Studio are the intellectual property of QR Studio or their authorized creators. Reproduction, distribution, or modification without written permission is prohibited."
+        },
+        "s8": {
+          "title": "8. Limitation of Liability",
+          "content": "QR Studio does not warrant that the service will be error-free or uninterrupted. We are not liable for any indirect, special, or consequential damages."
+        },
+        "s9": {
+          "title": "9. Changes to Terms",
+          "content": "We reserve the right to modify these terms at any time. Changes take effect immediately upon posting on the website. Continued use after changes constitutes acceptance of the new terms."
+        },
+        "s10": {
+          "title": "10. Contact",
+          "content": "If you have questions regarding these terms, please contact us via Discord or email at support@qrstudio.com"
+        }
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "subtitle": "Last Updated: December 1, 2024",
+      "hero_desc": "QR Studio prioritizes your data security and privacy. This policy explains how we collect, use, and protect your information transparently.",
+      "contact_hint": "For further questions, contact our legal department at",
+      "sections": {
+        "s1": {
+          "title": "1. Information We Collect",
+          "content": "We collect information you provide directly, such as username, email, and Discord data when creating an account, as well as transaction data when purchasing products."
+        },
+        "s2": {
+          "title": "2. How We Use Information",
+          "content": "We use your information to: provide and improve our platform, process transactions, send notifications and updates, respond to inquiries and provide support, and prevent fraud/ensure security."
+        },
+        "s3": {
+          "title": "3. Data Sharing",
+          "content": "We do not sell or rent your personal information. We may share data with trusted service providers (e.g., Stripe for payments) to facilitate our services."
+        },
+        "s4": {
+          "title": "4. Data Security",
+          "content": "We use appropriate security measures to protect your data, including SSL encryption, password hashing, and access controls."
+        },
+        "s5": {
+          "title": "5. Cookies and Tracking",
+          "content": "We use cookies to improve your experience, maintain login sessions, and analyze website usage. You can disable cookies in your browser, though it may affect some functions."
+        },
+        "s6": {
+          "title": "6. Your Rights",
+          "content": "You have the right to: access your personal data, correct inaccurate data, request deletion, and opt-out of marketing communications."
+        },
+        "s7": {
+          "title": "7. Data Retention",
+          "content": "We retain your data as long as necessary for the purposes collected or as required by law. Transaction data is kept for accounting and tax purposes."
+        },
+        "s8": {
+          "title": "8. Third-Party Services",
+          "content": "Our website may contain links to third-party services. We are not responsible for their privacy policies. Please read their policies before using their services."
+        },
+        "s9": {
+          "title": "9. Policy Changes",
+          "content": "We may update this privacy policy from time to time. Changes will be posted on this page with an updated date. Continued use after changes constitutes acceptance of the new policy."
+        },
+        "s10": {
+          "title": "10. Contact Us",
+          "content": "If you have questions about this privacy policy, please contact us at privacy@qrstudio.com or via Discord."
+        }
+      }
+    },
+    "license": {
+      "title": "License Policy",
+      "subtitle": "License Usage Policy",
+      "hero_desc": "To ensure fair service and maintain software quality, QR Studio hereby states the License policy and agreement for all customers as follows:",
+      "protection_title": "Rights Protection",
+      "protection_desc": "QR Studio reserves the right to modify these terms at any time without prior notice. However, we will post significant changes on our website and Discord.",
+      "sections": {
+        "s1": {
+          "title": "1. Usage Rights",
+          "content": "When you purchase a product from QR Studio, you receive a license to use the software on specified servers only. This license is personal and non-transferable."
+        },
+        "s2": {
+          "title": "2. Usage Restrictions",
+          "content": "Modification of core logic for resale or redistribution is prohibited without written permission from QR Studio."
+        },
+        "s3": {
+          "title": "3. IP Whitelist System",
+          "content": "Most of our scripts are bound to an IP Whitelist for security. You can manage IP changes via your Dashboard according to the specified quota."
+        },
+        "s4": {
+          "title": "4. Copyright Infringement",
+          "content": "Attempts to Crack, Deobfuscate, or Leak products will result in immediate license revocation and a permanent ban from all services without refund."
+        },
+        "s5": {
+          "title": "5. Warranty and Updates",
+          "content": "We continuously update products to support the latest framework versions (ESX/QB). You receive lifetime free updates for the purchased product."
+        }
+      }
+    },
+    "refund": {
+      "title": "Refund Policy",
+      "subtitle": "Refund Policy",
+      "important": "Important: No refunds are provided once a product is confirmed and delivered.",
+      "contact_hint": "If you have questions about this policy, please contact Discord Support before purchasing.",
+      "sections": {
+        "s1": {
+          "title": "1. No Refund Policy",
+          "content": "As our products are digital goods and software accessible immediately after payment, we have a strict 'No Refund Policy' once an order is confirmed and delivered to your account."
+        },
+        "s2": {
+          "title": "2. Order Confirmation",
+          "content": "Please verify product details, supported framework versions, and system requirements thoroughly before payment. Purchasing constitutes acceptance of these terms."
+        },
+        "s3": {
+          "title": "3. Product Issues",
+          "content": "If a product does not function as specified or contains bugs, we will provide technical support and fixes until the product meets its stated features. Contact our support channels for assistance."
+        },
+        "s4": {
+          "title": "4. Exceptions",
+          "content": "Refunds are only considered in cases of payment system errors (e.g., double payment) or if we fail to deliver the product within the specified timeframe."
+        }
+      }
+    }
+  },
+  "features": {
+    "script": {
+      "title": "Quality Script",
+      "desc": "Clean code, high performance"
+    },
+    "ui": {
+      "title": "Beautiful UI",
+      "desc": "Modern design, user-friendly"
+    },
+    "update": {
+      "title": "Free Updates",
+      "desc": "Lifetime updates included"
+    }
+  }
+}

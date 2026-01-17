@@ -18,12 +18,12 @@ interface ConfettiProps {
 
 const colors = [
   "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#3b82f6", // blue
-  "#8b5cf6", // purple
-  "#ec4899", // pink
+  "#dc2626", // red-600
+  "#991b1b", // red-800
+  "#f87171", // red-400
+  "#b91c1c", // red-700
+  "#7f1d1d", // red-900
+  "#fee2e2", // red-50
 ];
 
 export function Confetti({ isActive, duration = 3000 }: ConfettiProps) {
@@ -33,7 +33,7 @@ export function Confetti({ isActive, duration = 3000 }: ConfettiProps) {
   useEffect(() => {
     if (isActive) {
       // Generate confetti pieces
-      const newPieces: ConfettiPiece[] = Array.from({ length: 50 }, (_, i) => ({
+      const newPieces: ConfettiPiece[] = Array.from({ length: Math.max(0, 50) }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         color: colors[Math.floor(Math.random() * colors.length)],

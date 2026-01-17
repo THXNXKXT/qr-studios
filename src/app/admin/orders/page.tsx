@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -10,251 +10,386 @@ import {
   Clock,
   XCircle,
   ShoppingCart,
+  Package,
+  Loader2,
 } from "lucide-react";
-import { Card, Button, Input, Badge } from "@/components/ui";
+import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { OrderDetailModal } from "@/components/admin";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
+import { adminApi } from "@/lib/api";
 
-type OrderStatus = "completed" | "pending" | "processing" | "cancelled";
+type OrderStatus = "COMPLETED" | "PENDING" | "PROCESSING" | "CANCELLED" | "REFUNDED";
 
 type Order = {
   id: string;
-  user: { name: string; email: string; discordId?: string };
-  products: { name: string; price: number; licenseKey?: string }[];
+  user: { id: string; username: string; email: string };
+  items: { product: { id: string; name: string }; price: number; quantity: number }[];
+  licenses?: { licenseKey: string; productId: string }[];
   total: number;
-  discount?: number;
-  promoCode?: string;
+  discount: number;
+  promoCode: string | null;
   status: OrderStatus;
   paymentMethod: string;
   paymentRef?: string;
-  date: Date;
+  createdAt: string;
+  updatedAt?: string;
 };
 
-// Mock orders
-const initialOrders: Order[] = [
-  {
-    id: "ORD-20241209-001",
-    user: { name: "GamerTH", email: "gamer@example.com" },
-    products: [{ name: "Advanced Inventory System", price: 599 }],
-    total: 599,
-    status: "completed",
-    paymentMethod: "Stripe",
-    date: new Date("2024-12-09T14:30:00"),
-  },
-  {
-    id: "ORD-20241209-002",
-    user: { name: "FiveMDev", email: "dev@example.com" },
-    products: [{ name: "Modern HUD UI", price: 399 }],
-    total: 399,
-    status: "completed",
-    paymentMethod: "Balance",
-    date: new Date("2024-12-09T12:15:00"),
-  },
-  {
-    id: "ORD-20241209-003",
-    user: { name: "ServerOwner", email: "owner@example.com" },
-    products: [
-      { name: "Vehicle Shop UI", price: 299 },
-      { name: "Phone UI", price: 349 },
-    ],
-    total: 648,
-    status: "pending",
-    paymentMethod: "Stripe",
-    date: new Date("2024-12-09T10:45:00"),
-  },
-  {
-    id: "ORD-20241208-004",
-    user: { name: "NewUser123", email: "new@example.com" },
-    products: [{ name: "Admin Panel", price: 799 }],
-    total: 799,
-    status: "processing",
-    paymentMethod: "Stripe",
-    date: new Date("2024-12-08T16:00:00"),
-  },
-  {
-    id: "ORD-20241208-005",
-    user: { name: "ProGamer", email: "pro@example.com" },
-    products: [{ name: "Complete Bundle", price: 1499 }],
-    total: 1499,
-    status: "cancelled",
-    paymentMethod: "Stripe",
-    date: new Date("2024-12-08T09:30:00"),
-  },
-];
-
-const statusConfig = {
-  completed: { icon: CheckCircle, label: "สำเร็จ", color: "success", bg: "bg-green-500/20", text: "text-green-400" },
-  pending: { icon: Clock, label: "รอชำระ", color: "warning", bg: "bg-yellow-500/20", text: "text-yellow-400" },
-  processing: { icon: Clock, label: "กำลังดำเนินการ", color: "secondary", bg: "bg-blue-500/20", text: "text-blue-400" },
-  cancelled: { icon: XCircle, label: "ยกเลิก", color: "destructive", bg: "bg-red-500/20", text: "text-red-400" },
+const statusConfig: Record<string, { icon: any; label: string; bg: string; text: string }> = {
+  COMPLETED: { icon: CheckCircle, label: "สำเร็จ", bg: "bg-red-500/10", text: "text-red-400" },
+  PENDING: { icon: Clock, label: "รอชำระ", bg: "bg-red-900/20", text: "text-red-500/70" },
+  PROCESSING: { icon: Clock, label: "กำลังดำเนินการ", bg: "bg-red-500/5", text: "text-red-300" },
+  CANCELLED: { icon: XCircle, label: "ยกเลิก", bg: "bg-white/5", text: "text-gray-500" },
+  REFUNDED: { icon: XCircle, label: "คืนเงิน", bg: "bg-amber-500/10", text: "text-amber-400" },
 };
 
 export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || order.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await adminApi.getOrders({
+        status: filterStatus === "all" ? undefined : filterStatus,
+        search: searchQuery || undefined
+      });
+      if (data && (data as any).success) {
+        setOrders((data as any).data || []);
+        setCurrentPage(1); // Reset to page 1 on search/filter change
+      }
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterStatus, searchQuery]);
 
-  const handleViewOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setIsDetailOpen(true);
-  };
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
-  const handleUpdateStatus = async (orderId: string, status: OrderStatus) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
-  };
+  const handleViewOrder = useCallback(async (order: Order) => {
+    try {
+      const { data: res } = await adminApi.getOrderById(order.id);
+      if (res && (res as any).success) {
+        setSelectedOrder((res as any).data);
+        setIsDetailOpen(true);
+      }
+    } catch (err) {
+      console.error("Failed to fetch order details:", err);
+      // Fallback to basic data if full fetch fails
+      setSelectedOrder(order);
+      setIsDetailOpen(true);
+    }
+  }, []);
+
+  const handleUpdateStatus = useCallback(async (orderId: string, status: string) => {
+    try {
+      const res = await adminApi.updateOrderStatus(orderId, status);
+      if (res.data && (res.data as any).success) {
+        await fetchOrders();
+        // If the modal is open and showing the updated order, update it too
+        if (selectedOrder?.id === orderId) {
+          const { data: detailRes } = await adminApi.getOrderById(orderId);
+          if (detailRes && (detailRes as any).success) {
+            setSelectedOrder((detailRes as any).data);
+          }
+        }
+      } else {
+        alert((res.data as any)?.error || "Failed to update order status");
+      }
+    } catch (err) {
+      console.error("Error updating order status:", err);
+      alert("An error occurred while updating the order status");
+    }
+  }, [fetchOrders, selectedOrder]);
+
+  const handleResendReceipt = useCallback(async (orderId: string) => {
+    try {
+      const res = await adminApi.resendOrderReceipt(orderId);
+      if (res.data && (res.data as any).success) {
+        alert("Receipt resent successfully");
+      } else {
+        alert((res.data as any)?.error || "Failed to resend receipt");
+      }
+    } catch (err) {
+      console.error("Error resending receipt:", err);
+      alert("An error occurred while resending the receipt");
+    }
+  }, []);
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return orders.slice(startIndex, startIndex + itemsPerPage);
+  }, [orders, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+
+  const handleExport = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      // Fetch more orders for export (e.g., 1000 items)
+      const { data } = await adminApi.getOrders({
+        status: filterStatus === "all" ? undefined : filterStatus,
+        search: searchQuery || undefined,
+        limit: 1000
+      });
+
+      if (data && (data as any).success) {
+        const exportData = (data as any).data || [];
+        if (exportData.length === 0) {
+          alert("No data to export");
+          return;
+        }
+
+        // CSV Headers
+        const headers = [
+          "Order ID",
+          "Date",
+          "Customer Name",
+          "Customer Email",
+          "Products",
+          "Total",
+          "Status",
+          "Payment Method"
+        ];
+
+        // Format data for CSV
+        const rows = exportData.map((order: Order) => [
+          `#${order.id}`,
+          new Date(order.createdAt).toLocaleString("th-TH"),
+          order.user.username,
+          order.user.email,
+          order.items.map(item => `${item.product.name} (x${item.quantity})`).join("; "),
+          order.total,
+          order.status,
+          order.paymentMethod
+        ]);
+
+        // Construct CSV content
+        const csvContent = [
+          headers.join(","),
+          ...rows.map((row: any[]) => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        ].join("\n");
+
+        // Create blob and download
+        const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (err) {
+      console.error("Failed to export orders:", err);
+      alert("Failed to export orders. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [filterStatus, searchQuery]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
+      
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">จัดการคำสั่งซื้อ</h1>
-          <p className="text-gray-400">ดูและจัดการคำสั่งซื้อทั้งหมด</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Order Management</h1>
+          <p className="text-gray-400 mt-1">ติดตามและบริหารจัดการรายการสั่งซื้อทั้งหมดในระบบ</p>
         </div>
-        <Button variant="secondary">
-          <Download className="w-4 h-4" />
-          Export
+        <Button 
+          onClick={handleExport}
+          disabled={isExporting}
+          className="bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300 disabled:opacity-50"
+        >
+          {isExporting ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-5 h-5 mr-2" />
+          )}
+          {isExporting ? "Exporting..." : "Export Data"}
         </Button>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+      <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-md shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder="ค้นหาคำสั่งซื้อ, ผู้ใช้..."
+              placeholder="ค้นหา Order ID, ชื่อลูกค้า หรืออีเมล..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
             />
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {["all", "completed", "pending", "processing", "cancelled"].map((status) => (
-              <Button
+          <div className="flex flex-wrap gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+            {["all", "COMPLETED", "PENDING", "PROCESSING", "CANCELLED", "REFUNDED"].map((status) => (
+              <button
                 key={status}
-                variant={filterStatus === status ? "default" : "ghost"}
-                size="sm"
                 onClick={() => setFilterStatus(status)}
+                className={cn(
+                  "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
+                  filterStatus === status 
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                    : "text-gray-500 hover:text-white hover:bg-white/5"
+                )}
               >
-                {status === "all" ? "ทั้งหมด" : statusConfig[status as keyof typeof statusConfig]?.label}
-              </Button>
+                {status === "all" ? "All Orders" : statusConfig[status]?.label || status}
+              </button>
             ))}
           </div>
         </div>
       </Card>
 
       {/* Orders Table */}
-      <Card className="overflow-hidden">
+      <Card className="border-white/5 bg-white/2 backdrop-blur-md shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-4 text-sm font-medium text-gray-400">คำสั่งซื้อ</th>
-                <th className="text-left p-4 text-sm font-medium text-gray-400">ผู้ใช้</th>
-                <th className="text-left p-4 text-sm font-medium text-gray-400">สินค้า</th>
-                <th className="text-left p-4 text-sm font-medium text-gray-400">ยอดรวม</th>
-                <th className="text-left p-4 text-sm font-medium text-gray-400">สถานะ</th>
-                <th className="text-left p-4 text-sm font-medium text-gray-400">วันที่</th>
-                <th className="text-right p-4 text-sm font-medium text-gray-400">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order, index) => {
-                const status = statusConfig[order.status as keyof typeof statusConfig];
-                const StatusIcon = status.icon;
-                return (
-                  <motion.tr
-                    key={order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                  >
-                    <td className="p-4">
-                      <p className="font-mono text-sm text-white">{order.id}</p>
-                      <p className="text-xs text-gray-500">{order.paymentMethod}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm text-white">{order.user.name}</p>
-                      <p className="text-xs text-gray-500">{order.user.email}</p>
-                    </td>
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        {order.products.slice(0, 2).map((p, i) => (
-                          <p key={i} className="text-sm text-gray-300">{p.name}</p>
-                        ))}
-                        {order.products.length > 2 && (
-                          <p className="text-xs text-gray-500">+{order.products.length - 2} รายการ</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-semibold text-red-400">{formatPrice(order.total)}</p>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant={status.color as any}>{status.label}</Badge>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm text-gray-400">
-                        {order.date.toLocaleDateString("th-TH")}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {order.date.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
-                      </p>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order)}>
-                          <Eye className="w-4 h-4" />
-                          ดู
-                        </Button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="w-10 h-10 animate-spin text-red-600" />
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading orders...</p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
+                  <th className="px-6 py-5 text-left border-b border-white/5">Order ID</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">Customer</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">Products</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">Total</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">Status</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">Date</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {paginatedOrders.map((order, index) => {
+                  const status = statusConfig[order.status] || statusConfig.PENDING;
+                  return (
+                    <motion.tr
+                      key={order.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="hover:bg-white/2 transition-colors group cursor-pointer"
+                      onClick={() => handleViewOrder(order)}
+                    >
+                      <td className="px-6 py-6">
+                        <p className="font-mono text-sm font-bold text-white group-hover:text-red-400 transition-colors">#{order.id.substring(0, 8)}</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">{order.paymentMethod}</p>
+                      </td>
+                      <td className="px-6 py-6">
+                        <p className="font-bold text-white group-hover:text-red-400 transition-colors">{order.user.username}</p>
+                        <p className="text-[10px] text-gray-500 font-black tracking-tighter opacity-60">{order.user.email}</p>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="space-y-1">
+                          {order.items.slice(0, 2).map((item, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <Package className="w-3 h-3 text-red-500/50" />
+                              <p className="text-sm text-gray-300 font-medium truncate max-w-[150px]">{item.product.name}</p>
+                            </div>
+                          ))}
+                          {order.items.length > 2 && (
+                            <p className="text-[10px] text-gray-500 uppercase font-black ml-5">+{order.items.length - 2} more items</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <p className="font-black text-red-500 text-lg">{formatPrice(order.total)}</p>
+                      </td>
+                      <td className="px-6 py-6">
+                        <Badge className={cn(
+                          "px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase tracking-widest transition-all duration-500",
+                          status.bg,
+                          status.text
+                        )}>
+                          {status.label}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-300 font-bold">{new Date(order.createdAt).toLocaleDateString("th-TH")}</span>
+                          <span className="text-[10px] text-gray-500 uppercase font-black">{new Date(order.createdAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleViewOrder(order)}
+                            className="rounded-xl px-4 hover:bg-red-500/10 hover:text-red-400 font-black uppercase tracking-widest text-[10px] transition-all"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </Button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {filteredOrders.length === 0 && (
-          <div className="p-12 text-center">
-            <ShoppingCart className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">ไม่พบคำสั่งซื้อ</p>
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-white/5 bg-white/2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+
+        {!loading && orders.length === 0 && (
+          <div className="p-20 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
+            <ShoppingCart className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No orders found</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">ลองเปลี่ยนเงื่อนไขการค้นหาหรือรอคำสั่งซื้อใหม่</p>
           </div>
         )}
       </Card>
 
-      {/* Order Detail Modal */}
       <OrderDetailModal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         order={selectedOrder ? {
           ...selectedOrder,
-          items: selectedOrder.products.map((p, i) => ({
-            id: `item-${i}`,
-            productName: p.name,
-            price: p.price,
-            quantity: 1,
-            licenseKey: p.licenseKey,
+          items: selectedOrder.items.map((item: any, i: number) => ({
+            id: item.id || `item-${i}`,
+            productId: item.productId,
+            productName: item.product?.name || "Unknown Product",
+            productImage: item.product?.images?.[0],
+            price: item.price,
+            quantity: item.quantity,
+            licenseKeys: (selectedOrder as any).licenses
+              ?.filter((l: any) => l.productId === item.productId)
+              .map((l: any) => l.licenseKey)
           })),
-          discount: selectedOrder.discount || 0,
-          createdAt: selectedOrder.date,
-          updatedAt: selectedOrder.date,
+          createdAt: new Date(selectedOrder.createdAt),
+          updatedAt: new Date(selectedOrder.updatedAt || selectedOrder.createdAt),
         } : null}
-        onUpdateStatus={(orderId, status) => handleUpdateStatus(orderId, status as OrderStatus)}
+        onUpdateStatus={(orderId, status) => handleUpdateStatus(orderId, status)}
+        onResendReceipt={handleResendReceipt}
       />
     </div>
   );

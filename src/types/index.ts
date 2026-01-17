@@ -6,6 +6,7 @@ export interface Product {
   price: number;
   originalPrice?: number;
   category: ProductCategory;
+  thumbnail?: string;
   images: string[];
   features: string[];
   tags: string[];
@@ -14,11 +15,21 @@ export interface Product {
   stock: number;
   isNew?: boolean;
   isFeatured?: boolean;
+  isFlashSale?: boolean;
+  flashSalePrice?: number;
+  flashSaleEnds?: Date | string;
+  rewardPoints?: number;
+  expectedPoints?: number;
+  isDownloadable?: boolean;
+  downloadUrl?: string;
+  downloadKey?: string;
+  version?: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type ProductCategory = "script" | "ui" | "bundle";
+export type ProductCategory = "SCRIPT" | "UI" | "BUNDLE";
 
 // User Types
 export interface User {
@@ -94,6 +105,17 @@ export interface SiteStats {
   totalMembers: number;
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  media: string[];
+  isActive: boolean;
+  startsAt?: Date;
+  endsAt?: Date;
+  createdAt: Date;
+}
+
 // Notification Types
 export interface Notification {
   id: string;
@@ -104,4 +126,4 @@ export interface Notification {
   createdAt: Date;
 }
 
-export type NotificationType = "update" | "promotion" | "system" | "order";
+export type NotificationType = "UPDATE" | "PROMOTION" | "SYSTEM" | "ORDER";

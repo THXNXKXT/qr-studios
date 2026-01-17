@@ -71,7 +71,7 @@ export function useProducts() {
   const getProducts = useCallback(
     (params?: { category?: string; search?: string; sort?: string; page?: number }) => {
       const searchParams = new URLSearchParams();
-      if (params?.category) searchParams.set("category", params.category);
+      if (params?.category) searchParams.set("category", params.category.toUpperCase());
       if (params?.search) searchParams.set("search", params.search);
       if (params?.sort) searchParams.set("sort", params.sort);
       if (params?.page) searchParams.set("page", params.page.toString());
@@ -93,7 +93,7 @@ export function useOrders() {
   const api = useApi();
 
   const getOrders = useCallback(
-    () => api.execute("/api/users/me/orders"),
+    () => api.execute("/api/users/orders"),
     [api]
   );
 
@@ -231,13 +231,13 @@ export function useUser() {
   const api = useApi();
 
   const getProfile = useCallback(
-    () => api.execute("/api/users/me"),
+    () => api.execute("/api/users/profile"),
     [api]
   );
 
   const updateProfile = useCallback(
-    (data: { username?: string; email?: string }) =>
-      api.execute("/api/users/me", {
+    (data: { avatar?: string }) =>
+      api.execute("/api/users/profile", {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
@@ -245,7 +245,7 @@ export function useUser() {
   );
 
   const getBalance = useCallback(
-    () => api.execute("/api/users/me/balance"),
+    () => api.execute("/api/users/balance"),
     [api]
   );
 
@@ -256,18 +256,18 @@ export function useNotificationsApi() {
   const api = useApi();
 
   const getNotifications = useCallback(
-    () => api.execute("/api/users/me/notifications"),
+    () => api.execute("/api/users/notifications"),
     [api]
   );
 
   const markAsRead = useCallback(
     (id: string) =>
-      api.execute(`/api/users/me/notifications/${id}/read`, { method: "PATCH" }),
+      api.execute(`/api/users/notifications/${id}/read`, { method: "PATCH" }),
     [api]
   );
 
   const markAllAsRead = useCallback(
-    () => api.execute("/api/users/me/notifications/read-all", { method: "POST" }),
+    () => api.execute("/api/users/notifications/read-all", { method: "POST" }),
     [api]
   );
 

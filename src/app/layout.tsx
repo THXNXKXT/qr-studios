@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Kanit } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/providers";
+import { AuthProvider, I18nProvider } from "@/components/providers";
 
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -30,7 +30,10 @@ export const metadata: Metadata = {
   authors: [{ name: "QR STUDIO" }],
   creator: "QR STUDIO",
   icons: {
-    icon: "/images/Query.Design.png",
+    icon: [
+      { url: "/images/Query.Design.png" },
+      { url: "/favicon.png" }
+    ],
     shortcut: "/images/Query.Design.png",
     apple: "/images/Query.Design.png",
   },
@@ -64,6 +67,9 @@ export const viewport: Viewport = {
   themeColor: "#dc2626",
 };
 
+import { BackToTop } from "@/components/ui";
+import { LuckyWheelTrigger } from "@/components/lucky-wheel/LuckyWheelTrigger";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -72,9 +78,13 @@ export default function RootLayout({
   return (
     <html lang="th" className="dark">
       <body className={`${kanit.variable} font-sans antialiased`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            {children}
+            <BackToTop />
+            <LuckyWheelTrigger />
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );

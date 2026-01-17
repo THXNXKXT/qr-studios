@@ -7,6 +7,12 @@ export interface RecentlyViewedItem {
   price: number;
   image: string;
   category: string;
+  stock: number;
+  isFlashSale?: boolean;
+  flashSalePrice?: number;
+  flashSaleEnds?: Date | string;
+  rewardPoints?: number;
+  expectedPoints?: number;
   viewedAt: number;
 }
 

@@ -7,11 +7,13 @@
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Runtime:** Bun
+- **Library:** React 19
 - **Styling:** TailwindCSS v4
 - **UI Components:** Custom Glassmorphism Design
 - **State Management:** Zustand
 - **Animation:** Framer Motion
 - **Authentication:** NextAuth.js (Discord OAuth)
+- **Internationalization:** i18next (EN/TH)
 - **Payment:** Stripe
 - **Icons:** Lucide React
 - **Font:** Kanit (Thai/Latin)
@@ -24,12 +26,14 @@
 4. **Dashboard** - แสดงจำนวนผู้เข้าชม / สินค้า / License / สมาชิก
 5. **Notifications** - ระบบแจ้งเตือนการอัพเดท
 6. **Product Showcase** - หน้าโชว์สินค้าพร้อมระบบกรองและค้นหา
-7. **Mobile Responsive** - รองรับการแสดงผลบนมือถือ
-8. **Top-up System** - ระบบเติมเงิน (เตรียมไว้สำหรับ Backend)
-9. **Payment System** - ระบบชำระเงินผ่าน Stripe
-10. **Shopping Cart** - ระบบตะกร้าสินค้า
-11. **SEO Optimized** - ปรับแต่ง Meta tags และ Open Graph
-12. **Security** - ใช้ Stripe สำหรับการชำระเงินที่ปลอดภัย
+7. **Mobile Responsive** - รองรับการแสดงผลบนมือถือเต็มรูปแบบ
+8. **Multi-language** - รองรับ 2 ภาษา (ไทย/อังกฤษ)
+9. **Instant Download** - ระบบดาวน์โหลดสินค้าอัตโนมัติหลังชำระเงิน
+10. **Repurchase Flow** - ระบบซื้อซ้ำและจัดการ License
+11. **Payment System** - รองรับ Stripe และเติมเงิน (Credit)
+12. **Shopping Cart** - ระบบตะกร้าสินค้าที่ปลอดภัย
+13. **SEO Optimized** - ปรับแต่ง Meta tags และ Open Graph
+14. **CI/CD Pipeline** - ระบบตรวจสอบโค้ดและทดสอบอัตโนมัติ
 
 ## Getting Started
 
@@ -111,6 +115,14 @@ src/
 - **Primary Color:** Purple (#9333ea)
 - **Background:** Black (#050505)
 - **Font:** Kanit (Thai/Latin support)
+
+## CI/CD Pipeline
+
+โปรเจคนี้มีการตั้งค่า GitHub Actions สำหรับ:
+- **Linting:** ตรวจสอบมาตรฐานโค้ดด้วย ESLint
+- **Testing:** รัน Unit Test ทั้ง Frontend และ Backend
+- **Build:** ทดสอบการ Build เพื่อป้องกัน Error ก่อน Deploy
+- **Workflow:** รันอัตโนมัติเมื่อมีการ `push` หรือ `pull_request` ไปยัง `master`
 
 ## Scripts
 

@@ -171,8 +171,6 @@ export default function WebDesignPage() {
     },
   ], [t]);
 
-  if (!mounted) return null;
-
   const renderedServices = useMemo(() => services.map((service, index) => {
     const Icon = service.icon;
     return (
@@ -320,6 +318,8 @@ export default function WebDesignPage() {
       </Card>
     </motion.div>
   )), [portfolios, renderTranslation]);
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen pt-20">

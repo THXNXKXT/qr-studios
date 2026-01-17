@@ -19,11 +19,11 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Badge, WishlistButton, StockCounter, FlashSaleTimer } from "@/components/ui";
-import { 
-  ProductCard, 
-  RecentlyViewed, 
-  ReviewSection, 
-  ProductDetailSkeleton 
+import {
+  ProductCard,
+  RecentlyViewed,
+  ReviewSection,
+  ProductDetailSkeleton
 } from "@/components/product";
 import { useCartStore } from "@/store/cart";
 import { useRecentlyViewedStore } from "@/store/recently-viewed";
@@ -121,14 +121,14 @@ export default function ProductDetailPage() {
       if (data && (data as any).success) {
         const reviewsData = (data as any).data;
         setReviews(reviewsData || []);
-        
+
         // Calculate distribution
         const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         reviewsData.forEach((r: any) => {
           const rating = Math.round(r.rating) as keyof typeof dist;
           if (dist[rating] !== undefined) dist[rating]++;
         });
-        
+
         setReviewStats({
           average: product?.rating || 0,
           total: product?.reviewCount || 0,
@@ -142,13 +142,13 @@ export default function ProductDetailPage() {
 
   const checkHasPurchased = useCallback(async () => {
     if (!user || !product) return;
-    
+
     try {
       const { data } = await userApi.getOrders();
       if (data && (data as any).success) {
         const orders = (data as any).data;
-        const purchased = orders.some((order: any) => 
-          order.status === "COMPLETED" && 
+        const purchased = orders.some((order: any) =>
+          order.status === "COMPLETED" &&
           order.items.some((item: any) => item.productId === product.id)
         );
         setHasPurchased(purchased);
@@ -180,7 +180,7 @@ export default function ProductDetailPage() {
   const fetchProduct = useCallback(async () => {
     const productId = params?.id as string;
     if (!productId) return;
-    
+
     try {
       const { data, error } = await productsApi.getById(productId);
       if (data && (data as any).success) {
@@ -256,7 +256,7 @@ export default function ProductDetailPage() {
       router.push(`/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
-    
+
     try {
       const { data, error } = await productsApi.addReview(product.id, rating, comment);
       if (data && (data as any).success) {
@@ -324,7 +324,7 @@ export default function ProductDetailPage() {
 
         {/* Product Detail */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Images */}
+          {/* Images */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -345,7 +345,7 @@ export default function ProductDetailPage() {
                   <span className="text-sm font-black uppercase tracking-[0.2em] text-gray-600">{renderTranslation("products.detail.no_image")}</span>
                 </div>
               )}
-              
+
               <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
 
               {/* Badges */}
@@ -400,10 +400,10 @@ export default function ProductDetailPage() {
               {product.category === "SCRIPT"
                 ? renderTranslation("footer.links.products.script")
                 : product.category === "UI"
-                ? renderTranslation("footer.links.products.ui")
-                : product.category === "BUNDLE"
-                ? renderTranslation("footer.links.products.bundle")
-                : renderTranslation("footer.links.products.commission")}
+                  ? renderTranslation("footer.links.products.ui")
+                  : product.category === "BUNDLE"
+                    ? renderTranslation("footer.links.products.bundle")
+                    : renderTranslation("footer.links.products.commission")}
             </Badge>
 
             {/* Title */}
@@ -417,17 +417,16 @@ export default function ProductDetailPage() {
                 {[...Array(Math.max(0, 5))].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-5 h-5 ${
-                      i < Math.floor(product.rating || 0)
-                        ? "fill-red-500 text-red-500"
-                        : "text-white/10"
-                    }`}
+                    className={`w-5 h-5 ${i < Math.floor(product.rating || 0)
+                      ? "fill-red-500 text-red-500"
+                      : "text-white/10"
+                      }`}
                   />
                 ))}
                 <span className="ml-2 text-white font-medium">{product.rating}</span>
                 <span className="text-gray-400 ml-1">({product.reviewCount} {renderTranslation("products.detail.reviews_count")})</span>
               </div>
-              
+
               <StockCounter stock={product.stock} />
             </div>
 
@@ -450,21 +449,21 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-4">
-                    {/* Reward Points Badge */}
-                    {product.expectedPoints !== undefined && product.expectedPoints > 0 && (
-                      <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-yellow-400/5 border border-yellow-400/10 shadow-inner group">
-                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500/20 group-hover:scale-110 transition-transform" />
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest leading-none mb-1">{renderTranslation("products.detail.earn_points")}</p>
-                          <p className="text-lg font-black text-yellow-500 leading-none">
-                            {product.expectedPoints.toLocaleString()} <span className="text-xs uppercase opacity-60">Pts</span>
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                {/* Reward Points Badge */}
+                {product.expectedPoints !== undefined && product.expectedPoints > 0 && (
+                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-yellow-400/5 border border-yellow-400/10 shadow-inner group">
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500/20 group-hover:scale-110 transition-transform" />
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest leading-none mb-1">{renderTranslation("products.detail.earn_points")}</p>
+                      <p className="text-lg font-black text-yellow-500 leading-none">
+                        {product.expectedPoints.toLocaleString()} <span className="text-xs uppercase opacity-60">Pts</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {isProductOnFlashSale(product) && product.flashSaleEnds && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="inline-flex items-center gap-4 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20"
@@ -473,8 +472,8 @@ export default function ProductDetailPage() {
                       <Clock className="w-5 h-5 animate-pulse" />
                       <span className="text-xs font-black uppercase tracking-widest">{renderTranslation("flash_sale.title")} {renderTranslation("flash_sale.ends_in")}</span>
                     </div>
-                    <FlashSaleTimer 
-                      endTime={product.flashSaleEnds} 
+                    <FlashSaleTimer
+                      endTime={product.flashSaleEnds}
                       variant="default"
                       className="text-white"
                     />
@@ -500,12 +499,12 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
-              {hasPurchased ? (
-                product.isDownloadable && (
-                  <Button 
-                    size="xl" 
-                    className="flex-2 bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/20 h-14 text-lg font-bold" 
+            <div className="flex flex-col gap-4 pt-6">
+              {hasPurchased && product.isDownloadable && (
+                <div className="w-full">
+                  <Button
+                    size="xl"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/20 h-14 text-lg font-bold mb-4"
                     onClick={handleDownload}
                     disabled={isDownloading}
                   >
@@ -521,17 +520,24 @@ export default function ProductDetailPage() {
                       </>
                     )}
                   </Button>
-                )
-              ) : (
-                <Button 
-                  size="xl" 
-                  className="flex-2 bg-red-600 hover:bg-red-500 shadow-xl shadow-red-600/20 h-14 text-lg font-bold" 
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <Button
+                  size="xl"
+                  className={cn(
+                    "flex-1 h-14 text-lg font-bold shadow-xl shadow-red-600/20",
+                    hasPurchased ? "bg-white/10 hover:bg-white/20 border border-white/10" : "bg-red-600 hover:bg-red-500"
+                  )}
                   onClick={handleBuyNow}
                 >
-                  {renderTranslation("products.detail.buy_now_btn")}
+                  {hasPurchased
+                    ? renderTranslation("products.detail.buy_now_btn")
+                    : renderTranslation("products.detail.buy_now_btn")
+                  }
                 </Button>
-              )}
-              {!hasPurchased && (
+
                 <Button
                   variant="secondary"
                   size="xl"
@@ -541,23 +547,24 @@ export default function ProductDetailPage() {
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   {renderTranslation("products.detail.add_to_cart_btn")}
                 </Button>
-              )}
-              <WishlistButton
-                item={{
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  image: product.thumbnail || product.images[0] || "",
-                  category: product.category,
-                  description: product.description || "",
-                  stock: product.stock,
-                  isFlashSale: product.isFlashSale,
-                  flashSalePrice: product.flashSalePrice,
-                  flashSaleEnds: product.flashSaleEnds,
-                }}
-                size="xl"
-                className="h-14 w-14 shrink-0 bg-white/5 border-white/5"
-              />
+
+                <WishlistButton
+                  item={{
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.thumbnail || product.images[0] || "",
+                    category: product.category,
+                    description: product.description || "",
+                    stock: product.stock,
+                    isFlashSale: product.isFlashSale,
+                    flashSalePrice: product.flashSalePrice,
+                    flashSaleEnds: product.flashSaleEnds,
+                  }}
+                  size="xl"
+                  className="h-14 w-14 shrink-0 bg-white/5 border-white/5 hover:bg-white/10"
+                />
+              </div>
             </div>
 
             {/* Trust Badges */}

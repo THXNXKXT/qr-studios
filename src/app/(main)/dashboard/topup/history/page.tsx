@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import {
   Wallet,
   CreditCard,
@@ -64,7 +65,7 @@ export default function TopupHistoryPage() {
     fetchHistory();
   }, [fetchHistory]);
 
-  const filteredTopups = useMemo(() => 
+  const filteredTopups = useMemo(() =>
     topups.filter((topup) => {
       const searchLower = searchTerm.toLowerCase();
       const idMatch = topup.id?.toLowerCase().includes(searchLower) ?? false;
@@ -72,6 +73,8 @@ export default function TopupHistoryPage() {
       return idMatch || methodMatch;
     }), [topups, searchTerm]
   );
+
+  const totalPages = Math.ceil(filteredTopups.length / itemsPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -114,7 +117,7 @@ export default function TopupHistoryPage() {
   return (
     <div className="min-h-screen pt-32 px-4 pb-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />
-      
+
       <div className="container max-w-6xl mx-auto relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div className="space-y-2">
@@ -128,7 +131,7 @@ export default function TopupHistoryPage() {
             <h1 className="text-2xl font-bold text-white tracking-tight">{renderTranslation("dashboard.menu.topup_history")}</h1>
             <p className="text-gray-400 text-xs">{renderTranslation("dashboard.topup_history.desc")}</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Card className="p-2 border-white/5 bg-white/2 backdrop-blur-md w-full sm:w-72">
               <div className="relative group">
@@ -141,7 +144,7 @@ export default function TopupHistoryPage() {
                 />
               </div>
             </Card>
-            
+
             <Link href="/dashboard/topup" className="w-full sm:w-auto">
               <Button className="w-full bg-red-600 hover:bg-red-500 h-12 px-8 rounded-2xl shadow-xl shadow-red-600/20 font-bold group">
                 <Wallet className="w-5 h-5 mr-2" />
@@ -176,37 +179,37 @@ export default function TopupHistoryPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card 
+                  <Card
                     className="p-6 border-white/5 bg-white/2 backdrop-blur-sm hover:border-red-500/30 transition-all duration-500 group cursor-pointer relative overflow-hidden"
                     onClick={() => setSelectedTopup(topup)}
                   >
                     <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-red-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                       <div className="flex items-center gap-6">
                         <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center border border-white/5 group-hover:scale-110 group-hover:bg-red-500/20 transition-all duration-500 shadow-lg">
                           <CreditCard className="w-7 h-7 text-red-500" />
                         </div>
-                        
+
                         <div>
                           <div className="flex flex-wrap items-center gap-3 mb-1">
                             <span className="text-sm font-mono text-gray-500 uppercase tracking-tighter bg-white/5 px-2 py-1 rounded">#{topup.id?.substring(0, 12).toUpperCase() || 'N/A'}</span>
                             <Badge
                               className={cn(
                                 "px-3 py-0.5 rounded-lg border-none font-bold text-[10px] uppercase tracking-wider",
-                                topup.status === "COMPLETED" 
-                                  ? "bg-red-500/20 text-red-400" 
+                                topup.status === "COMPLETED"
+                                  ? "bg-red-500/20 text-red-400"
                                   : topup.status === "CANCELLED" || topup.status === "FAILED"
                                     ? "bg-gray-500/20 text-gray-400"
                                     : "bg-red-900/20 text-red-500/50"
                               )}
                             >
-                              {topup.status === "COMPLETED" 
-                                ? renderTranslation("dashboard.orders.status.completed") 
-                                : topup.status === "CANCELLED" 
-                                  ? renderTranslation("dashboard.orders.status.cancelled") 
-                                  : topup.status === "FAILED" 
-                                    ? renderTranslation("common.error") 
+                              {topup.status === "COMPLETED"
+                                ? renderTranslation("dashboard.orders.status.completed")
+                                : topup.status === "CANCELLED"
+                                  ? renderTranslation("dashboard.orders.status.cancelled")
+                                  : topup.status === "FAILED"
+                                    ? renderTranslation("common.error")
                                     : renderTranslation("dashboard.orders.status.pending")}
                             </Badge>
                           </div>
@@ -229,10 +232,10 @@ export default function TopupHistoryPage() {
                             +{formatPrice(topup.amount)}
                           </p>
                           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1 font-bold">
-                            {topup.paymentMethod === 'promptpay' 
-                              ? 'Stripe - PromptPay' 
-                              : topup.paymentMethod === 'card' 
-                                ? 'Stripe - Credit/Debit Card' 
+                            {topup.paymentMethod === 'promptpay'
+                              ? 'Stripe - PromptPay'
+                              : topup.paymentMethod === 'card'
+                                ? 'Stripe - Credit/Debit Card'
                                 : 'Stripe Payment'}
                           </p>
                         </div>
@@ -259,9 +262,9 @@ export default function TopupHistoryPage() {
         )}
       </div>
 
-      <TopupDetailModal 
-        topup={selectedTopup} 
-        onClose={() => setSelectedTopup(null)} 
+      <TopupDetailModal
+        topup={selectedTopup}
+        onClose={() => setSelectedTopup(null)}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -11,7 +11,7 @@ import { formatPrice } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/auth";
 
-export default function TopupSuccessPage() {
+function TopupSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, verifyTopup, isVerifyingTopup, verifiedTopupSessions } = useAuth();
@@ -34,7 +34,7 @@ export default function TopupSuccessPage() {
       if (isVerifyingTopup) return;
 
       const result = await verifyTopup(sessionId);
-      
+
       if (result.success) {
         if (result.amount) setAmount(result.amount);
         setStatus("success");
@@ -115,12 +115,12 @@ export default function TopupSuccessPage() {
       >
         <Card className="p-8 md:p-10 text-center border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-          
+
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-inner relative">
             <Check className="w-10 h-10 text-red-500" />
             <div className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping opacity-20" />
           </div>
-          
+
           <h1 className="text-2xl font-black text-white mb-2 tracking-tighter uppercase">เติมเงินสำเร็จ!</h1>
           <p className="text-gray-400 mb-8 leading-relaxed text-xs">
             ยอดเครดิตจำนวน <span className="text-red-500 font-black">{formatPrice(amount)}</span> ถูกเพิ่มเข้าสู่บัญชีของคุณแล้ว
@@ -159,5 +159,19 @@ export default function TopupSuccessPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function TopupSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center pt-32 px-4 pb-20 relative overflow-hidden">
+        <div className="w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-8 shadow-inner">
+          <Loader2 className="h-10 w-10 animate-spin text-red-500" />
+        </div>
+      </div>
+    }>
+      <TopupSuccessContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { Suspense, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { 
-  Check, 
-  Loader2, 
-  ArrowRight, 
+import {
+  Check,
+  Loader2,
+  ArrowRight,
   ShoppingBag,
   AlertCircle,
   Star
@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "react-i18next";
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const { t } = useTranslation("common");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,7 +57,7 @@ export default function CheckoutSuccessPage() {
 
     verificationStarted.current = true;
     const result = await verifyPayment(sessionId);
-    
+
     if (result.success) {
       setStatus("success");
       clearCart();
@@ -151,12 +151,12 @@ export default function CheckoutSuccessPage() {
       >
         <Card className="p-8 md:p-10 text-center border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-          
+
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-inner relative">
             <Check className="w-10 h-10 text-red-500" />
             <div className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping opacity-20" />
           </div>
-          
+
           <h1 className="text-2xl font-black text-white mb-2 tracking-tighter uppercase">{renderTranslation("checkout.success.title")}</h1>
           <p className="text-gray-400 mb-8 leading-relaxed text-xs">
             {renderTranslation("checkout.success.desc")}
@@ -204,5 +204,19 @@ export default function CheckoutSuccessPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-32 flex flex-col items-center justify-center px-4 pb-20 relative overflow-hidden">
+        <div className="w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-8 shadow-inner">
+          <Loader2 className="h-10 w-10 animate-spin text-red-500" />
+        </div>
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

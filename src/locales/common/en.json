@@ -47,8 +47,8 @@
       }
     },
     "rights_reserved": "All rights reserved.",
-    "made_with": "Made with",
-    "in_thailand": "in Thailand"
+    "made_with": "Created by",
+    "in_thailand": "THXNXKXT"
   },
   "hero": {
     "badge": "Premium FiveM Scripts & UI",
@@ -123,11 +123,26 @@
     "process": {
       "section_title": "Work Process",
       "section_desc": "Clear and systematic process for the best results for you.",
-      "step1": { "title": "Send Details", "desc": "Tell us your needs and attach references." },
-      "step2": { "title": "Price Evaluation", "desc": "We will evaluate price and timeline." },
-      "step3": { "title": "Payment", "desc": "50% deposit payment." },
-      "step4": { "title": "Implementation", "desc": "Start design and development." },
-      "step5": { "title": "Delivery", "desc": "Deliver work and pay remaining." }
+      "step1": {
+        "title": "Send Details",
+        "desc": "Tell us your needs and attach references."
+      },
+      "step2": {
+        "title": "Price Evaluation",
+        "desc": "We will evaluate price and timeline."
+      },
+      "step3": {
+        "title": "Payment",
+        "desc": "50% deposit payment."
+      },
+      "step4": {
+        "title": "Implementation",
+        "desc": "Start design and development."
+      },
+      "step5": {
+        "title": "Delivery",
+        "desc": "Deliver work and pay remaining."
+      }
     },
     "pricing": {
       "section_title": "Starting Packages",
@@ -235,10 +250,22 @@
     "process": {
       "section_title": "Work Process",
       "section_desc": "Clear, transparent, and trackable process for the best results.",
-      "step1": { "title": "Requirement Gathering", "desc": "Discuss needs and analyze project." },
-      "step2": { "title": "UI/UX Design", "desc": "Design user interface and experience." },
-      "step3": { "title": "Development", "desc": "Code and develop features." },
-      "step4": { "title": "Testing & Delivery", "desc": "Test system and deliver project." }
+      "step1": {
+        "title": "Requirement Gathering",
+        "desc": "Discuss needs and analyze project."
+      },
+      "step2": {
+        "title": "UI/UX Design",
+        "desc": "Design user interface and experience."
+      },
+      "step3": {
+        "title": "Development",
+        "desc": "Code and develop features."
+      },
+      "step4": {
+        "title": "Testing & Delivery",
+        "desc": "Test system and deliver project."
+      }
     },
     "tech": {
       "section_title": "Global Technologies",
@@ -248,15 +275,36 @@
       "section_title": "Our Proud Works",
       "section_desc": "Some samples of projects we have delivered.",
       "view_details": "View Project Details",
-      "p1": { "title": "Fashion Online Store", "cat": "E-Commerce" },
-      "p2": { "title": "Meeting Room Booking", "cat": "Web Application" },
-      "p3": { "title": "Construction Corporate", "cat": "Corporate Website" }
+      "p1": {
+        "title": "Fashion Online Store",
+        "cat": "E-Commerce"
+      },
+      "p2": {
+        "title": "Meeting Room Booking",
+        "cat": "Web Application"
+      },
+      "p3": {
+        "title": "Construction Corporate",
+        "cat": "Corporate Website"
+      }
     },
     "why": {
-      "code": { "title": "Quality Code", "desc": "Clean, standard code, easy to maintain." },
-      "speed": { "title": "Fast Loading", "desc": "Fast, high-performance, Core Web Vitals passed." },
-      "security": { "title": "Secure", "desc": "Standard security systems to prevent attacks." },
-      "time": { "title": "On-time Delivery", "desc": "Deliver on schedule with progress updates." }
+      "code": {
+        "title": "Quality Code",
+        "desc": "Clean, standard code, easy to maintain."
+      },
+      "speed": {
+        "title": "Fast Loading",
+        "desc": "Fast, high-performance, Core Web Vitals passed."
+      },
+      "security": {
+        "title": "Secure",
+        "desc": "Standard security systems to prevent attacks."
+      },
+      "time": {
+        "title": "On-time Delivery",
+        "desc": "Deliver on schedule with progress updates."
+      }
     },
     "cta": {
       "title": "Ready to Start Your Online Presence?",

@@ -4,6 +4,7 @@ import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   ArrowRight,
@@ -79,10 +80,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
 
+  const toggleKeyVisibility = useCallback((id: string) => {
+    setVisibleKeys(prev =>
+      prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]
+    );
+  }, []);
+
   useEffect(() => {
     async function fetchOrderDetail() {
       const token = getAuthToken();
-      
+
       // If auth is still working, wait for it
       if (!isSynced && !user?.id && token) return;
 
@@ -135,7 +142,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         alert(error || t("dashboard.licenses.errors.download_failed"));
         return;
       }
-      
+
       const downloadUrl = (data as any).success ? (data as any).data.downloadUrl : (data as any).downloadUrl;
       if (!downloadUrl) {
         alert(t("dashboard.licenses.errors.download_failed"));
@@ -233,9 +240,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <Badge
                   className={cn(
                     "px-4 py-1 rounded-xl border-none font-black text-[10px] uppercase tracking-widest shadow-lg",
-                    order.status === "COMPLETED" ? "bg-red-500/20 text-red-400 shadow-red-500/10" : 
-                    order.status === "PENDING" ? "bg-red-900/20 text-red-500/50 shadow-red-900/10" : 
-                    "bg-red-500/20 text-red-400 shadow-red-500/10"
+                    order.status === "COMPLETED" ? "bg-red-500/20 text-red-400 shadow-red-500/10" :
+                      order.status === "PENDING" ? "bg-red-900/20 text-red-500/50 shadow-red-900/10" :
+                        "bg-red-500/20 text-red-400 shadow-red-500/10"
                   )}
                 >
                   {order.status === "COMPLETED" ? renderTranslation("dashboard.orders.status.completed") : order.status === "PENDING" ? renderTranslation("dashboard.orders.status.pending") : order.status}
@@ -291,9 +298,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex items-center gap-6">
                     <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center overflow-hidden shrink-0 group-hover:border-red-500/30 transition-colors">
                       {Array.isArray(order.items.find(i => i.id === item.id)?.product.images) && order.items.find(i => i.id === item.id)?.product.images[0] ? (
-                        <img 
-                          src={order.items.find(i => i.id === item.id)?.product.images[0]} 
-                          alt={item.product.name} 
+                        <img
+                          src={order.items.find(i => i.id === item.id)?.product.images[0]}
+                          alt={item.product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                       ) : (
@@ -323,7 +330,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
               ))}
             </div>
-            
+
             <div className="p-8 bg-black/40 border-t border-white/5">
               <div className="max-w-xs ml-auto space-y-4">
                 <div className="flex justify-between text-sm">
@@ -363,7 +370,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   License & Download
                 </Badge>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-6">
                 {order.licenses.map((license, index) => (
                   <motion.div
@@ -374,51 +381,51 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   >
                     <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm hover:border-red-500/30 transition-all duration-500 group shadow-2xl relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600" />
-                      
+
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
                         <div className="flex-1 min-w-0 space-y-6">
                           <div>
                             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-2">Product Name</p>
                             <h4 className="text-2xl font-black text-white group-hover:text-red-400 transition-colors">{license.product.name}</h4>
                           </div>
-                          
+
                           <div>
                             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-3">License Key</p>
                             <div className="relative group/key max-w-2xl">
                               <div className="absolute -inset-1 bg-linear-to-r from-red-600 to-red-900 rounded-2xl blur opacity-10 group-hover/key:opacity-20 transition duration-500" />
                               <div className="relative bg-black/60 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-6 group-hover/key:border-red-500/20 transition-all">
                                 <code className="text-sm font-mono text-red-400 truncate">
-                              {visibleKeys.includes(license.id) 
-                                ? license.licenseKey 
-                                : `${license.licenseKey?.substring(0, 6) || ''}••••••••••••••••••••`}
-                            </code>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
-                                onClick={() => toggleKeyVisibility(license.id)}
-                                title={visibleKeys.includes(license.id) ? renderTranslation("dashboard.licenses.hide_key") : renderTranslation("dashboard.licenses.show_key")}
-                              >
-                                {visibleKeys.includes(license.id) ? (
-                                  <EyeOff className="w-4 h-4" />
-                                ) : (
-                                  <Eye className="w-4 h-4" />
-                                )}
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
-                                onClick={() => copyToClipboard(license.licenseKey, license.id)}
-                              >
-                                  {copiedKey === license.id ? (
-                                    <CheckCircle className="w-4 h-4 text-red-500" />
-                                  ) : (
-                                    <Copy className="w-4 h-4" />
-                                  )}
-                              </Button>
-                            </div>
+                                  {visibleKeys.includes(license.id)
+                                    ? license.licenseKey
+                                    : `${license.licenseKey?.substring(0, 6) || ''}••••••••••••••••••••`}
+                                </code>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
+                                    onClick={() => toggleKeyVisibility(license.id)}
+                                    title={visibleKeys.includes(license.id) ? renderTranslation("dashboard.licenses.hide_key") : renderTranslation("dashboard.licenses.show_key")}
+                                  >
+                                    {visibleKeys.includes(license.id) ? (
+                                      <EyeOff className="w-4 h-4" />
+                                    ) : (
+                                      <Eye className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
+                                    onClick={() => copyToClipboard(license.licenseKey, license.id)}
+                                  >
+                                    {copiedKey === license.id ? (
+                                      <CheckCircle className="w-4 h-4 text-red-500" />
+                                    ) : (
+                                      <Copy className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -432,7 +439,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                               <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                             </Button>
                           </Link>
-                          <Button 
+                          <Button
                             className="flex-1 w-full h-14 bg-red-600 hover:bg-red-500 rounded-2xl font-black shadow-xl shadow-red-600/20 text-lg group/dl"
                             onClick={() => handleDownload(license.id)}
                           >

@@ -5,22 +5,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, 
-  Grid, 
-  LayoutGrid, 
-  Sparkles, 
-  TrendingUp, 
+import {
+  Search,
+  Grid,
+  LayoutGrid,
+  Sparkles,
+  TrendingUp,
   Clock,
   ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui";
-import { 
-  ProductCard, 
-  RecentlyViewed, 
-  ProductsHero, 
-  ProductFilters, 
-  ProductGridSkeleton 
+import {
+  ProductCard,
+  RecentlyViewed,
+  ProductsHero,
+  ProductFilters,
+  ProductGridSkeleton
 } from "@/components/product";
 import { useCartStore } from "@/store/cart";
 import { productsApi } from "@/lib/api";
@@ -72,7 +72,7 @@ function ProductsContent() {
         search: searchQuery || undefined,
         sort: sortBy
       });
-      
+
       if (data && (data as any).success) {
         setProducts((data as any).data || []);
       }
@@ -142,7 +142,7 @@ function ProductsContent() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
                 >
                   {products.map((product, index) => (
                     <ProductCard key={product.id} product={product} index={index} />

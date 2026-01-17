@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { 
-  MessageCircle, 
-  Mail, 
+import {
+  MessageCircle,
+  Mail,
   Heart,
   ExternalLink
 } from "lucide-react";
@@ -45,7 +45,7 @@ export function Footer() {
     <footer className="relative mt-20 border-t border-white/10 bg-black/50 backdrop-blur-xl">
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-linear-to-t from-red-900/10 to-transparent pointer-events-none" />
-      
+
       <div className="container mx-auto px-4 py-12 relative">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
@@ -138,8 +138,8 @@ export function Footer() {
           <p className="text-gray-500 text-sm">
             © {new Date().getFullYear()} QR STUDIO. {t("footer.rights_reserved")}
           </p>
-          <p className="text-gray-500 text-sm flex items-center gap-1">
-            {t("footer.made_with")} <Heart className="w-4 h-4 text-red-500 fill-red-500" /> {t("footer.in_thailand")}
+          <p className="text-gray-500 text-sm">
+            {t("footer.made_with")} {t("footer.in_thailand")}
           </p>
         </div>
       </div>

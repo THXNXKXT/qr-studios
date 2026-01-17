@@ -44,6 +44,7 @@ export default function WishlistPage() {
       features: [],
       tags: [],
       stock: item.stock,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -51,10 +52,10 @@ export default function WishlistPage() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     async function initWishlist() {
       const token = getAuthToken();
-      
+
       // If auth is still working, wait for it
       if (!isSynced && !user?.id && token) return;
 
@@ -63,7 +64,7 @@ export default function WishlistPage() {
         await fetchWishlist();
       }
     }
-    
+
     initWishlist();
   }, [user?.id, isSynced, fetchWishlist]);
 

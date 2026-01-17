@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { MessageCircle, Shield, Zap, Gift, ArrowLeft } from "lucide-react";
+import { MessageCircle, Shield, Zap, Gift, ArrowLeft, Loader2 } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 
 const benefits = [
@@ -26,7 +27,7 @@ const benefits = [
   },
 ];
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
@@ -51,7 +52,7 @@ export default function LoginPage() {
       >
         <Card className="p-10 border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-          
+
           {/* Logo */}
           <div className="text-center mb-10">
             <Link href="/" className="inline-flex items-center gap-3 mb-6 group">
@@ -132,8 +133,8 @@ export default function LoginPage() {
 
         {/* Back to Home */}
         <div className="text-center mt-8">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-white transition-all group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -142,5 +143,19 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center pt-32 px-4 pb-20 relative overflow-hidden">
+        <div className="w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-8 shadow-inner">
+          <Loader2 className="h-10 w-10 animate-spin text-red-500" />
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

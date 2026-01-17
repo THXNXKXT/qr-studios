@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CreditCard } from "lucide-react";
 import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface TopupTransaction {
   id: string;
@@ -41,7 +42,7 @@ export function RecentListSkeleton({ title }: { title: string }) {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <h3 className="text-lg font-semibold text-white" suppressHydrationWarning>{title}</h3>
           <Skeleton className="h-4 w-48 mt-1" />
         </div>
         <Skeleton className="h-8 w-20" />
@@ -68,6 +69,8 @@ export function RecentListSkeleton({ title }: { title: string }) {
 }
 
 export function RecentTopups({ topups, onSelectTopup }: RecentTopupsProps) {
+  const { t } = useTranslation("common");
+
   return (
     <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl">
       <div className="flex items-center justify-between mb-6">
@@ -76,17 +79,17 @@ export function RecentTopups({ topups, onSelectTopup }: RecentTopupsProps) {
             <CreditCard className="w-5 h-5 text-red-500" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">ประวัติการเติมเงิน</h3>
-            <p className="text-xs text-gray-500">รายการเติมเงิน 3 รายการล่าสุด</p>
+            <h3 className="text-lg font-bold text-white" suppressHydrationWarning>{t("dashboard.recent.topups")}</h3>
+            <p className="text-xs text-gray-500" suppressHydrationWarning>{t("dashboard.recent.topups_subtitle", "Last 3 transactions")}</p>
           </div>
         </div>
         <Link href="/dashboard/topup/history">
           <Button variant="secondary" size="sm" className="bg-white/5 border-white/10 hover:bg-white/10 rounded-xl px-4">
-            ดูทั้งหมด
+            {t("common.view_all", "View All")}
           </Button>
         </Link>
       </div>
-      <motion.div 
+      <motion.div
         variants={container}
         initial="hidden"
         animate="show"
@@ -95,7 +98,7 @@ export function RecentTopups({ topups, onSelectTopup }: RecentTopupsProps) {
         {topups.length === 0 ? (
           <div className="text-center py-12 rounded-2xl border-2 border-dashed border-white/5 bg-white/2">
             <CreditCard className="w-12 h-12 text-gray-700 mx-auto mb-4 opacity-20" />
-            <p className="text-gray-500">ยังไม่มีประวัติการเติมเงิน</p>
+            <p className="text-gray-500" suppressHydrationWarning>{t("dashboard.history.no_data", "No top-up history found")}</p>
           </div>
         ) : (
           topups.slice(0, 3).map((topup) => (
@@ -111,13 +114,13 @@ export function RecentTopups({ topups, onSelectTopup }: RecentTopupsProps) {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white group-hover:text-red-400 transition-colors">
-                    {topup.paymentMethod === 'promptpay' 
-                      ? 'PromptPay' 
-                      : topup.paymentMethod === 'card' 
-                        ? 'Credit/Debit Card' 
+                    {topup.paymentMethod === 'promptpay'
+                      ? 'PromptPay'
+                      : topup.paymentMethod === 'card'
+                        ? 'Credit/Debit Card'
                         : 'Stripe Payment'}
                   </p>
-                  <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-1">
+                  <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-1" suppressHydrationWarning>
                     {new Date(topup.createdAt).toLocaleDateString('th-TH', {
                       day: 'numeric',
                       month: 'short',
@@ -136,20 +139,20 @@ export function RecentTopups({ topups, onSelectTopup }: RecentTopupsProps) {
                   variant={topup.status === "COMPLETED" ? "success" : "warning"}
                   className={cn(
                     "mt-1 px-2.5 py-0.5 rounded-lg border-none shadow-sm text-[10px]",
-                    topup.status === "COMPLETED" 
-                      ? "bg-red-500/20 text-red-400" 
+                    topup.status === "COMPLETED"
+                      ? "bg-red-500/20 text-red-400"
                       : topup.status === "CANCELLED" || topup.status === "FAILED"
                         ? "bg-gray-500/20 text-gray-400"
                         : "bg-red-900/20 text-red-500/50"
                   )}
                 >
-                  {topup.status === "COMPLETED" 
-                    ? "สำเร็จ" 
-                    : topup.status === "CANCELLED" 
-                      ? "ยกเลิก" 
-                      : topup.status === "FAILED" 
-                        ? "ล้มเหลว" 
-                        : "รอดำเนินการ"}
+                  {topup.status === "COMPLETED"
+                    ? t("status.completed", "Success")
+                    : topup.status === "CANCELLED"
+                      ? t("status.cancelled", "Cancelled")
+                      : topup.status === "FAILED"
+                        ? t("status.failed", "Failed")
+                        : t("status.pending", "Pending")}
                 </Badge>
               </div>
             </motion.div>

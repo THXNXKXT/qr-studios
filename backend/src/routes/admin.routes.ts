@@ -58,6 +58,13 @@ admin.patch('/orders/:id/status', zValidator('param', idParamSchema), zValidator
 
 admin.post('/licenses/grant', zValidator('json', grantLicenseSchema), adminController.grantLicense);
 admin.post('/licenses/:id/revoke', zValidator('param', idParamSchema), adminController.revokeLicense);
+admin.post('/licenses/:id/reset-ip', zValidator('param', idParamSchema), adminController.resetLicenseIp);
+
+// IP Blacklist management
+admin.get('/licenses/blacklist', adminController.getBlacklist);
+admin.post('/licenses/blacklist', adminController.addToBlacklist);
+admin.delete('/licenses/blacklist/:ip', adminController.removeFromBlacklist);
+
 admin.patch('/reviews/:id/verify', zValidator('param', idParamSchema), adminController.toggleReviewVerification);
 admin.delete('/reviews/:id', zValidator('param', idParamSchema), adminController.deleteReview);
 

@@ -90,7 +90,7 @@ export default function AdminLayout({
                   className="relative rounded-lg shadow-xl"
                 />
               </div>
-              <span className="font-black text-white tracking-tighter uppercase text-lg group-hover:text-red-400 transition-colors">{t("sidebar.admin_panel")}</span>
+              <span className="font-black text-white tracking-tighter uppercase text-lg group-hover:text-red-400 transition-colors" suppressHydrationWarning>{t("sidebar.admin_panel")}</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -126,7 +126,7 @@ export default function AdminLayout({
                     "w-5 h-5 transition-transform duration-500",
                     isActive ? "scale-110" : "group-hover:scale-110 group-hover:text-red-500"
                   )} />
-                  <span className="relative z-10">{link.label}</span>
+                  <span className="relative z-10" suppressHydrationWarning>{link.label}</span>
                   {isActive && (
                     <motion.div
                       initial={{ x: -10, opacity: 0 }}
@@ -146,7 +146,7 @@ export default function AdminLayout({
             <Link href="/">
               <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-bold group">
                 <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                {t("sidebar.logout_admin")}
+                <span suppressHydrationWarning>{t("sidebar.logout_admin")}</span>
               </Button>
             </Link>
           </div>
@@ -168,8 +168,8 @@ export default function AdminLayout({
                 <LanguageSwitcher />
                 <div className="flex items-center gap-3 group cursor-pointer">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-black text-white group-hover:text-red-400 transition-colors">{t("sidebar.admin_user")}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{t("sidebar.super_admin")}</p>
+                    <p className="text-sm font-black text-white group-hover:text-red-400 transition-colors" suppressHydrationWarning>{t("sidebar.admin_user")}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold" suppressHydrationWarning>{t("sidebar.super_admin")}</p>
                   </div>
                   <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 border border-white/10">
                     <span className="text-lg font-black text-white">A</span>

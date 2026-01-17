@@ -21,7 +21,8 @@ import {
   Save,
   X,
   ShieldCheck,
-  Hash
+  Hash,
+  RotateCcw
 } from "lucide-react";
 import { Card, Button, Input, Badge } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin/confirm-modal";
@@ -81,6 +82,11 @@ export default function AdminLicensesPage() {
     isOpen: false,
     id: null,
   });
+  const [confirmResetIp, setConfirmResetIp] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null,
+  });
+  const [isResettingIp, setIsResettingIp] = useState(false);
 
   const fetchLicenses = useCallback(async () => {
     setLoading(true);
@@ -132,11 +138,11 @@ export default function AdminLicensesPage() {
     if (!grantData.productId || grantData.productId.trim() === "") {
       newErrors.productId = t("licenses.modals.grant.product_label");
     }
-    
+
     if (grantData.expiresAt && new Date(grantData.expiresAt) <= new Date()) {
       newErrors.expiresAt = "Invalid date";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -176,7 +182,7 @@ export default function AdminLicensesPage() {
 
   const handleRevokeLicense = useCallback(async () => {
     if (!confirmRevoke.id) return;
-    
+
     try {
       const res = await adminApi.revokeLicense(confirmRevoke.id);
       if (res.data && (res.data as any).success) {
@@ -190,11 +196,30 @@ export default function AdminLicensesPage() {
     }
   }, [confirmRevoke.id, fetchLicenses]);
 
+  const handleResetLicenseIp = useCallback(async () => {
+    if (!confirmResetIp.id) return;
+    setIsResettingIp(true);
+    try {
+      const res = await adminApi.resetLicenseIp(confirmResetIp.id);
+      if (res.data && (res.data as any).success) {
+        await fetchLicenses();
+        setConfirmResetIp({ isOpen: false, id: null });
+      } else {
+        alert((res.data as any)?.error || "Failed to reset IP");
+      }
+    } catch (err) {
+      console.error("Error resetting license IP:", err);
+      alert("An error occurred while resetting the license IP");
+    } finally {
+      setIsResettingIp(false);
+    }
+  }, [confirmResetIp.id, fetchLicenses]);
+
   useEffect(() => {
     fetchLicenses();
   }, [fetchLicenses]);
 
-  const filteredLicenses = useMemo(() => 
+  const filteredLicenses = useMemo(() =>
     licenses.filter((license) => {
       const matchesSearch =
         license.licenseKey.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -208,7 +233,7 @@ export default function AdminLicensesPage() {
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
@@ -216,7 +241,7 @@ export default function AdminLicensesPage() {
           <p className="text-gray-400 mt-1">{t("licenses.subtitle")}</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Button 
+          <Button
             onClick={handleGrantClick}
             className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300"
           >
@@ -230,8 +255,8 @@ export default function AdminLicensesPage() {
                 onClick={() => setFilterStatus(status)}
                 className={cn(
                   "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
-                  filterStatus === status 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  filterStatus === status
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
@@ -364,10 +389,21 @@ export default function AdminLicensesPage() {
                           <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all">
                             <Eye className="w-4 h-4" />
                           </Button>
+                          {license.status === "ACTIVE" && license.ipAddress && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setConfirmResetIp({ isOpen: true, id: license.id })}
+                              className="w-10 h-10 rounded-xl hover:bg-blue-500/10 text-blue-500/50 hover:text-blue-500 transition-all"
+                              title="Reset IP"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          )}
                           {license.status === "ACTIVE" && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setConfirmRevoke({ isOpen: true, id: license.id })}
                               className="w-10 h-10 rounded-xl hover:bg-red-900/20 text-red-500/50 hover:text-red-500 transition-all"
                               title="Revoke License"
@@ -413,7 +449,7 @@ export default function AdminLicensesPage() {
               className="relative w-full max-w-lg bg-[#0A0A0A] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-              
+
               <form onSubmit={handleGrantSubmit} className="p-8 space-y-8">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -448,7 +484,7 @@ export default function AdminLicensesPage() {
                           value={grantData.userId}
                           onChange={(e) => {
                             setGrantData({ ...grantData, userId: e.target.value });
-                            if (errors.userId) setErrors({...errors, userId: ""});
+                            if (errors.userId) setErrors({ ...errors, userId: "" });
                           }}
                           required
                           className={cn(
@@ -480,7 +516,7 @@ export default function AdminLicensesPage() {
                           value={grantData.productId}
                           onChange={(e) => {
                             setGrantData({ ...grantData, productId: e.target.value });
-                            if (errors.productId) setErrors({...errors, productId: ""});
+                            if (errors.productId) setErrors({ ...errors, productId: "" });
                           }}
                           required
                           className={cn(
@@ -556,6 +592,16 @@ export default function AdminLicensesPage() {
         message={t("licenses.modals.revoke.message")}
         confirmText={t("licenses.modals.revoke.confirm")}
         type="danger"
+      />
+
+      <ConfirmModal
+        isOpen={confirmResetIp.isOpen}
+        onClose={() => setConfirmResetIp({ isOpen: false, id: null })}
+        onConfirm={handleResetLicenseIp}
+        title="Reset License IP"
+        message="Are you sure you want to reset the IP address for this license? The user will need to verify from their new server IP."
+        confirmText={isResettingIp ? "Resetting..." : "Reset IP"}
+        type="warning"
       />
     </div>
   );

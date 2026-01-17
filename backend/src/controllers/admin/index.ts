@@ -73,6 +73,10 @@ export const adminController = {
     getAllLicenses: licensesController.getAllLicenses,
     grantLicense: licensesController.grantLicense,
     revokeLicense: licensesController.revokeLicense,
+    resetLicenseIp: licensesController.resetLicenseIp,
+    getBlacklist: licensesController.getBlacklist,
+    addToBlacklist: licensesController.addToBlacklist,
+    removeFromBlacklist: licensesController.removeFromBlacklist,
 
     // Promo Codes
     getAllPromoCodes: promoController.getAllPromoCodes,

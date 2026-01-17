@@ -31,15 +31,15 @@ export function LanguageSwitcher() {
         className="flex items-center gap-2 px-4 h-11 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 text-gray-400 hover:text-white transition-all font-bold"
       >
         <Globe className="w-4 h-4" />
-        <span className="text-xs uppercase tracking-widest">{currentLang.code}</span>
+        <span className="text-xs uppercase tracking-widest" suppressHydrationWarning>{currentLang.code}</span>
       </Button>
 
       <AnimatePresence>
         {isOpen && (
           <>
-            <div 
-              className="fixed inset-0 z-40" 
-              onClick={() => setIsOpen(false)} 
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setIsOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}

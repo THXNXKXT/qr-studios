@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Package, ImageOff } from "lucide-react";
 import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Order {
   id: string;
@@ -40,6 +41,8 @@ const item = {
 };
 
 export function RecentOrders({ orders }: RecentOrdersProps) {
+  const { t } = useTranslation("common");
+
   return (
     <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl">
       <div className="flex items-center justify-between mb-6">
@@ -48,17 +51,17 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
             <Package className="w-5 h-5 text-red-500" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">คำสั่งซื้อล่าสุด</h3>
-            <p className="text-xs text-gray-500">รายการสั่งซื้อ 3 รายการล่าสุด</p>
+            <h3 className="text-lg font-bold text-white" suppressHydrationWarning>{t("dashboard.recent.orders")}</h3>
+            <p className="text-xs text-gray-500" suppressHydrationWarning>{t("dashboard.recent.orders_subtitle", "Last 3 orders")}</p>
           </div>
         </div>
         <Link href="/dashboard/orders">
           <Button variant="secondary" size="sm" className="bg-white/5 border-white/10 hover:bg-white/10 rounded-xl px-4">
-            ดูทั้งหมด
+            {t("common.view_all", "View All")}
           </Button>
         </Link>
       </div>
-      <motion.div 
+      <motion.div
         variants={container}
         initial="hidden"
         animate="show"
@@ -69,12 +72,12 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 border border-white/5">
               <Package className="w-8 h-8 text-gray-700 opacity-20" />
             </div>
-            <p className="text-gray-500">ยังไม่มีคำสั่งซื้อ</p>
+            <p className="text-gray-500" suppressHydrationWarning>{t("dashboard.history.no_orders", "No orders yet")}</p>
           </div>
         ) : (
           orders.slice(0, 3).map((order) => (
             <motion.div key={order.id} variants={item}>
-              <Link 
+              <Link
                 href={`/dashboard/orders/${order.id}`}
                 className="block group"
               >
@@ -105,7 +108,9 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                         order.status === "COMPLETED" ? "bg-red-500/20 text-red-400" : "bg-red-900/20 text-red-500/50"
                       )}
                     >
-                      {order.status === "COMPLETED" ? "สำเร็จ" : "รอดำเนินการ"}
+                      {order.status === "COMPLETED"
+                        ? t("status.completed", "Success")
+                        : t("status.pending", "Pending")}
                     </Badge>
                   </div>
                 </div>

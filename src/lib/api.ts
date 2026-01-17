@@ -356,6 +356,13 @@ export const adminApi = {
   grantLicense: (data: { userId: string; productId: string; expiresAt?: string }) =>
     apiFetch("/api/admin/licenses/grant", { method: "POST", body: JSON.stringify(data) }),
   revokeLicense: (id: string) => apiFetch(`/api/admin/licenses/${id}/revoke`, { method: "POST" }),
+  resetLicenseIp: (id: string) => apiFetch(`/api/admin/licenses/${id}/reset-ip`, { method: "POST" }),
+
+  // IP Blacklist
+  getBlacklist: () => apiFetch<any[]>("/api/admin/licenses/blacklist"),
+  addToBlacklist: (ipAddress: string, reason?: string) =>
+    apiFetch("/api/admin/licenses/blacklist", { method: "POST", body: JSON.stringify({ ipAddress, reason }) }),
+  removeFromBlacklist: (ip: string) => apiFetch(`/api/admin/licenses/blacklist/${ip}`, { method: "DELETE" }),
 
   // Promo Codes
   getPromoCodes: () => apiFetch<any[]>("/api/admin/promo-codes"),

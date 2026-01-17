@@ -93,6 +93,16 @@ export const licensesService = {
   },
 
   async verifyLicense(licenseKey: string, ipAddress: string, resourceName?: string) {
+    // Check if IP is blacklisted first
+    const blacklistedIp = await db.query.ipBlacklist.findFirst({
+      where: eq(schema.ipBlacklist.ipAddress, ipAddress),
+    });
+
+    if (blacklistedIp) {
+      await licensesService.logLicenseVerification('N/A', ipAddress, false, resourceName);
+      throw new BadRequestError('IP address is blacklisted');
+    }
+
     const license = await licensesService.getLicenseByKey(licenseKey);
 
     if (license.status === 'REVOKED') {
@@ -119,13 +129,21 @@ export const licensesService = {
     // If no IP is set yet, set the current IP as the first whitelisted IP (First-use)
     if (allowedIPs.length === 0 && !license.ipAddress) {
       await db.update(schema.licenses)
-        .set({ ipAddress: ipAddress })
+        .set({
+          ipAddress: ipAddress,
+          lastVerifiedAt: new Date(),
+        })
         .where(
           and(
             eq(schema.licenses.id, license.id),
             sql`${schema.licenses.ipAddress} IS NULL`
           )
         );
+    } else {
+      // Update last verified timestamp
+      await db.update(schema.licenses)
+        .set({ lastVerifiedAt: new Date() })
+        .where(eq(schema.licenses.id, license.id));
     }
 
     await licensesService.logLicenseVerification(license.id, ipAddress, true, resourceName);
@@ -141,6 +159,12 @@ export const licensesService = {
         discordId: license.user.discordId,
         expiresAt: license.expiresAt,
       },
+      // Legacy script compatibility fields
+      state: 'actived',
+      name: license.user.username,
+      resname: license.product.name,
+      dev: 'QR Studios',
+      a: ipAddress,
     };
   },
 
@@ -152,7 +176,7 @@ export const licensesService = {
     }
 
     const validIPs = ipAddresses.filter((ip) => licensesService.isValidIP(ip));
-    
+
     if (validIPs.length !== ipAddresses.length) {
       throw new BadRequestError('Invalid IP address format');
     }
@@ -173,7 +197,7 @@ export const licensesService = {
     return updated;
   },
 
-  async resetIPWhitelist(licenseId: string, userId: string) {
+  async resetIPWhitelist(licenseId: string, userId?: string) {
     const license = await licensesService.getLicenseById(licenseId, userId);
 
     if (license.status !== 'ACTIVE') {
@@ -234,7 +258,7 @@ export const licensesService = {
   verifyDownloadToken(token: string): { licenseId: string; downloadKey: string; userId: string } {
     try {
       const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-      
+
       if (decoded.exp < Math.floor(Date.now() / 1000)) {
         throw new UnauthorizedError('Download token expired');
       }
@@ -242,11 +266,11 @@ export const licensesService = {
       const secret = env.JWT_SECRET;
       const expectedSignature = crypto
         .createHmac('sha256', secret)
-        .update(JSON.stringify({ 
-          licenseId: decoded.licenseId, 
-          downloadKey: decoded.downloadKey, 
+        .update(JSON.stringify({
+          licenseId: decoded.licenseId,
+          downloadKey: decoded.downloadKey,
           userId: decoded.userId,
-          exp: decoded.exp 
+          exp: decoded.exp
         }))
         .digest('hex');
 
@@ -273,12 +297,12 @@ export const licensesService = {
   isValidIP(ip: string): boolean {
     const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
     const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-    
+
     if (ipv4Regex.test(ip)) {
       const parts = ip.split('.');
       return parts.every((part) => parseInt(part) >= 0 && parseInt(part) <= 255);
     }
-    
+
     return ipv6Regex.test(ip);
   },
 
@@ -367,5 +391,58 @@ export const licensesService = {
     await licensesService.logLicenseAction(licenseId, 'REVOKE', 'License revoked by admin');
 
     return updated;
+  },
+
+  // ============================================
+  // IP Blacklist Management
+  // ============================================
+
+  async getBlacklist() {
+    return db.query.ipBlacklist.findMany({
+      with: {
+        createdByUser: {
+          columns: { id: true, username: true },
+        },
+      },
+      orderBy: [desc(schema.ipBlacklist.createdAt)],
+    });
+  },
+
+  async addToBlacklist(ipAddress: string, reason: string, adminId: string) {
+    // Check if already blacklisted
+    const existing = await db.query.ipBlacklist.findFirst({
+      where: eq(schema.ipBlacklist.ipAddress, ipAddress),
+    });
+
+    if (existing) {
+      throw new BadRequestError('IP is already blacklisted');
+    }
+
+    const [entry] = await db.insert(schema.ipBlacklist).values({
+      ipAddress,
+      reason,
+      createdBy: adminId,
+    }).returning();
+
+    return entry;
+  },
+
+  async removeFromBlacklist(ipAddress: string) {
+    const [deleted] = await db.delete(schema.ipBlacklist)
+      .where(eq(schema.ipBlacklist.ipAddress, ipAddress))
+      .returning();
+
+    if (!deleted) {
+      throw new NotFoundError('IP not found in blacklist');
+    }
+
+    return deleted;
+  },
+
+  async isIpBlacklisted(ipAddress: string): Promise<boolean> {
+    const entry = await db.query.ipBlacklist.findFirst({
+      where: eq(schema.ipBlacklist.ipAddress, ipAddress),
+    });
+    return !!entry;
   },
 };

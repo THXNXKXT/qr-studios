@@ -9,18 +9,18 @@ import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { storageService } from '../services/storage.service';
-import { 
+import {
   AppError,
-  UnauthorizedError, 
-  BadRequestError, 
+  UnauthorizedError,
+  BadRequestError,
   ForbiddenError,
   NotFoundError
 } from '../utils/errors';
-import { 
-  licenseVerifySchema, 
-  licenseDownloadSchema, 
+import {
+  licenseVerifySchema,
+  licenseDownloadSchema,
   idParamSchema,
-  updateIPWhitelistSchema 
+  updateIPWhitelistSchema
 } from '../schemas';
 
 export const licensesController = {
@@ -33,17 +33,17 @@ export const licensesController = {
   async getById(c: Context) {
     const user = c.get('user');
     const { id } = idParamSchema.parse(c.req.param());
-    
+
     const license = await licensesService.getLicenseById(id, user.id);
     return success(c, license);
   },
 
   async verify(c: Context) {
     const { key, resource } = licenseVerifySchema.parse(c.req.query());
-    const ipAddress = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 
-                      c.req.header('x-real-ip') || 
-                      c.req.header('cf-connecting-ip') ||
-                      'unknown';
+    const ipAddress = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+      c.req.header('x-real-ip') ||
+      c.req.header('cf-connecting-ip') ||
+      'unknown';
 
     if (!key) {
       return c.json({ valid: false, error: 'License key required' }, 400);
@@ -53,10 +53,60 @@ export const licensesController = {
       const result = await licensesService.verifyLicense(key, ipAddress, resource);
       return c.json(result);
     } catch (error: any) {
-      return c.json({ 
-        valid: false, 
-        error: error.message || 'License verification failed' 
+      return c.json({
+        valid: false,
+        error: error.message || 'License verification failed'
       }, 401);
+    }
+  },
+
+  /**
+   * POST /verify - Legacy FiveM script compatibility
+   * Accepts: { key, license, licenseKey, resName, resourceName }
+   */
+  async verifyPost(c: Context) {
+    try {
+      const body = await c.req.json();
+      const { key, license, licenseKey, resName, resourceName } = body;
+
+      // Support multiple param names for compatibility
+      const actualKey = key || license || licenseKey;
+      const actualResource = resName || resourceName || '';
+
+      if (!actualKey) {
+        return c.json({
+          state: 'notfound',
+          message: 'License key is required',
+          a: 'unknown'
+        });
+      }
+
+      const ipAddress = c.req.header('cf-connecting-ip') ||
+        c.req.header('x-real-ip') ||
+        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+        'unknown';
+
+      const result = await licensesService.verifyLicense(actualKey, ipAddress, actualResource);
+
+      // Return legacy format
+      return c.json({
+        state: result.state || 'actived',
+        name: result.name || result.license?.user || 'Unknown',
+        resname: result.resname || result.license?.product || actualResource,
+        dev: result.dev || 'QR Studios',
+        a: result.a || ipAddress,
+      });
+    } catch (error: any) {
+      const ipAddress = c.req.header('cf-connecting-ip') ||
+        c.req.header('x-real-ip') ||
+        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+        'unknown';
+
+      return c.json({
+        state: 'notfound',
+        message: error.message || 'License verification failed',
+        a: ipAddress,
+      });
     }
   },
 
@@ -166,7 +216,7 @@ export const licensesController = {
         // If not found locally, try Cloudflare R2
         try {
           console.log(`[DOWNLOAD] Local file not found, checking R2 for key: ${key}`);
-          
+
           // Check if key exists in R2 before generating URL
           const exists = await storageService.fileExists(key);
           if (exists) {
@@ -174,7 +224,7 @@ export const licensesController = {
             const presignedUrl = await storageService.getDownloadUrl(key, 3600);
             return c.redirect(presignedUrl);
           }
-          
+
           console.warn(`[DOWNLOAD] Key ${key} not found in R2`);
           // Continue to next key if any
         } catch (r2Error) {
@@ -195,7 +245,7 @@ export const licensesController = {
 
   async getStats(c: Context) {
     const user = c.get('user');
-    
+
     if (user.role !== 'ADMIN') {
       return c.json({ error: 'Admin access required' }, 403);
     }

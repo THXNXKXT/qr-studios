@@ -9,6 +9,7 @@ const licenses = new Hono();
 
 // Public/Token-based routes (Must be before authMiddleware or use explicit protection)
 licenses.get('/verify', zValidator('query', licenseVerifySchema), licenseVerifyRateLimit, licensesController.verify);
+licenses.post('/verify', licenseVerifyRateLimit, licensesController.verifyPost);  // Legacy FiveM script compatibility
 licenses.get('/:id/download', zValidator('param', idParamSchema), zValidator('query', licenseDownloadSchema), licensesController.download);
 
 // Protected routes - explicit protection instead of use('*') to avoid catching the download route

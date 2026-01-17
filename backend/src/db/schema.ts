@@ -64,27 +64,53 @@ export const products = pgTable('products', {
   categoryIdx: index('products_category_idx').on(table.category),
   featuredIdx: index('products_featured_idx').on(table.isFeatured),
   flashSaleIdx: index('products_flash_sale_idx').on(table.isFlashSale),
-    isActiveIdx: index('products_is_active_idx').on(table.isActive),
-    slugIdx: uniqueIndex('products_slug_idx').on(table.slug),
-    createdAtIdx: index('products_created_at_idx').on(table.createdAt),
-  })
+  isActiveIdx: index('products_is_active_idx').on(table.isActive),
+  slugIdx: uniqueIndex('products_slug_idx').on(table.slug),
+  createdAtIdx: index('products_created_at_idx').on(table.createdAt),
+})
 );
 
 export const licenses = pgTable('licenses', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
-  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'cascade' }).notNull(), // Cross-reference to orders
+  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'cascade' }).notNull(),
   licenseKey: text('license_key').unique().notNull(),
   ipAddress: text('ip_address'),
+  maxIps: integer('max_ips').default(1).notNull(),
   status: licenseStatusEnum('status').default('ACTIVE').notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
+  lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   userIdIdx: index('licenses_user_id_idx').on(table.userId),
   productIdIdx: index('licenses_product_id_idx').on(table.productId),
   statusIdx: index('licenses_status_idx').on(table.status),
   licenseKeyIdx: uniqueIndex('licenses_key_idx').on(table.licenseKey),
+}));
+
+export const licenseIpHistory = pgTable('license_ip_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  licenseId: uuid('license_id').references(() => licenses.id, { onDelete: 'cascade' }).notNull(),
+  ipAddress: text('ip_address').notNull(),
+  userAgent: text('user_agent'),
+  firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).defaultNow().notNull(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow().notNull(),
+  isBlocked: boolean('is_blocked').default(false).notNull(),
+}, (table) => ({
+  licenseIdIdx: index('license_ip_history_license_id_idx').on(table.licenseId),
+  ipAddressIdx: index('license_ip_history_ip_address_idx').on(table.ipAddress),
+  licenseIpUnique: uniqueIndex('license_ip_unique').on(table.licenseId, table.ipAddress),
+}));
+
+export const ipBlacklist = pgTable('ip_blacklist', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ipAddress: text('ip_address').unique().notNull(),
+  reason: text('reason'),
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  ipAddressIdx: uniqueIndex('ip_blacklist_ip_idx').on(table.ipAddress),
 }));
 
 export const orders = pgTable('orders', {
@@ -346,10 +372,19 @@ export const orderItemRelations = relations(orderItems, ({ one }) => ({
   product: one(products, { fields: [orderItems.productId], references: [products.id] }),
 }));
 
-export const licenseRelations = relations(licenses, ({ one }) => ({
+export const licenseRelations = relations(licenses, ({ one, many }) => ({
   user: one(users, { fields: [licenses.userId], references: [users.id] }),
   product: one(products, { fields: [licenses.productId], references: [products.id] }),
   order: one(orders, { fields: [licenses.orderId], references: [orders.id] }),
+  ipHistory: many(licenseIpHistory),
+}));
+
+export const licenseIpHistoryRelations = relations(licenseIpHistory, ({ one }) => ({
+  license: one(licenses, { fields: [licenseIpHistory.licenseId], references: [licenses.id] }),
+}));
+
+export const ipBlacklistRelations = relations(ipBlacklist, ({ one }) => ({
+  createdByUser: one(users, { fields: [ipBlacklist.createdBy], references: [users.id] }),
 }));
 
 export const reviewRelations = relations(reviews, ({ one }) => ({

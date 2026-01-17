@@ -8,6 +8,13 @@
       "when": 1768052326947,
       "tag": "0000_wandering_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768678240210,
+      "tag": "0001_unknown_vindicator",
+      "breakpoints": true
     }
   ]
 }

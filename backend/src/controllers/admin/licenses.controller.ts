@@ -94,4 +94,62 @@ export const licensesController = {
         });
         return success(c, license, 'License revoked successfully');
     },
+
+    async resetLicenseIp(c: Context) {
+        const { id } = idParamSchema.parse(c.req.param());
+        const result = await licensesService.resetIPWhitelist(id);
+
+        const admin = c.get('user') as any;
+        await auditService.log({
+            userId: admin?.id,
+            action: 'RESET_LICENSE_IP',
+            entity: 'License',
+            entityId: id,
+        });
+        return success(c, result, 'License IP reset successfully');
+    },
+
+    async getBlacklist(c: Context) {
+        const blacklist = await licensesService.getBlacklist();
+        return success(c, blacklist);
+    },
+
+    async addToBlacklist(c: Context) {
+        const { ipAddress, reason } = await c.req.json();
+        const adminId = c.get('userId');
+
+        if (!ipAddress) {
+            return c.json({ error: 'IP address is required' }, 400);
+        }
+
+        const entry = await licensesService.addToBlacklist(ipAddress, reason || '', adminId);
+
+        if (!entry) {
+            return c.json({ error: 'Failed to add IP to blacklist' }, 500);
+        }
+
+        const admin = c.get('user') as any;
+        await auditService.log({
+            userId: admin?.id,
+            action: 'BLACKLIST_IP',
+            entity: 'IPBlacklist',
+            entityId: entry.id,
+            newData: { ipAddress, reason },
+        });
+        return success(c, entry, 'IP added to blacklist', 201);
+    },
+
+    async removeFromBlacklist(c: Context) {
+        const ip = c.req.param('ip');
+        const result = await licensesService.removeFromBlacklist(ip);
+
+        const admin = c.get('user') as any;
+        await auditService.log({
+            userId: admin?.id,
+            action: 'UNBLACKLIST_IP',
+            entity: 'IPBlacklist',
+            oldData: { ipAddress: ip },
+        });
+        return success(c, result, 'IP removed from blacklist');
+    },
 };

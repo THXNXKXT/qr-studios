@@ -21,7 +21,7 @@ import { Button, Card, Input, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 export default function ContactPage() {
-  const { t } = useTranslation("home");
+  const { t } = useTranslation(["home", "common"]);
   const { user } = useAuth();
 
   const faqs = [
@@ -81,8 +81,8 @@ export default function ContactPage() {
   ];
 
   const businessHours = [
-    { day: t("common.mon_fri", { defaultValue: "จันทร์ - ศุกร์" }), hours: "10:00 - 22:00" },
-    { day: t("common.sat_sun", { defaultValue: "เสาร์ - อาทิตย์" }), hours: "12:00 - 20:00" },
+    { day: t("common:common.mon_fri", { defaultValue: "จันทร์ - ศุกร์" }), hours: "10:00 - 22:00" },
+    { day: t("common:common.sat_sun", { defaultValue: "เสาร์ - อาทิตย์" }), hours: "12:00 - 20:00" },
   ];
   const [formData, setFormData] = useState({
     name: "",
@@ -215,7 +215,7 @@ export default function ContactPage() {
             >
               <Card className="p-8 md:p-10 border-white/5 bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-hidden h-full">
                 <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-red-600 to-transparent" />
-                
+
                 <h2 className="text-2xl md:text-3xl font-black text-white mb-2 tracking-tight">
                   {t("misc.contact.form.title")}
                 </h2>
@@ -238,8 +238,8 @@ export default function ContactPage() {
                     <p className="text-gray-400">
                       {t("misc.contact.form.success_desc")}
                     </p>
-                    <Button 
-                      variant="secondary" 
+                    <Button
+                      variant="secondary"
                       className="mt-8 bg-white/5 border-white/10"
                       onClick={() => setIsSubmitted(false)}
                     >
@@ -391,25 +391,25 @@ export default function ContactPage() {
                   <Link href="/products">
                     <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
                       <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
-                      {t("dashboard.menu.orders")}
+                      {t("common:dashboard.menu.orders")}
                     </Button>
                   </Link>
                   <Link href="/commission">
                     <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
                       <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
-                      {t("nav.ui_service")}
+                      {t("common:nav.ui_service")}
                     </Button>
                   </Link>
                   <Link href="/web-design">
                     <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
                       <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
-                      {t("nav.web_service")}
+                      {t("common:nav.web_service")}
                     </Button>
                   </Link>
                   <Link href="/dashboard">
                     <Button variant="secondary" className="w-full justify-start h-11 bg-white/5 border-white/10 hover:bg-red-600/10 hover:border-red-500/30 group text-xs rounded-xl">
                       <ArrowRight className="w-3.5 h-3.5 mr-2 text-red-500 group-hover:translate-x-1 transition-transform" />
-                      {t("nav.dashboard")}
+                      {t("common:nav.dashboard")}
                     </Button>
                   </Link>
                 </div>

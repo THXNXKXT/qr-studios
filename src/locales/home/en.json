@@ -364,7 +364,29 @@
       "no_answer_title": "Can't find what you're looking for?",
       "no_answer_desc": "Our support team is always ready to help via Discord 24/7.",
       "join_discord": "Join Our Discord",
-      "contact_support": "Contact Support"
+      "contact_support": "Contact Support",
+      "items": {
+        "preview": {
+          "q": "Can I see a preview before purchasing?",
+          "a": "Yes, you can contact us via Discord to request a preview or ask for more details."
+        },
+        "support": {
+          "q": "Is there support after purchase?",
+          "a": "Yes, we have a support team ready to help 24/7, and lifetime free updates are included."
+        },
+        "payment": {
+          "q": "What payment methods do you accept?",
+          "a": "We accept Credit/Debit Cards (Stripe), PromptPay, and Account Balance."
+        },
+        "commission_time": {
+          "q": "How long does a Commission take?",
+          "a": "It depends on complexity. Generally simple UI takes 3-5 days, complex ones 1-2 weeks."
+        },
+        "revisions": {
+          "q": "How many revisions are allowed?",
+          "a": "For Commissions, you get 3 free revisions. Additional revisions may incur extra charges."
+        }
+      }
     },
     "announcements": {
       "title": "Announcements",

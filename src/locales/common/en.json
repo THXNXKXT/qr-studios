@@ -493,6 +493,22 @@
         "completed": "Success",
         "pending": "Pending",
         "cancelled": "Cancelled"
+      },
+      "order_id": "Order ID",
+      "version": "Version",
+      "license_download": "License & Download",
+      "product_name": "Product Name",
+      "license_key": "License Key",
+      "download_receipt": "Download Receipt",
+      "date": "Date",
+      "payment_method": "Payment Method",
+      "total_payment": "Total Payment",
+      "items_title": "Order Items",
+      "items_count": "items",
+      "subtotal": "Subtotal",
+      "usage_info": "Usage Information",
+      "errors": {
+        "fetch_failed": "Failed to load order details"
       }
     },
     "licenses": {
@@ -509,7 +525,7 @@
       },
       "download": "Download",
       "view_product": "View Product Details",
-      "ip_whitelist": "IP Whitelist (for server usage)",
+      "ip_whitelist": "IP Whitelist",
       "ip_placeholder": "Enter IP Address (e.g. 1.2.3.4, 5.6.7.8)",
       "edit_ip": "Edit IP",
       "save_ip": "Save",
@@ -520,6 +536,8 @@
       "hide_key": "Hide",
       "show_key": "Show",
       "copy_key": "Copy License Key",
+      "preparing": "Preparing License",
+      "preparing_desc": "Creating your license key, please wait...",
       "errors": {
         "update_ip_failed": "Failed to update IP Whitelist",
         "reset_ip_failed": "Failed to reset IP Whitelist",
@@ -647,6 +665,7 @@
     "mon_fri": "Mon - Fri",
     "sat_sun": "Sat - Sun",
     "no_results": "No results found",
+    "no_image": "No Image",
     "start_at": "Starting at",
     "receive": "Receive",
     "product": "Product",

@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
-import { 
-  Key, 
+import {
+  Key,
   Search,
   ArrowLeft,
   Download,
@@ -63,7 +63,7 @@ export default function LicensesPage() {
   useEffect(() => {
     async function fetchLicenses() {
       const token = getAuthToken();
-      
+
       // If auth is still working, wait for it
       if (!isSynced && !user?.id && token) return;
 
@@ -77,13 +77,13 @@ export default function LicensesPage() {
       if (user?.id) {
         // Only show full-page loading if we don't have any data yet
         if (licenses.length === 0) setLoading(true);
-        
+
         try {
           const { data, error } = await licensesApi.getAll();
           if (data && typeof data === 'object' && 'data' in data) {
             const licensesData = (data as any).data || [];
             setLicenses(licensesData);
-            
+
             // Initialize IP values
             const ips: Record<string, string> = {};
             licensesData.forEach((lic: License) => {
@@ -122,13 +122,13 @@ export default function LicensesPage() {
       const rawIp = ipValues[licenseId] || '';
       // Convert comma-separated string back to array for the API
       const ipArray = rawIp.split(',').map(ip => ip.trim()).filter(Boolean);
-      
+
       const { data, error } = await licensesApi.updateIp(licenseId, ipArray);
-      
+
       if (data) {
         setEditingIp(null);
         // Update local state
-        setLicenses(prev => prev.map(lic => 
+        setLicenses(prev => prev.map(lic =>
           lic.id === licenseId ? { ...lic, ipAddress: ipArray.join(',') } : lic
         ));
       } else {
@@ -143,13 +143,13 @@ export default function LicensesPage() {
 
   const handleResetIp = useCallback(async () => {
     if (!confirmReset.id) return;
-    
+
     setActionLoading(`reset-${confirmReset.id}`);
     try {
       const { data, error } = await licensesApi.resetIp(confirmReset.id);
       if (data) {
         setIpValues(prev => ({ ...prev, [confirmReset.id!]: '' }));
-        setLicenses(prev => prev.map(lic => 
+        setLicenses(prev => prev.map(lic =>
           lic.id === confirmReset.id ? { ...lic, ipAddress: null } : lic
         ));
       } else {
@@ -169,8 +169,8 @@ export default function LicensesPage() {
       if (data && (data as any).success) {
         const downloadUrl = (data as any).data.downloadUrl;
         // Construct full URL if it's relative
-        const fullUrl = downloadUrl.startsWith('http') 
-          ? downloadUrl 
+        const fullUrl = downloadUrl.startsWith('http')
+          ? downloadUrl
           : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001'}${downloadUrl}`;
         window.open(fullUrl, '_blank');
       } else {
@@ -184,7 +184,7 @@ export default function LicensesPage() {
   }, [t]);
 
   // Use Memo for filtered licenses
-  const filteredLicenses = useMemo(() => 
+  const filteredLicenses = useMemo(() =>
     licenses.filter(license =>
       license.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       license.licenseKey.toLowerCase().includes(searchQuery.toLowerCase())
@@ -213,12 +213,12 @@ export default function LicensesPage() {
                 className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 group"
               >
                 <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                {t("dashboard.licenses.back")}
+                <span suppressHydrationWarning>{t("dashboard.licenses.back")}</span>
               </Link>
-              <h1 className="text-4xl font-bold text-white tracking-tight">{t("dashboard.licenses.title")}</h1>
-              <p className="text-gray-400">{t("dashboard.licenses.desc")}</p>
+              <h1 className="text-4xl font-bold text-white tracking-tight" suppressHydrationWarning>{t("dashboard.licenses.title")}</h1>
+              <p className="text-gray-400" suppressHydrationWarning>{t("dashboard.licenses.desc")}</p>
             </div>
-            
+
             <Card className="p-2 border-white/5 bg-white/2 backdrop-blur-md w-full md:w-80">
               <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />
@@ -227,6 +227,7 @@ export default function LicensesPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-transparent border-none focus:ring-0 h-10"
+                  suppressHydrationWarning
                 />
               </div>
             </Card>
@@ -263,29 +264,30 @@ export default function LicensesPage() {
     <div className="min-h-screen pt-20 px-4 pb-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />
       <div className="container max-w-6xl mx-auto relative z-10">
-          <div className="space-y-2">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 group"
-            >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              {t("dashboard.licenses.back")}
-            </Link>
-            <h1 className="text-4xl font-bold text-white tracking-tight">{t("dashboard.licenses.title")}</h1>
-            <p className="text-gray-400">{t("dashboard.licenses.desc")}</p>
+        <div className="space-y-2 mb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 group"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span suppressHydrationWarning>{t("dashboard.licenses.back")}</span>
+          </Link>
+          <h1 className="text-4xl font-bold text-white tracking-tight" suppressHydrationWarning>{t("dashboard.licenses.title")}</h1>
+          <p className="text-gray-400" suppressHydrationWarning>{t("dashboard.licenses.desc")}</p>
+        </div>
+
+        <Card className="p-2 border-white/5 bg-white/2 backdrop-blur-md w-full md:w-80 mb-6">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />
+            <Input
+              placeholder={t("dashboard.licenses.search_placeholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-transparent border-none focus:ring-0 h-10"
+              suppressHydrationWarning
+            />
           </div>
-          
-          <Card className="p-2 border-white/5 bg-white/2 backdrop-blur-md w-full md:w-80">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />
-              <Input
-                placeholder={t("dashboard.licenses.search_placeholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-transparent border-none focus:ring-0 h-10"
-              />
-            </div>
-          </Card>
+        </Card>
 
         <div className="grid grid-cols-1 gap-4">
           <AnimatePresence mode="popLayout">
@@ -318,7 +320,7 @@ export default function LicensesPage() {
                 >
                   <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-sm hover:border-red-500/30 transition-all duration-500 group overflow-hidden relative">
                     <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-red-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10 mb-8">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-3">
@@ -334,18 +336,18 @@ export default function LicensesPage() {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="relative group/key">
                           <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex items-center justify-between gap-4 group-hover/key:border-red-500/20 transition-all">
                             <code className="text-sm font-mono text-red-400 truncate">
-                              {visibleKeys.includes(license.id) 
-                                ? license.licenseKey 
+                              {visibleKeys.includes(license.id)
+                                ? license.licenseKey
                                 : `${license.licenseKey?.substring(0, 6) || ''}••••••••••••••••••••`}
                             </code>
                             <div className="flex items-center gap-1 shrink-0">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
                                 onClick={() => toggleKeyVisibility(license.id)}
                                 title={visibleKeys.includes(license.id) ? t("dashboard.licenses.hide_key") : t("dashboard.licenses.show_key")}
@@ -356,17 +358,17 @@ export default function LicensesPage() {
                                   <Eye className="w-4 h-4" />
                                 )}
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
                                 onClick={() => copyToClipboard(license.licenseKey, license.id)}
                               >
-                                  {copiedKey === license.id ? (
-                                    <CheckCircle className="w-4 h-4 text-red-500" />
-                                  ) : (
-                                    <Copy className="w-4 h-4" />
-                                  )}
+                                {copiedKey === license.id ? (
+                                  <CheckCircle className="w-4 h-4 text-red-500" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
                               </Button>
                             </div>
                           </div>
@@ -384,8 +386,8 @@ export default function LicensesPage() {
                           {license.status === "ACTIVE" ? t("dashboard.licenses.status.active") : t("dashboard.licenses.status.suspended")}
                         </Badge>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="secondary" 
+                          <Button
+                            variant="secondary"
                             className="bg-white/5 border-white/10 hover:bg-white/10 hover:text-white group/btn rounded-xl px-6 h-11"
                             onClick={() => handleDownload(license.id)}
                             disabled={actionLoading !== null}

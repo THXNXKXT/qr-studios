@@ -493,6 +493,22 @@
         "completed": "สำเร็จ",
         "pending": "รอดำเนินการ",
         "cancelled": "ยกเลิกแล้ว"
+      },
+      "order_id": "รหัสคำสั่งซื้อ",
+      "version": "เวอร์ชัน",
+      "license_download": "License และดาวน์โหลด",
+      "product_name": "ชื่อสินค้า",
+      "license_key": "รหัส License",
+      "download_receipt": "ดาวน์โหลดใบเสร็จ",
+      "date": "วันที่",
+      "payment_method": "ช่องทางชำระเงิน",
+      "total_payment": "ยอดชำระทั้งหมด",
+      "items_title": "รายการสินค้า",
+      "items_count": "รายการ",
+      "subtotal": "ราคาสินค้า",
+      "usage_info": "ข้อมูลการใช้งาน",
+      "errors": {
+        "fetch_failed": "ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้"
       }
     },
     "licenses": {
@@ -509,7 +525,7 @@
       },
       "download": "ดาวน์โหลด",
       "view_product": "ดูรายละเอียดสินค้า",
-      "ip_whitelist": "IP Whitelist (สำหรับการใช้งานเซิร์ฟเวอร์)",
+      "ip_whitelist": "IP Whitelist",
       "ip_placeholder": "ระบุ IP Address (เช่น 1.2.3.4, 5.6.7.8)",
       "edit_ip": "แก้ไข IP",
       "save_ip": "บันทึก",
@@ -520,6 +536,8 @@
       "hide_key": "ซ่อน",
       "show_key": "แสดง",
       "copy_key": "คัดลอก License Key",
+      "preparing": "กำลังเตรียม License",
+      "preparing_desc": "ระบบกำลังสร้าง License Key ให้คุณ กรุณารอสักครู่...",
       "errors": {
         "update_ip_failed": "ไม่สามารถอัพเดท IP ได้",
         "reset_ip_failed": "ไม่สามารถรีเซ็ต IP ได้",
@@ -647,6 +665,7 @@
     "mon_fri": "จันทร์ - ศุกร์",
     "sat_sun": "เสาร์ - อาทิตย์",
     "no_results": "ไม่พบข้อมูล",
+    "no_image": "ไม่มีรูป",
     "start_at": "เริ่มต้นที่",
     "date_locale": "th",
     "receive": "รับ",

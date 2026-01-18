@@ -166,17 +166,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <Link href="/dashboard/orders">
               <Button variant="ghost" size="sm" className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                {renderTranslation("dashboard.orders.back")}
+                <span suppressHydrationWarning>{renderTranslation("dashboard.orders.back")}</span>
               </Button>
             </Link>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-white">{renderTranslation("dashboard.orders.details")}</h1>
-                <p className="text-gray-400">{renderTranslation("common.loading")}</p>
+                <h1 className="text-3xl font-bold text-white" suppressHydrationWarning>{renderTranslation("dashboard.orders.details")}</h1>
+                <p className="text-gray-400" suppressHydrationWarning>{renderTranslation("common.loading")}</p>
               </div>
               <Button disabled className="bg-red-600/50">
                 <Download className="w-4 h-4 mr-2" />
-                {renderTranslation("dashboard.orders.download_receipt")}
+                <span suppressHydrationWarning>{renderTranslation("dashboard.orders.download_receipt")}</span>
               </Button>
             </div>
           </div>
@@ -199,12 +199,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       <div className="min-h-screen pt-32 px-4 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">{renderTranslation("dashboard.orders.no_orders")}</h1>
-          <p className="text-gray-400 mb-6">{error || renderTranslation("dashboard.orders.no_orders_desc")}</p>
+          <h1 className="text-2xl font-bold text-white mb-2" suppressHydrationWarning>{renderTranslation("dashboard.orders.no_orders")}</h1>
+          <p className="text-gray-400 mb-6" suppressHydrationWarning>{error || renderTranslation("dashboard.orders.no_orders_desc")}</p>
           <Link href="/dashboard/orders">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              {renderTranslation("dashboard.orders.back")}
+              <span suppressHydrationWarning>{renderTranslation("dashboard.orders.back")}</span>
             </Button>
           </Link>
         </div>
@@ -231,12 +231,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            {renderTranslation("dashboard.orders.back")}
+            <span suppressHydrationWarning>{renderTranslation("dashboard.orders.back")}</span>
           </Link>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <h1 className="text-4xl font-bold text-white tracking-tight flex flex-wrap items-center gap-4">
-                {renderTranslation("dashboard.orders.details")}
+                <span suppressHydrationWarning>{renderTranslation("dashboard.orders.details")}</span>
                 <Badge
                   className={cn(
                     "px-4 py-1 rounded-xl border-none font-black text-[10px] uppercase tracking-widest shadow-lg",
@@ -244,19 +244,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       order.status === "PENDING" ? "bg-red-900/20 text-red-500/50 shadow-red-900/10" :
                         "bg-red-500/20 text-red-400 shadow-red-500/10"
                   )}
+                  suppressHydrationWarning
                 >
                   {order.status === "COMPLETED" ? renderTranslation("dashboard.orders.status.completed") : order.status === "PENDING" ? renderTranslation("dashboard.orders.status.pending") : order.status}
                 </Badge>
               </h1>
               <div className="flex items-center gap-2 text-gray-500 font-mono text-sm uppercase tracking-tighter">
                 <Hash className="w-4 h-4" />
-                <span>Order ID: {order.id.toUpperCase()}</span>
+                <span suppressHydrationWarning>{renderTranslation("dashboard.orders.order_id")}: {order.id.toUpperCase()}</span>
               </div>
             </div>
             {order.status === "COMPLETED" && (
               <Button className="bg-red-600 hover:bg-red-500 h-12 px-8 rounded-2xl shadow-xl shadow-red-600/20 font-bold group">
                 <Download className="w-5 h-5 mr-2 group-hover:translate-y-0.5 transition-transform" />
-                {renderTranslation("dashboard.orders.download_receipt")}
+                <span suppressHydrationWarning>{renderTranslation("dashboard.orders.download_receipt")}</span>
               </Button>
             )}
           </div>
@@ -274,8 +275,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <item.icon className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">{item.label}</p>
-                  <p className={cn("text-sm text-white font-bold", item.valueClass)}>{item.value}</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1" suppressHydrationWarning>{item.label}</p>
+                  <p className={cn("text-sm text-white font-bold", item.valueClass)} suppressHydrationWarning>{item.value}</p>
                 </div>
               </div>
             </Card>
@@ -288,9 +289,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
               <h3 className="text-xl font-bold text-white flex items-center gap-3">
                 <Package className="w-6 h-6 text-red-500" />
-                {renderTranslation("dashboard.orders.items_title")}
+                <span suppressHydrationWarning>{renderTranslation("dashboard.orders.items_title")}</span>
               </h3>
-              <Badge className="bg-white/5 text-gray-400 border-none">{order.items.length} {renderTranslation("dashboard.orders.items_count")}</Badge>
+              <Badge className="bg-white/5 text-gray-400 border-none" suppressHydrationWarning>{order.items.length} {renderTranslation("dashboard.orders.items_count")}</Badge>
             </div>
             <div className="divide-y divide-white/5">
               {order.items.map((item) => (
@@ -306,7 +307,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       ) : (
                         <div className="flex flex-col items-center justify-center">
                           <ImageOff className="w-8 h-8 text-gray-700 mb-1" />
-                          <span className="text-[8px] font-black uppercase tracking-widest text-gray-700">No Image</span>
+                          <span className="text-[8px] font-black uppercase tracking-widest text-gray-700" suppressHydrationWarning>{renderTranslation("common.no_image")}</span>
                         </div>
                       )}
                     </div>
@@ -317,8 +318,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           {item.quantity} × {formatPrice(item.price)}
                         </span>
                         {item.product.version && (
-                          <Badge variant="outline" className="text-[10px] py-0 border-white/10 text-gray-400">
-                            Version {item.product.version}
+                          <Badge variant="outline" className="text-[10px] py-0 border-white/10 text-gray-400" suppressHydrationWarning>
+                            {renderTranslation("dashboard.orders.version")} {item.product.version}
                           </Badge>
                         )}
                       </div>
@@ -334,12 +335,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <div className="p-8 bg-black/40 border-t border-white/5">
               <div className="max-w-xs ml-auto space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-bold uppercase tracking-wider">{renderTranslation("dashboard.orders.subtotal")}</span>
+                  <span className="text-gray-500 font-bold uppercase tracking-wider" suppressHydrationWarning>{renderTranslation("dashboard.orders.subtotal")}</span>
                   <span className="text-white font-mono">{formatPrice(order.total + order.discount)}</span>
                 </div>
                 {order.discount > 0 && (
                   <div className="flex justify-between text-sm items-center">
-                    <span className="text-red-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-red-400 font-bold uppercase tracking-wider flex items-center gap-2" suppressHydrationWarning>
                       <Sparkles className="w-4 h-4" />
                       {renderTranslation("cart.summary.promo_discount", { code: order.promoCode ? `(${order.promoCode})` : '' })}
                     </span>
@@ -347,7 +348,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-4 border-t border-white/10">
-                  <span className="text-lg font-black text-white uppercase tracking-tight">{renderTranslation("dashboard.orders.total_payment")}</span>
+                  <span className="text-lg font-black text-white uppercase tracking-tight" suppressHydrationWarning>{renderTranslation("dashboard.orders.total_payment")}</span>
                   <span className="text-3xl font-black text-red-500 tracking-tighter">{formatPrice(order.total)}</span>
                 </div>
               </div>
@@ -364,10 +365,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-2xl font-bold text-white flex items-center gap-3">
                   <Key className="w-7 h-7 text-red-500" />
-                  {renderTranslation("dashboard.orders.usage_info")}
+                  <span suppressHydrationWarning>{renderTranslation("dashboard.orders.usage_info")}</span>
                 </h3>
-                <Badge className="bg-red-600 text-white border-none shadow-lg shadow-red-600/20 px-3">
-                  License & Download
+                <Badge className="bg-red-600 text-white border-none shadow-lg shadow-red-600/20 px-3" suppressHydrationWarning>
+                  {renderTranslation("dashboard.orders.license_download")}
                 </Badge>
               </div>
 
@@ -385,12 +386,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
                         <div className="flex-1 min-w-0 space-y-6">
                           <div>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-2">Product Name</p>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-2" suppressHydrationWarning>{renderTranslation("dashboard.orders.product_name")}</p>
                             <h4 className="text-2xl font-black text-white group-hover:text-red-400 transition-colors">{license.product.name}</h4>
                           </div>
 
                           <div>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-3">License Key</p>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-3" suppressHydrationWarning>{renderTranslation("dashboard.orders.license_key")}</p>
                             <div className="relative group/key max-w-2xl">
                               <div className="absolute -inset-1 bg-linear-to-r from-red-600 to-red-900 rounded-2xl blur opacity-10 group-hover/key:opacity-20 transition duration-500" />
                               <div className="relative bg-black/60 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-6 group-hover/key:border-red-500/20 transition-all">
@@ -435,7 +436,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           <Link href={`/dashboard/licenses`} className="flex-1">
                             <Button variant="secondary" className="w-full h-14 bg-white/5 border-white/10 hover:bg-white/10 rounded-2xl font-bold group/btn">
                               <Shield className="w-5 h-5 mr-2 text-red-500" />
-                              {renderTranslation("dashboard.licenses.ip_whitelist")}
+                              <span suppressHydrationWarning>{renderTranslation("dashboard.licenses.ip_whitelist")}</span>
                               <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                             </Button>
                           </Link>
@@ -444,7 +445,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                             onClick={() => handleDownload(license.id)}
                           >
                             <Download className="w-6 h-6 mr-2 group-hover/dl:translate-y-0.5 transition-transform" />
-                            {renderTranslation("dashboard.licenses.download")}
+                            <span suppressHydrationWarning>{renderTranslation("dashboard.licenses.download")}</span>
                           </Button>
                         </div>
                       </div>
@@ -458,8 +459,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="w-20 h-20 rounded-full bg-red-500/5 flex items-center justify-center mx-auto mb-6 border border-red-500/10">
                     <Loader2 className="w-10 h-10 text-red-500 animate-spin" />
                   </div>
-                  <h4 className="text-2xl font-black text-white mb-2">{renderTranslation("dashboard.licenses.preparing")}</h4>
-                  <p className="text-gray-500 max-w-md mx-auto">{renderTranslation("dashboard.licenses.preparing_desc")}</p>
+                  <h4 className="text-2xl font-black text-white mb-2" suppressHydrationWarning>{renderTranslation("dashboard.licenses.preparing")}</h4>
+                  <p className="text-gray-500 max-w-md mx-auto" suppressHydrationWarning>{renderTranslation("dashboard.licenses.preparing_desc")}</p>
                 </Card>
               )}
             </motion.div>

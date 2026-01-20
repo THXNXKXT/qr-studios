@@ -156,6 +156,7 @@ export const useAuthStore = create<AuthState>()(
         
         // 3. STOP THE LOOP: If already synced and not forced, return immediately.
         const token = getAuthToken();
+        // REMOVED state.isSynced check when force is true to ensure data is updated
         if (state.isSynced && !force && (status === 'authenticated' || !!token)) {
           if (state.loading) set({ loading: false });
           return;
@@ -164,9 +165,6 @@ export const useAuthStore = create<AuthState>()(
         // Create new sync promise
         activeSyncPromise = (async () => {
           try {
-            // Double check syncing flag to prevent overlap
-            if (get().isSyncing && !force) return;
-            
             // 4. Handle unauthenticated state from NextAuth
             if (status === 'unauthenticated' || !session?.user) {
               if (!token) {
@@ -185,20 +183,8 @@ export const useAuthStore = create<AuthState>()(
                   console.log('[AuthStore] Recovering session from token...');
                   const backendUser = await getBackendSession();
                   if (backendUser) {
-                    const currentState = get();
-                    const isSameUser = currentState.user && 
-                      backendUser.id === currentState.user.id && 
-                      backendUser.balance === currentState.user.balance &&
-                      backendUser.points === currentState.user.points &&
-                      backendUser.avatar === currentState.user.avatar &&
-                      backendUser.username === currentState.user.username;
-
-                    if (!isSameUser) {
-                      console.log('[AuthStore] Session recovered, updating user');
-                      set({ user: backendUser, loading: false, isSynced: true, isSyncing: false, error: null });
-                    } else {
-                      set({ isSynced: true, loading: false, isSyncing: false });
-                    }
+                    // Update user even if it looks the same if forced
+                    set({ user: backendUser, loading: false, isSynced: true, isSyncing: false, error: null });
                   } else {
                     console.log('[AuthStore] Token invalid, clearing auth');
                     clearBackendSession();
@@ -239,41 +225,9 @@ export const useAuthStore = create<AuthState>()(
                 backendUser = backendSession.user;
               }
 
-              if (backendUser && session?.user && (!backendUser.avatar || backendUser.username !== session.user.name)) {
-                try {
-                  console.log('[AuthStore] Updating profile/avatar from Discord...');
-                  const accessToken = (session as any).accessToken || (session?.user as any)?.accessToken;
-                  if (accessToken) {
-                    const backendSession = await createBackendSession({
-                      accessToken
-                    });
-                    backendUser = backendSession.user;
-                  }
-                } catch (syncErr) {
-                  console.error('[AuthStore] Failed to sync profile:', syncErr);
-                }
-              }
-
               if (backendUser) {
-                const currentState = get();
-                const isSameUser = currentState.user && 
-                  backendUser.id === currentState.user.id && 
-                  backendUser.balance === currentState.user.balance &&
-                  backendUser.points === currentState.user.points &&
-                  backendUser.avatar === currentState.user.avatar &&
-                  backendUser.username === currentState.user.username;
-
-                if (!isSameUser) {
-                  // Final Race Condition Check before updating state
-                  if (getAuthToken() === null && status !== 'authenticated' && !force) {
-                    console.log('[AuthStore] User logged out before sync completion, skipping update');
-                    return;
-                  }
-                  console.log('[AuthStore] Sync complete, updating user');
-                  set({ user: backendUser, loading: false, isSynced: true, isSyncing: false, error: null });
-                } else {
-                  set({ isSynced: true, loading: false, isSyncing: false });
-                }
+                console.log('[AuthStore] Sync complete, updating user');
+                set({ user: backendUser, loading: false, isSynced: true, isSyncing: false, error: null });
               } else {
                 set({ isSynced: true, loading: false, isSyncing: false });
               }

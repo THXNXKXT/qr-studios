@@ -67,7 +67,7 @@ interface TopupTransaction {
 
 export default function DashboardPage() {
   const { t } = useTranslation("common");
-  const { user, loading: authLoading, isSynced, isSyncing } = useAuth();
+  const { user, loading: authLoading, isSynced, isSyncing, refresh } = useAuth();
 
   const menuItems = useMemo(() => [
     { icon: User, label: t("dashboard.menu.profile"), href: "/dashboard" },
@@ -133,6 +133,21 @@ export default function DashboardPage() {
     }
   }, [user?.id, isSynced]);
 
+  useEffect(() => {
+    // Force refresh user data on dashboard mount to ensure latest totalSpent/points
+    const forceRefresh = async () => {
+      const token = getAuthToken();
+      if (token) {
+        console.log('[Dashboard] Forcing profile refresh...');
+        await refresh();
+        // After profile sync, re-fetch dashboard specific data
+        fetchData();
+      }
+    };
+    forceRefresh();
+  }, [refresh, fetchData]);
+
+  // Keep this for subsequent manual refreshes or data updates
   useEffect(() => {
     fetchData();
   }, [fetchData]);

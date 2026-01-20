@@ -65,7 +65,7 @@ export function Navbar() {
   const itemCount = useCartStore((state) => state.getItemCount());
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } = useNotificationStore();
-  const { user, loading, isSyncing, isAuthenticated: isAuthFromHook, clearAuth } = useAuth();
+  const { user, loading, isSyncing, isAuthenticated: isAuthFromHook, logout } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
@@ -108,35 +108,7 @@ export function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      // 1. Clear custom backend session tokens (localStorage + cookies)
-      clearBackendSession();
-      
-      // 2. Clear all possible NextAuth cookie variants manually for safety
-      eraseCookie('next-auth.session-token');
-      eraseCookie('__Secure-next-auth.session-token');
-      eraseCookie('next-auth.callback-url');
-      eraseCookie('next-auth.csrf-token');
-      
-      // 3. Clear global auth store (Zustand)
-      if (clearAuth) clearAuth();
-      
-      // 4. Call NextAuth signOut
-      await signOut({ 
-        redirect: false,
-        callbackUrl: '/' 
-      });
-      
-      // 5. Reset UI states
-      setShowUserMenu(false);
-      setIsOpen(false);
-      
-      // 6. FORCE hard reload to the home page to destroy all JS state/memory
-      window.location.href = '/';
-    } catch (error) {
-      console.error('[Logout] Error during logout:', error);
-      window.location.href = '/';
-    }
+    await logout();
   };
 
   return (

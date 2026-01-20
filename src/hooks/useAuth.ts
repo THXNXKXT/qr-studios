@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useAuthStore } from '@/store/auth';
 
 export function useAuth() {
@@ -24,6 +24,22 @@ export function useAuth() {
   const addVerifiedSession = useAuthStore((state) => state.addVerifiedSession);
   const addVerifiedTopupSession = useAuthStore((state) => state.addVerifiedTopupSession);
   const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  const logout = useCallback(async () => {
+    try {
+      // 1. Sign out from NextAuth first
+      await signOut({ redirect: false });
+      // 2. Clear custom backend session and store
+      clearAuth();
+      // 3. Redirect manually
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout error:', err);
+      // Fallback: clear and redirect anyway
+      clearAuth();
+      window.location.href = '/';
+    }
+  }, [clearAuth]);
 
   // Extract primitive values from session to stabilize dependencies
   const sessionEmail = session?.user?.email;
@@ -59,6 +75,7 @@ export function useAuth() {
     error,
     isAuthenticated: !!user,
     refresh,
+    logout,
     clearAuth,
   };
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,14 +32,65 @@ import { cn } from "@/lib/utils";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { LanguageSwitcher } from "@/components/admin/LanguageSwitcher";
 
+import { AdminPinModal } from "@/components/admin/AdminPinModal";
+import { getBackendSession } from "@/lib/auth-helper";
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { t } = useTranslation("admin");
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isPinVerified, setIsPinVerified] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      setMounted(true);
+      
+      try {
+        const user = await getBackendSession();
+        
+        // If no user or not an admin/moderator, redirect to home
+        if (!user || !["ADMIN", "MODERATOR"].includes(user.role.toUpperCase())) {
+          router.push("/");
+          return;
+        }
+
+        // User is admin, now check PIN
+        const verified = localStorage.getItem("admin_session_verified");
+        const expiry = localStorage.getItem("admin_session_expiry");
+        
+        if (verified === "true" && expiry && Date.now() < parseInt(expiry)) {
+          setIsPinVerified(true);
+        }
+        
+        setIsCheckingRole(false);
+      } catch (error) {
+        console.error("Failed to verify admin access:", error);
+        router.push("/");
+      }
+    };
+
+    checkAdminAccess();
+  }, [router]);
+
+  if (!mounted || isCheckingRole) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/50 text-xs font-black uppercase tracking-widest animate-pulse">
+            Verifying Access...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const sidebarLinks = [
     { href: "/admin", label: t("sidebar.dashboard"), icon: LayoutDashboard },
@@ -58,6 +109,14 @@ export default function AdminLayout({
     { href: "/admin/audit-logs", label: t("sidebar.audit_logs"), icon: History },
     { href: "/admin/settings", label: t("sidebar.settings"), icon: Settings },
   ];
+
+  if (!isPinVerified) {
+    return (
+      <I18nProvider>
+        <AdminPinModal onSuccess={() => setIsPinVerified(true)} />
+      </I18nProvider>
+    );
+  }
 
   return (
     <I18nProvider>
@@ -90,7 +149,7 @@ export default function AdminLayout({
                   className="relative rounded-lg shadow-xl"
                 />
               </div>
-              <span className="font-black text-white tracking-tighter uppercase text-lg group-hover:text-red-400 transition-colors" suppressHydrationWarning>{t("sidebar.admin_panel")}</span>
+              <span className="font-black text-white tracking-tighter uppercase text-lg group-hover:text-red-400 transition-colors">{mounted ? t("sidebar.admin_panel") : ""}</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -109,32 +168,23 @@ export default function AdminLayout({
                   key={link.href}
                   href={link.href}
                   onClick={() => setSidebarOpen(false)}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 group relative overflow-hidden",
+                    "flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-colors duration-200 group relative overflow-hidden outline-none ring-0 focus:outline-none focus:ring-0 select-none",
                     isActive
-                      ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+                      ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-600/20 border border-transparent"
                       : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/5"
                   )}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="admin-active-nav"
-                      className="absolute inset-0 bg-linear-to-r from-red-600 to-red-500 -z-10"
-                    />
-                  )}
                   <link.icon className={cn(
-                    "w-5 h-5 transition-transform duration-500",
-                    isActive ? "scale-110" : "group-hover:scale-110 group-hover:text-red-500"
+                    "w-5 h-5 transition-transform duration-300",
+                    isActive ? "scale-105" : "group-hover:scale-105 group-hover:text-red-500"
                   )} />
-                  <span className="relative z-10" suppressHydrationWarning>{link.label}</span>
+                  <span className="relative z-10">{mounted ? link.label : ""}</span>
                   {isActive && (
-                    <motion.div
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      className="ml-auto"
-                    >
+                    <div className="ml-auto animate-in fade-in duration-300">
                       <ChevronRight className="w-4 h-4" />
-                    </motion.div>
+                    </div>
                   )}
                 </Link>
               );
@@ -146,7 +196,7 @@ export default function AdminLayout({
             <Link href="/">
               <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-bold group">
                 <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                <span suppressHydrationWarning>{t("sidebar.logout_admin")}</span>
+                <span>{mounted ? t("sidebar.logout_admin") : ""}</span>
               </Button>
             </Link>
           </div>
@@ -168,8 +218,8 @@ export default function AdminLayout({
                 <LanguageSwitcher />
                 <div className="flex items-center gap-3 group cursor-pointer">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-black text-white group-hover:text-red-400 transition-colors" suppressHydrationWarning>{t("sidebar.admin_user")}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold" suppressHydrationWarning>{t("sidebar.super_admin")}</p>
+                    <p className="text-sm font-black text-white group-hover:text-red-400 transition-colors">{mounted ? t("sidebar.admin_user") : ""}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{mounted ? t("sidebar.super_admin") : ""}</p>
                   </div>
                   <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 border border-white/10">
                     <span className="text-lg font-black text-white">A</span>
@@ -183,7 +233,14 @@ export default function AdminLayout({
           <main className="p-6 md:p-10 flex-1 relative">
             <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-red-500/10 to-transparent" />
             <div className="max-w-7xl mx-auto">
-              {children}
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                {children}
+              </motion.div>
             </div>
           </main>
         </div>

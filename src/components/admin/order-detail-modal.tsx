@@ -93,7 +93,7 @@ export function OrderDetailModal({ isOpen, onClose, order, onUpdateStatus, onRes
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-white uppercase tracking-tight">{t("orders.modals.details.title")}</h2>
-                  <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest opacity-60 font-mono">
+                  <p className="text-xs text-gray-500 uppercase font-black tracking-widest opacity-60 font-mono">
                     {t("orders.table.order_id")}: {order.id}
                   </p>
                 </div>
@@ -123,193 +123,194 @@ export function OrderDetailModal({ isOpen, onClose, order, onUpdateStatus, onRes
                     <StatusIcon className="w-7 h-7" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{t("orders.modals.details.status_label")}</p>
+                    <p className="text-xs text-gray-500 uppercase font-black tracking-widest">{t("orders.modals.details.status_label")}</p>
                     <h3 className="text-xl font-black text-white uppercase tracking-tight">{status.label}</h3>
                   </div>
 
                   {onUpdateStatus && order.status !== "COMPLETED" && order.status !== "REFUNDED" && (
                     <div className="flex items-center gap-2 relative z-10">
                       {order.status === "PENDING" && (
-                        <Button onClick={() => onUpdateStatus(order.id, "PROCESSING")} className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest px-6 py-4 rounded-xl">
+                        <Button onClick={() => onUpdateStatus(order.id, "PROCESSING")} className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-xs tracking-widest px-6 py-4 rounded-xl">
                           {t("orders.modals.details.process_btn")}
                         </Button>
                       )}
                       {order.status === "PROCESSING" && (
-                        <Button onClick={() => onUpdateStatus(order.id, "COMPLETED")} className="bg-green-600 hover:bg-green-700 text-white font-black uppercase text-[10px] tracking-widest px-6 py-4 rounded-xl">
+                        <Button onClick={() => onUpdateStatus(order.id, "COMPLETED")} className="bg-green-600 hover:bg-green-700 text-white font-black uppercase text-xs tracking-widest px-6 py-4 rounded-xl">
                           {t("orders.modals.details.success_btn")}
                         </Button>
                       )}
-                      <Button variant="ghost" onClick={() => onUpdateStatus(order.id, "CANCELLED")} className="text-red-500 hover:bg-red-500/10 font-black uppercase text-[10px] tracking-widest px-6 py-4 rounded-xl">
+                      <Button variant="ghost" onClick={() => onUpdateStatus(order.id, "CANCELLED")} className="text-red-500 hover:bg-red-500/10 font-black uppercase text-xs tracking-widest px-6 py-4 rounded-xl">
                         {t("orders.modals.details.cancel_btn")}
                       </Button>
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* User Info */}
-                  <div className="p-6 rounded-3xl bg-white/2 border border-white/5 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <User className="w-4 h-4 text-blue-500" />
-                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.customer_info")}</h3>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tighter">{t("users.modals.form.username")}</p>
-                        <p className="text-sm font-bold text-white">{order.user.username}</p>
-                      </div>
-                      <div>
-                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tighter">{t("users.modals.form.email")}</p>
-                        <p className="text-sm font-bold text-white">{order.user.email}</p>
-                      </div>
-                      {order.user.discordId && (
-                        <div>
-                          <p className="text-[8px] text-gray-500 uppercase font-black tracking-tighter">{t("users.modals.form.discord_id")}</p>
-                          <p className="text-sm font-mono font-bold text-blue-400">{order.user.discordId}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Payment Info */}
-                  <div className="p-6 rounded-3xl bg-white/2 border border-white/5 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="w-4 h-4 text-purple-500" />
-                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.payment_details")}</h3>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tighter">{t("orders.modals.details.method")}</p>
-                        <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 uppercase font-black text-[8px] tracking-widest">{order.paymentMethod}</Badge>
-                      </div>
-                      {order.paymentRef && (
-                        <div>
-                          <p className="text-[8px] text-gray-500 uppercase font-black tracking-tighter">{t("orders.modals.details.ref")}</p>
-                          <p className="text-xs font-mono font-bold text-gray-400 truncate">{order.paymentRef}</p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tighter">{t("orders.modals.details.timestamp")}</p>
-                        <p className="text-sm font-bold text-white">{new Date(order.createdAt).toLocaleString("th-TH")}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div className="space-y-4">
+              {/* Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* User Info */}
+                <div className="p-6 rounded-3xl bg-white/2 border border-white/5 space-y-4">
                   <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-red-500" />
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.items")}</h3>
+                    <User className="w-4 h-4 text-blue-500" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.customer_info")}</h3>
                   </div>
-                  <div className="space-y-4">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="p-6 rounded-4xl bg-white/2 border border-white/5 hover:border-white/10 transition-all group">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-4xl bg-white/5 border border-white/10 overflow-hidden flex flex-col items-center justify-center shrink-0">
-                              {item.productImage ? (
-                                <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
-                              ) : (
-                                <>
-                                  <ImageOff className="w-6 h-6 text-gray-600 mb-1" />
-                                  <span className="text-[6px] font-black uppercase tracking-widest text-gray-600">{t("products.table.no_image")}</span>
-                                </>
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-black text-white uppercase tracking-tight">{item.productName}</h4>
-                              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">{t("orders.modals.details.quantity")}: x{item.quantity}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-black text-red-500">{formatPrice(item.price * item.quantity)}</p>
-                            <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">{formatPrice(item.price)} / unit</p>
-                          </div>
-                        </div>
-
-                        {item.licenseKeys && item.licenseKeys.length > 0 && (
-                          <div className="mt-6 pt-6 border-t border-white/5 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">{t("orders.modals.details.keys")}</p>
-                              <span className="text-[8px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md">{t("orders.modals.details.keys_count", { count: item.licenseKeys.length })}</span>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                              {item.licenseKeys.map((key, kIndex) => (
-                                <div key={kIndex} className="p-4 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between group/key">
-                                  <div className="flex items-center gap-3">
-                                    <Key className="w-4 h-4 text-red-500" />
-                                    <code className="text-xs font-mono text-red-400 font-bold">{key}</code>
-                                  </div>
-                                  <button
-                                    onClick={() => copyToClipboard(key)}
-                                    className="p-2 rounded-lg bg-white/5 text-gray-500 hover:text-white hover:bg-red-600 transition-all opacity-0 group-hover/key:opacity-100"
-                                  >
-                                    <Copy className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Total Summary */}
-                <div className="p-8 rounded-[2.5rem] bg-linear-to-br from-white/5 to-transparent border border-white/10 space-y-4">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-500">
-                      <span>{t("orders.modals.details.subtotal")}</span>
-                      <span className="text-white">{formatPrice(order.total + order.discount)}</span>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-black tracking-tighter">{t("users.modals.form.username")}</p>
+                      <p className="text-sm font-bold text-white">{order.user.username}</p>
                     </div>
-                    {order.discount > 0 && (
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.discount")}</span>
-                          {order.promoCode && <Badge className="bg-red-600 text-white font-mono text-[8px] border-none px-2">{order.promoCode}</Badge>}
-                        </div>
-                        <span className="text-sm font-black text-green-500">-{formatPrice(order.discount)}</span>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-black tracking-tighter">{t("users.modals.form.email")}</p>
+                      <p className="text-sm font-bold text-white">{order.user.email}</p>
+                    </div>
+                    {order.user.discordId && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-tighter">{t("users.modals.form.discord_id")}</p>
+                        <p className="text-sm font-mono font-bold text-blue-400">{order.user.discordId}</p>
                       </div>
                     )}
-                    <div className="h-px bg-white/10 my-2" />
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-white">{t("orders.modals.details.total")}</span>
-                      <span className="text-3xl font-black text-red-500 tracking-tighter">{formatPrice(order.total)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Info */}
+                <div className="p-6 rounded-3xl bg-white/2 border border-white/5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-4 h-4 text-purple-500" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.payment_details")}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-black tracking-tighter">{t("orders.modals.details.method")}</p>
+                      <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 uppercase font-black text-xs tracking-widest">{order.paymentMethod}</Badge>
+                    </div>
+                    {order.paymentRef && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-tighter">{t("orders.modals.details.ref")}</p>
+                        <p className="text-xs font-mono font-bold text-gray-400 truncate">{order.paymentRef}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-tighter">{t("orders.modals.details.timestamp")}</p>
+                      <p className="text-sm font-bold text-white" suppressHydrationWarning>{new Date(order.createdAt).toLocaleString("th-TH")}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Footer Actions */}
-              <div className="p-6 border-t border-white/5 bg-white/2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    order.status === "COMPLETED" ? "bg-green-500 shadow-[0_0_10px_#22c55e]" : "bg-yellow-500 shadow-[0_0_10px_#eab308]"
-                  )} />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.verified")}</span>
-                </div>
+              {/* Order Items */}
+              <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" onClick={onClose} className="px-8 py-6 rounded-2xl text-gray-400 hover:text-white uppercase font-black text-[10px] tracking-widest">
-                    {t("orders.modals.details.close")}
-                  </Button>
-                  {order.status === "COMPLETED" && onResendReceipt && (
-                    <Button
-                      onClick={async () => {
-                        setIsResending(true);
-                        await onResendReceipt(order.id);
-                        setIsResending(false);
-                      }}
-                      disabled={isResending}
-                      className="bg-white/5 hover:bg-white/10 text-white border border-white/10 py-6 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all"
-                    >
-                      {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                      {t("orders.modals.details.resend")}
-                    </Button>
-                  )}
+                  <Package className="w-4 h-4 text-red-500" />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.items")}</h3>
                 </div>
+                <div className="space-y-4">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="p-6 rounded-4xl bg-white/2 border border-white/5 hover:border-white/10 transition-all group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-4xl bg-white/5 border border-white/10 overflow-hidden flex flex-col items-center justify-center shrink-0">
+                            {item.productImage ? (
+                              <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+                            ) : (
+                              <>
+                                <ImageOff className="w-6 h-6 text-gray-600 mb-1" />
+                                <span className="text-[6px] font-black uppercase tracking-widest text-gray-600">{t("products.table.no_image")}</span>
+                              </>
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-white uppercase tracking-tight">{item.productName}</h4>
+                            <p className="text-xs text-gray-500 font-black uppercase tracking-widest mt-1">{t("orders.modals.details.quantity")}: x{item.quantity}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-red-500" suppressHydrationWarning>{formatPrice(item.price * item.quantity)}</p>
+                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest" suppressHydrationWarning>{formatPrice(item.price)} / unit</p>
+                        </div>
+                      </div>
+
+                      {item.licenseKeys && item.licenseKeys.length > 0 && (
+                        <div className="mt-6 pt-6 border-t border-white/5 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{t("orders.modals.details.keys")}</p>
+                            <span className="text-[10px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md">{t("orders.modals.details.keys_count", { count: item.licenseKeys.length })}</span>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
+                            {item.licenseKeys.map((key, kIndex) => (
+                              <div key={kIndex} className="p-4 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between group/key">
+                                <div className="flex items-center gap-3">
+                                  <Key className="w-4 h-4 text-red-500" />
+                                  <code className="text-xs font-mono text-red-400 font-bold">{key}</code>
+                                </div>
+                                <button
+                                  onClick={() => copyToClipboard(key)}
+                                  className="p-2 rounded-lg bg-white/5 text-gray-500 hover:text-white hover:bg-red-600 transition-all opacity-0 group-hover/key:opacity-100"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Total Summary */}
+              <div className="p-8 rounded-[2.5rem] bg-linear-to-br from-white/5 to-transparent border border-white/10 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-gray-500">
+                    <span>{t("orders.modals.details.subtotal")}</span>
+                    <span className="text-white" suppressHydrationWarning>{formatPrice(order.total + order.discount)}</span>
+                  </div>
+                  {order.discount > 0 && (
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.discount")}</span>
+                        {order.promoCode && <Badge className="bg-red-600 text-white font-mono text-[10px] border-none px-2">{order.promoCode}</Badge>}
+                      </div>
+                      <span className="text-sm font-black text-green-500" suppressHydrationWarning>-{formatPrice(order.discount)}</span>
+                    </div>
+                  )}
+                  <div className="h-px bg-white/10 my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-black uppercase tracking-[0.2em] text-white">{t("orders.modals.details.total")}</span>
+                    <span className="text-2xl font-black text-red-500 tracking-tighter" suppressHydrationWarning>{formatPrice(order.total)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-6 border-t border-white/5 bg-white/2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  order.status === "COMPLETED" ? "bg-green-500 shadow-[0_0_10px_#22c55e]" : "bg-yellow-500 shadow-[0_0_10px_#eab308]"
+                )} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("orders.modals.details.verified")}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" onClick={onClose} className="px-8 py-6 rounded-2xl text-gray-400 hover:text-white uppercase font-black text-xs tracking-widest">
+                  {t("orders.modals.details.close")}
+                </Button>
+                {order.status === "COMPLETED" && onResendReceipt && (
+                  <Button
+                    onClick={async () => {
+                      setIsResending(true);
+                      await onResendReceipt(order.id);
+                      setIsResending(false);
+                    }}
+                    disabled={isResending}
+                    className="bg-white/5 hover:bg-white/10 text-white border border-white/10 py-6 px-8 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+                  >
+                    {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {t("orders.modals.details.resend")}
+                  </Button>
+                )}
               </div>
             </div>
           </div>

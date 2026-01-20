@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from "react-i18next";
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,11 @@ import { Globe } from 'lucide-react';
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const languages = [
     { code: 'th', label: 'ภาษาไทย', flag: '🇹🇭' },
@@ -23,6 +28,17 @@ export function LanguageSwitcher() {
     setIsOpen(false);
   };
 
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        className="flex items-center gap-2 px-4 h-11 rounded-xl bg-white/5 border border-white/5 text-gray-400 font-bold opacity-0"
+      >
+        <Globe className="w-4 h-4" />
+      </Button>
+    );
+  }
+
   return (
     <div className="relative">
       <Button
@@ -31,7 +47,7 @@ export function LanguageSwitcher() {
         className="flex items-center gap-2 px-4 h-11 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 text-gray-400 hover:text-white transition-all font-bold"
       >
         <Globe className="w-4 h-4" />
-        <span className="text-xs uppercase tracking-widest" suppressHydrationWarning>{currentLang.code}</span>
+        <span className="text-xs uppercase tracking-widest">{currentLang.code}</span>
       </Button>
 
       <AnimatePresence>

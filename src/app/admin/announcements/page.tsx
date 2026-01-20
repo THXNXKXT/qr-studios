@@ -11,16 +11,16 @@ import {
   Eye,
   EyeOff,
   Image as ImageIcon,
-  Video,
   Clock,
   Loader2,
   TrendingUp,
 } from "lucide-react";
 import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { AnnouncementFormModal, ConfirmModal } from "@/components/admin";
-import { formatPrice, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { AnimatePresence } from "framer-motion";
 import { adminApi } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 type Media = {
   type: "image" | "video";
@@ -48,7 +48,13 @@ export default function AdminAnnouncementsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Record<string, { active: number; inactive: number; total: number }> | null>(null);
+  const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
@@ -58,11 +64,11 @@ export default function AdminAnnouncementsPage() {
         adminApi.getStats()
       ]);
 
-      if (annRes.data && (annRes.data as any).success) {
-        setAnnouncements((annRes.data as any).data || []);
+      if (annRes.data && (annRes.data as unknown as { success: boolean; data: Announcement[] }).success) {
+        setAnnouncements((annRes.data as unknown as { success: boolean; data: Announcement[] }).data || []);
       }
       if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data);
+        setStats(statsRes.data.data as Record<string, { active: number; inactive: number; total: number }>);
       }
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
@@ -75,7 +81,7 @@ export default function AdminAnnouncementsPage() {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
 
-  const filteredAnnouncements = useMemo(() => 
+  const filteredAnnouncements = useMemo(() =>
     announcements.filter((ann) => {
       const matchesSearch = ann.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesActive =
@@ -113,8 +119,8 @@ export default function AdminAnnouncementsPage() {
 
   const handleToggleActive = useCallback(async (announcement: Announcement) => {
     try {
-      const res = await adminApi.toggleAnnouncement(announcement.id);
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.toggleAnnouncement(announcement.id) as { data: { success: boolean } };
+      if (res.data && res.data.success) {
         await fetchAnnouncements();
       }
     } catch (err) {
@@ -122,73 +128,74 @@ export default function AdminAnnouncementsPage() {
     }
   }, [fetchAnnouncements]);
 
-  const handleSaveAnnouncement = useCallback(async (announcementData: any) => {
+  const handleSaveAnnouncement = useCallback(async (announcementData: Partial<Announcement>) => {
     try {
-      let res;
+      let res: { data: { success: boolean; error?: string } };
       if (selectedAnnouncement) {
-        res = await adminApi.updateAnnouncement(selectedAnnouncement.id, announcementData);
+        res = await adminApi.updateAnnouncement(selectedAnnouncement.id, announcementData) as { data: { success: boolean; error?: string } };
       } else {
-        res = await adminApi.createAnnouncement(announcementData);
+        res = await adminApi.createAnnouncement(announcementData) as { data: { success: boolean; error?: string } };
       }
 
-      if (res.data && (res.data as any).success) {
+      if (res.data && res.data.success) {
         await fetchAnnouncements();
         setIsFormOpen(false);
       } else {
-        alert((res.data as any)?.error || "Failed to save announcement");
+        alert(res.data?.error || t("announcements.errors.save_failed"));
       }
     } catch (err) {
       console.error("Error saving announcement:", err);
-      alert("An error occurred while saving the announcement");
+      alert(t("announcements.errors.save_failed"));
     }
-  }, [selectedAnnouncement, fetchAnnouncements]);
+  }, [selectedAnnouncement, fetchAnnouncements, t]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedAnnouncement) return;
     try {
-      const res = await adminApi.deleteAnnouncement(selectedAnnouncement.id);
-      if (res.data && (res.data as any).success) {
+      const response = await adminApi.deleteAnnouncement(selectedAnnouncement.id);
+      const res = response as unknown as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         await fetchAnnouncements();
         setIsDeleteOpen(false);
       } else {
-        alert((res.data as any)?.error || "Failed to delete announcement");
+        alert(res.data?.error || t("announcements.errors.delete_fail"));
       }
     } catch (err) {
       console.error("Error deleting announcement:", err);
-      alert("An error occurred while deleting the announcement");
+      alert(t("announcements.errors.delete_fail"));
     }
-  }, [selectedAnnouncement, fetchAnnouncements]);
+  }, [selectedAnnouncement, fetchAnnouncements, t]);
 
   return (
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Announcements</h1>
-          <p className="text-gray-400 mt-1">บริหารจัดการข่าวสาร โปรโมชั่น และการประกาศแจ้งเตือนบนหน้าเว็บไซต์</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("announcements.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("announcements.subtitle") : ""}</p>
         </div>
-        <Button 
+        <Button
           onClick={handleAddAnnouncement}
-          className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300"
+          className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-xs transition-all duration-300 shrink-0 w-full lg:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Create Announcement
+          {mounted ? t("announcements.add_announcement") : ""}
         </Button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Posts", value: stats?.announcements?.total || 0, icon: Megaphone, color: "text-white", bg: "bg-white/5" },
-          { label: "Currently Published", value: stats?.announcements?.active || 0, icon: Eye, color: "text-red-500", bg: "bg-red-500/10" },
-          { label: "Hidden Drafts", value: stats?.announcements?.inactive || 0, icon: EyeOff, color: "text-gray-500", bg: "bg-white/5" },
-          { label: "Reach (Total Views)", value: "∞", icon: TrendingUp, color: "text-red-800", bg: "bg-red-900/20" },
+          { label: mounted ? t("announcements.active") : "", value: stats?.announcements?.active || 0, icon: Eye, color: "text-red-500", bg: "bg-red-500/10" },
+          { label: mounted ? t("announcements.inactive") : "", value: stats?.announcements?.inactive || 0, icon: EyeOff, color: "text-gray-500", bg: "bg-white/5" },
+          { label: mounted ? t("announcements.title") : "", value: stats?.announcements?.total || 0, icon: Megaphone, color: "text-white", bg: "bg-white/5" },
+          { label: mounted ? t("announcements.stats.reach") : "", value: "∞", icon: TrendingUp, color: "text-red-800", bg: "bg-red-900/20" },
         ].map((stat, index) => (
           <motion.div
-            key={stat.label}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -202,7 +209,7 @@ export default function AdminAnnouncementsPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{stat.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{mounted ? stat.label : ""}</p>
               </div>
             </Card>
           </motion.div>
@@ -216,7 +223,7 @@ export default function AdminAnnouncementsPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder="ค้นหาหัวข้อประกาศ หรือเนื้อหา..."
+              placeholder={mounted ? t("announcements.search_placeholder") : ""}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -229,12 +236,12 @@ export default function AdminAnnouncementsPage() {
                 onClick={() => setFilterActive(status)}
                 className={cn(
                   "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                  filterActive === status 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  filterActive === status
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {status === "all" ? "All Posts" : status === "active" ? "Published" : "Hidden"}
+                {mounted ? (status === "all" ? t("promo_codes.filter.all") : status === "active" ? t("announcements.active") : t("announcements.inactive")) : ""}
               </button>
             ))}
           </div>
@@ -247,7 +254,7 @@ export default function AdminAnnouncementsPage() {
           {loading ? (
             <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading announcements...</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
             </div>
           ) : (
             paginatedAnnouncements.map((announcement, index) => (
@@ -260,7 +267,7 @@ export default function AdminAnnouncementsPage() {
               >
                 <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-md hover:border-red-500/30 transition-all duration-500 group shadow-2xl relative overflow-hidden h-full flex flex-col">
                   <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
+
                   <div className="flex items-start justify-between mb-8 relative z-10">
                     <div className="flex items-center gap-4">
                       <div className={cn(
@@ -275,45 +282,45 @@ export default function AdminAnnouncementsPage() {
                       <div>
                         <Badge className={cn(
                           "px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase tracking-widest transition-all duration-500",
-                          announcement.isActive 
-                            ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                          announcement.isActive
+                            ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                             : "bg-white/5 text-gray-500"
                         )}>
-                          {announcement.isActive ? "PUBLISHED" : "HIDDEN"}
+                          {mounted ? (announcement.isActive ? t("announcements.active") : t("announcements.inactive")) : ""}
                         </Badge>
                         <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-2">
-                          {new Date(announcement.createdAt).toLocaleDateString("th-TH")}
+                          {mounted ? new Date(announcement.createdAt).toLocaleDateString("th-TH") : ""}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => handleToggleActive(announcement)}
-                        className="w-10 h-10 rounded-xl hover:bg-white/5 transition-all"
-                        title={announcement.isActive ? "Hide" : "Show"}
+                        className="w-10 h-10 rounded-xl text-gray-500 hover:bg-white/5 hover:text-white transition-all"
+                        title={announcement.isActive ? (mounted ? t("common.hide") : "") : (mounted ? t("common.show") : "")}
                       >
                         {announcement.isActive ? (
-                          <EyeOff className="w-4 h-4 text-gray-400" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <Eye className="w-4 h-4 text-gray-400" />
+                          <Eye className="w-4 h-4" />
                         )}
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleEditAnnouncement(announcement)}
-                        className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
+                        className="w-10 h-10 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDeleteAnnouncement(announcement)}
-                        className="w-10 h-10 rounded-xl hover:bg-red-500/10 text-red-500/50 hover:text-red-500 transition-all"
+                        className="w-10 h-10 rounded-xl text-red-500/30 hover:bg-red-500/10 hover:text-red-500 transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -338,7 +345,7 @@ export default function AdminAnnouncementsPage() {
                           >
                             <ImageIcon className="w-4 h-4 text-red-500/50 group-hover/media:text-red-500 transition-colors" />
                             <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover/media:text-gray-300 transition-colors">
-                              Image {i + 1}
+                              {mounted ? t("announcements.card.image_index", { index: i + 1 }) : ""}
                             </span>
                           </div>
                         ))}
@@ -352,19 +359,19 @@ export default function AdminAnnouncementsPage() {
                       {announcement.startsAt && (
                         <div className="flex items-center gap-2">
                           <Clock className="w-3.5 h-3.5 text-gray-600" />
-                          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Starts:</span>
-                          <span className="text-[10px] text-gray-300 font-black uppercase tracking-widest">{new Date(announcement.startsAt).toLocaleDateString("th-TH")}</span>
+                          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{mounted ? t("announcements.starts_at") : ""}</span>
+                          <span className="text-[10px] text-gray-300 font-black uppercase tracking-widest">{mounted ? new Date(announcement.startsAt).toLocaleDateString("th-TH") : ""}</span>
                         </div>
                       )}
                       {announcement.endsAt && (
                         <div className="flex items-center gap-2">
                           <Clock className="w-3.5 h-3.5 text-red-900/50" />
-                          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Ends:</span>
+                          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{mounted ? t("announcements.ends_at") : ""}</span>
                           <span className={cn(
                             "text-[10px] font-black uppercase tracking-widest",
                             new Date(announcement.endsAt) < new Date() ? "text-red-900/50" : "text-gray-300"
                           )}>
-                            {new Date(announcement.endsAt).toLocaleDateString("th-TH")}
+                            {mounted ? new Date(announcement.endsAt).toLocaleDateString("th-TH") : ""}
                           </span>
                         </div>
                       )}
@@ -391,8 +398,7 @@ export default function AdminAnnouncementsPage() {
         <Card className="p-20 text-center relative overflow-hidden border-white/5 bg-white/2 backdrop-blur-md">
           <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
           <Megaphone className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-          <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No announcements found</p>
-          <p className="text-gray-600 text-sm mt-2 relative z-10">ลองเปลี่ยนเงื่อนไขการค้นหาหรือสร้างประกาศใหม่</p>
+          <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("announcements.no_announcements") : ""}</p>
         </Card>
       )}
 
@@ -401,7 +407,7 @@ export default function AdminAnnouncementsPage() {
       <AnnouncementFormModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        announcement={selectedAnnouncement as any}
+        announcement={selectedAnnouncement as Announcement}
         onSave={handleSaveAnnouncement}
       />
 
@@ -410,9 +416,9 @@ export default function AdminAnnouncementsPage() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="ลบประกาศ"
-        message={`คุณต้องการลบประกาศ "${selectedAnnouncement?.title}" หรือไม่?`}
-        confirmText="ลบประกาศ"
+        title={t("announcements.delete_title")}
+        message={t("announcements.delete_message", { title: selectedAnnouncement?.title })}
+        confirmText={t("announcements.delete_confirm")}
         type="danger"
       />
     </div>

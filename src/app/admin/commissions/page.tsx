@@ -26,6 +26,7 @@ import {
 import { Card, Button, Input, Badge } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 type CommissionStatus = "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
@@ -48,21 +49,29 @@ type Commission = {
   updatedAt: string;
 };
 
-const statusConfig: Record<CommissionStatus, { icon: any; label: string; bg: string; text: string }> = {
-  PENDING: { icon: Clock, label: "รอดำเนินการ", bg: "bg-amber-500/10", text: "text-amber-500" },
-  ACCEPTED: { icon: CheckCircle, label: "รับงานแล้ว", bg: "bg-blue-500/10", text: "text-blue-500" },
-  IN_PROGRESS: { icon: PlayCircle, label: "กำลังทำ", bg: "bg-indigo-500/10", text: "text-indigo-500" },
-  COMPLETED: { icon: CheckCircle, label: "เสร็จสิ้น", bg: "bg-green-500/10", text: "text-green-500" },
-  CANCELLED: { icon: XCircle, label: "ยกเลิก", bg: "bg-red-500/10", text: "text-red-500" },
+const statusConfig: Record<CommissionStatus, { icon: React.ElementType; labelKey: string; bg: string; text: string }> = {
+  PENDING: { icon: Clock, labelKey: "commissions.status.pending", bg: "bg-amber-500/10", text: "text-amber-500" },
+  ACCEPTED: { icon: CheckCircle, labelKey: "commissions.status.accepted", bg: "bg-blue-500/10", text: "text-blue-500" },
+  IN_PROGRESS: { icon: PlayCircle, labelKey: "commissions.status.in_progress", bg: "bg-indigo-500/10", text: "text-indigo-500" },
+  COMPLETED: { icon: CheckCircle, labelKey: "commissions.status.completed", bg: "bg-green-500/10", text: "text-green-500" },
+  CANCELLED: { icon: XCircle, labelKey: "commissions.status.cancelled", bg: "bg-red-500/10", text: "text-red-500" },
 };
 
 export default function AdminCommissionsPage() {
+  const { t } = useTranslation("admin");
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [stats, setStats] = useState<any>(null);
-  
+  const [stats, setStats] = useState<{
+    commissions: { total: number; pending: number; inProgress: number; completed: number };
+  } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // For update modal/form
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [selectedCommission, setSelectedReview] = useState<Commission | null>(null);
@@ -78,10 +87,10 @@ export default function AdminCommissionsPage() {
           status: filterStatus === "all" ? undefined : filterStatus,
         }),
         adminApi.getStats()
-      ]);
+      ]) as [{ data: { success: boolean; data: Commission[] } }, { data: { success: boolean; data: { commissions: { total: number; pending: number; inProgress: number; completed: number } } } }];
 
-      if (commissionsRes.data && (commissionsRes.data as any).success) {
-        setCommissions((commissionsRes.data as any).data || []);
+      if (commissionsRes.data && commissionsRes.data.success) {
+        setCommissions(commissionsRes.data.data || []);
       }
       if (statsRes.data && statsRes.data.success) {
         setStats(statsRes.data.data);
@@ -108,24 +117,25 @@ export default function AdminCommissionsPage() {
     if (!selectedCommission) return;
     setIsSaving(true);
     try {
-      const { data: res } = await adminApi.updateCommissionStatus(
+      const response = await adminApi.updateCommissionStatus(
         selectedCommission.id,
         { status: updateStatus, adminNotes }
       );
-      if (res && (res as any).success) {
+      const res = response as unknown as { data: { success: boolean } };
+      if (res.data && res.data.success) {
         await fetchCommissions();
         setIsUpdateOpen(false);
       }
     } catch (err) {
       console.error("Failed to update commission:", err);
-      alert("Failed to update commission status");
+      alert(mounted ? t("commissions.errors.update_failed") : "");
     } finally {
       setIsSaving(false);
     }
   };
 
   const filteredCommissions = useMemo(() => {
-    return commissions.filter(c => 
+    return commissions.filter(c =>
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.id.includes(searchQuery)
@@ -136,25 +146,41 @@ export default function AdminCommissionsPage() {
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Commissions</h1>
-          <p className="text-gray-400 mt-1">บริหารจัดการรายการจ้างทำสคริปต์และงานออกแบบเฉพาะทาง</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("commissions.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("commissions.subtitle") : ""}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md h-auto lg:h-14">
+          {["all", "PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={cn(
+                "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest h-full",
+                filterStatus === status
+                  ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+                  : "text-gray-500 hover:text-white hover:bg-white/5"
+              )}
+            >
+              {status === "all" ? t("commissions.filter.all") : t(statusConfig[status as CommissionStatus]?.labelKey)}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Requests", value: stats?.commissions?.total || 0, icon: ClipboardList, color: "text-white", bg: "bg-white/5" },
-          { label: "Pending Review", value: stats?.commissions?.pending || 0, icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10" },
-          { label: "In Progress", value: stats?.commissions?.inProgress || 0, icon: PlayCircle, color: "text-blue-400", bg: "bg-blue-500/5" },
-          { label: "Completed", value: stats?.commissions?.completed || 0, icon: CheckCircle, color: "text-green-500", bg: "bg-green-500/10" },
+          { label: mounted ? t("commissions.stats.total_requests") : "", value: stats?.commissions?.total || 0, icon: ClipboardList, color: "text-white", bg: "bg-white/5" },
+          { label: mounted ? t("commissions.stats.pending_review") : "", value: stats?.commissions?.pending || 0, icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10" },
+          { label: mounted ? t("commissions.stats.in_progress") : "", value: stats?.commissions?.inProgress || 0, icon: PlayCircle, color: "text-blue-400", bg: "bg-blue-500/5" },
+          { label: mounted ? t("commissions.stats.completed") : "", value: stats?.commissions?.completed || 0, icon: CheckCircle, color: "text-green-500", bg: "bg-green-500/10" },
         ].map((stat, index) => (
           <motion.div
-            key={stat.label}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -168,7 +194,7 @@ export default function AdminCommissionsPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{stat.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{mounted ? stat.label : ""}</p>
               </div>
             </Card>
           </motion.div>
@@ -182,7 +208,7 @@ export default function AdminCommissionsPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder="ค้นหาชื่อโปรเจกต์, ผู้จ้าง หรือ ID..."
+              placeholder={mounted ? t("commissions.search_placeholder") : ""}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -195,12 +221,12 @@ export default function AdminCommissionsPage() {
                 onClick={() => setFilterStatus(status)}
                 className={cn(
                   "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                  filterStatus === status 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  filterStatus === status
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {status === "all" ? "All" : statusConfig[status as CommissionStatus]?.label || status}
+                {status === "all" ? t("commissions.filter.all") : t(statusConfig[status as CommissionStatus]?.labelKey)}
               </button>
             ))}
           </div>
@@ -212,7 +238,7 @@ export default function AdminCommissionsPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading commissions...</p>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
           </div>
         ) : (
           filteredCommissions.map((commission: Commission, index: number) => {
@@ -226,7 +252,7 @@ export default function AdminCommissionsPage() {
               >
                 <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-md hover:border-red-500/30 transition-all duration-500 group shadow-2xl relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
+
                   <div className="flex flex-col lg:flex-row gap-8">
                     {/* Status & Date Side */}
                     <div className="lg:w-48 flex flex-col gap-4 border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-8">
@@ -236,23 +262,23 @@ export default function AdminCommissionsPage() {
                         status.text
                       )}>
                         <status.icon className="w-4 h-4 mr-2" />
-                        {status.label}
+                        {t(status.labelKey)}
                       </Badge>
-                      
+
                       <div className="space-y-4">
                         <div>
-                          <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mb-1">Created At</p>
+                          <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mb-1">{mounted ? t("commissions.card.created_at") : ""}</p>
                           <div className="flex items-center gap-2 text-gray-400">
                             <Calendar className="w-3.5 h-3.5" />
-                            <span className="text-xs font-bold">{new Date(commission.createdAt).toLocaleDateString("th-TH")}</span>
+                            <span className="text-xs font-bold">{mounted ? new Date(commission.createdAt).toLocaleDateString("th-TH") : ""}</span>
                           </div>
                         </div>
-                        
+
                         <div>
-                          <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mb-1">Budget</p>
+                          <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mb-1">{t("commissions.card.budget")}</p>
                           <div className="flex items-center gap-2 text-red-500">
                             <DollarSign className="w-3.5 h-3.5" />
-                            <span className="text-lg font-black">{commission.budget ? formatPrice(commission.budget) : "N/A"}</span>
+                            <span className="text-lg font-black">{commission.budget ? formatPrice(commission.budget) : (mounted ? t("common.no_data") : "")}</span>
                           </div>
                         </div>
                       </div>
@@ -275,7 +301,7 @@ export default function AdminCommissionsPage() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-white">{commission.user.username}</p>
-                            <p className="text-[10px] text-gray-500 font-bold">{commission.user.discordId}</p>
+                            <p className="text-[10px] text-gray-500 font-bold">{commission.user.discordId || (mounted ? t("common.no_data") : "")}</p>
                           </div>
                         </div>
                       </div>
@@ -298,7 +324,7 @@ export default function AdminCommissionsPage() {
                             >
                               <FileText className="w-4 h-4 text-red-500/50" />
                               <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                                Attachment {i + 1}
+                                {mounted ? `${t("commissions.card.attachment")} ${i + 1}` : ""}
                               </span>
                             </a>
                           ))}
@@ -309,7 +335,7 @@ export default function AdminCommissionsPage() {
                         <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
                           <div className="flex items-center gap-2 mb-2 text-red-400">
                             <MessageSquare className="w-4 h-4" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">Admin Notes</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest">{t("commissions.admin_notes_label")}</p>
                           </div>
                           <p className="text-sm text-gray-400 font-medium italic">
                             {commission.adminNotes}
@@ -322,9 +348,9 @@ export default function AdminCommissionsPage() {
                     <div className="lg:w-32 flex flex-row lg:flex-col gap-2 justify-end">
                       <Button
                         onClick={() => handleUpdateClick(commission)}
-                        className="flex-1 lg:w-full bg-white/5 hover:bg-white/10 text-white rounded-xl h-12 font-bold text-xs uppercase tracking-widest"
+                        className="flex-1 lg:w-full bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] transition-all duration-300"
                       >
-                        Manage
+                        {t("commissions.card.manage_btn")}
                       </Button>
                     </div>
                   </div>
@@ -338,7 +364,7 @@ export default function AdminCommissionsPage() {
           <div className="p-20 text-center relative overflow-hidden border-white/5 bg-white/2 backdrop-blur-md rounded-3xl">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <ClipboardList className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No commissions found</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("commissions.no_commissions") : ""}</p>
           </div>
         )}
       </div>
@@ -361,7 +387,7 @@ export default function AdminCommissionsPage() {
               className="relative w-full max-w-lg bg-[#0A0A0A] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-              
+
               <div className="p-8 space-y-8">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -369,7 +395,7 @@ export default function AdminCommissionsPage() {
                       <ClipboardList className="w-6 h-6 text-red-500" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Manage Commission</h2>
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">{t("commissions.modal.title")}</h2>
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">ID: {selectedCommission.id}</p>
                     </div>
                   </div>
@@ -392,7 +418,7 @@ export default function AdminCommissionsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 pb-2 border-b border-white/5">
                       <History className="w-4 h-4 text-orange-500" />
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">อัปเดตสถานะงาน</h3>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t("commissions.modal.update_status")}</h3>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -403,12 +429,12 @@ export default function AdminCommissionsPage() {
                           onClick={() => setUpdateStatus(status)}
                           className={cn(
                             "px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex items-center justify-center gap-2",
-                            updateStatus === status 
-                              ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/20" 
+                            updateStatus === status
+                              ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/20"
                               : "bg-white/5 border-white/5 text-gray-500 hover:text-white hover:bg-white/10"
                           )}
                         >
-                          {statusConfig[status].label}
+                          {t(statusConfig[status].labelKey)}
                         </button>
                       ))}
                     </div>
@@ -418,15 +444,15 @@ export default function AdminCommissionsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 pb-2 border-b border-white/5">
                       <MessageSquare className="w-4 h-4 text-blue-500" />
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">บันทึกจากผู้ดูแล (Admin Notes)</h3>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t("commissions.modal.admin_notes")}</h3>
                     </div>
 
                     <div className="space-y-3">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-1 italic">ผู้จ้างจะเห็นข้อความนี้ในการแจ้งเตือน</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-1 italic">{t("commissions.modal.notes_hint")}</p>
                       <textarea
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
-                        placeholder="กรอกรายละเอียดความคืบหน้า หรือเหตุผลในการเปลี่ยนสถานะ..."
+                        placeholder={t("commissions.modal.notes_placeholder")}
                         className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 transition-all resize-none"
                       />
                     </div>
@@ -439,7 +465,7 @@ export default function AdminCommissionsPage() {
                     onClick={() => setIsUpdateOpen(false)}
                     className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-xs text-gray-500 hover:text-white hover:bg-white/5"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     onClick={handleSaveUpdate}
@@ -447,9 +473,9 @@ export default function AdminCommissionsPage() {
                     className="flex-1 bg-red-600 hover:bg-red-500 text-white shadow-xl shadow-red-600/20 h-14 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95"
                   >
                     {isSaving ? (
-                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> กำลังบันทึก...</>
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {t("common.saving")}</>
                     ) : (
-                      <><Save className="w-4 h-4 mr-2" /> Update Commission</>
+                      <><Save className="w-4 h-4 mr-2" /> {t("commissions.modal.update_btn")}</>
                     )}
                   </Button>
                 </div>

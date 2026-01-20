@@ -18,6 +18,7 @@ import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { PromoFormModal, ConfirmModal } from "@/components/admin";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 type PromoCode = {
   id: string;
@@ -43,13 +44,20 @@ export default function AdminPromoCodesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState<PromoCode | null>(null);
+  const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchPromoCodes = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await adminApi.getPromoCodes();
-      if (data && (data as any).success) {
-        setPromoCodes((data as any).data || []);
+      const response = await adminApi.getPromoCodes();
+      const res = response as unknown as { data: { success: boolean; data: PromoCode[] } };
+      if (res.data && res.data.success) {
+        setPromoCodes(res.data.data || []);
       }
     } catch (err) {
       console.error("Failed to fetch promo codes:", err);
@@ -62,7 +70,7 @@ export default function AdminPromoCodesPage() {
     fetchPromoCodes();
   }, [fetchPromoCodes]);
 
-  const filteredCodes = useMemo(() => 
+  const filteredCodes = useMemo(() =>
     promoCodes.filter((code) => {
       const matchesSearch = code.code.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesActive =
@@ -104,8 +112,9 @@ export default function AdminPromoCodesPage() {
 
   const handleToggleActive = useCallback(async (promo: PromoCode) => {
     try {
-      const res = await adminApi.togglePromoCode(promo.id);
-      if (res.data && (res.data as any).success) {
+      const response = await adminApi.togglePromoCode(promo.id);
+      const res = response as unknown as { data: { success: boolean } };
+      if (res.data && res.data.success) {
         await fetchPromoCodes();
       }
     } catch (err) {
@@ -113,79 +122,78 @@ export default function AdminPromoCodesPage() {
     }
   }, [fetchPromoCodes]);
 
-  const handleSavePromo = useCallback(async (promoData: any) => {
+  const handleSavePromo = useCallback(async (promoData: Partial<PromoCode>) => {
     try {
-      let res;
+      let res: { data: { success: boolean; error?: string } };
       const formattedData = {
         ...promoData,
-        type: promoData.type.toUpperCase(),
+        type: promoData.type?.toUpperCase(),
         expiresAt: promoData.expiresAt ? new Date(promoData.expiresAt).toISOString() : null
       };
 
       if (selectedPromo) {
-        res = await adminApi.updatePromoCode(selectedPromo.id, formattedData);
+        res = await adminApi.updatePromoCode(selectedPromo.id, formattedData) as unknown as { data: { success: boolean; error?: string } };
       } else {
-        res = await adminApi.createPromoCode(formattedData);
+        res = await adminApi.createPromoCode(formattedData) as unknown as { data: { success: boolean; error?: string } };
       }
 
-      if (res.data && (res.data as any).success) {
+      if (res.data && res.data.success) {
         await fetchPromoCodes();
         setIsFormOpen(false);
       } else {
-        alert((res.data as any)?.error || "Failed to save promo code");
+        alert(res.data?.error || (mounted ? t("promo_codes.errors.save_failed") : ""));
       }
     } catch (err) {
       console.error("Error saving promo code:", err);
-      alert("An error occurred while saving the promo code");
     }
-  }, [selectedPromo, fetchPromoCodes]);
+  }, [selectedPromo, fetchPromoCodes, mounted, t]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedPromo) return;
     try {
-      const res = await adminApi.deletePromoCode(selectedPromo.id);
-      if (res.data && (res.data as any).success) {
+      const response = await adminApi.deletePromoCode(selectedPromo.id);
+      const res = response as unknown as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         await fetchPromoCodes();
         setIsDeleteOpen(false);
       } else {
-        alert((res.data as any)?.error || "Failed to delete promo code");
+        alert(res.data?.error || (mounted ? t("promo_codes.errors.delete_fail") : ""));
       }
     } catch (err) {
       console.error("Error deleting promo code:", err);
-      alert("An error occurred while deleting the promo code");
     }
-  }, [selectedPromo, fetchPromoCodes]);
+  }, [selectedPromo, fetchPromoCodes, mounted, t]);
 
   return (
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Promo Management</h1>
-          <p className="text-gray-400 mt-1">บริหารจัดการรหัสส่วนลดและแคมเปญการตลาดของ QR Studio</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("promo_codes.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("promo_codes.subtitle") : ""}</p>
         </div>
-        <Button 
+        <Button
           onClick={handleAddPromo}
-          className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300"
+          className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-xs transition-all duration-300 shrink-0 w-full lg:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Create New Code
+          {mounted ? t("promo_codes.add_code") : ""}
         </Button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Active Coupons", value: promoCodes.filter(c => c.isActive).length, icon: Tag, color: "text-red-500", bg: "bg-red-500/10" },
-          { label: "Total Usage", value: promoCodes.reduce((sum, c) => sum + c.usedCount, 0), icon: Copy, color: "text-white", bg: "bg-white/5" },
-          { label: "Expired Soon", value: promoCodes.filter(c => c.expiresAt && new Date(c.expiresAt) < new Date()).length, icon: Clock, color: "text-gray-500", bg: "bg-white/5" },
-          { label: "Total Campaigns", value: promoCodes.length, icon: Zap, color: "text-red-400", bg: "bg-red-500/5" },
+          { label: mounted ? t("promo_codes.active") : "", value: promoCodes.filter(c => c.isActive).length, icon: Tag, color: "text-red-500", bg: "bg-red-500/10" },
+          { label: mounted ? t("promo_codes.usage_count") : "", value: promoCodes.reduce((sum, c) => sum + c.usedCount, 0), icon: Copy, color: "text-white", bg: "bg-white/5" },
+          { label: mounted ? t("promo_codes.expired") : "", value: promoCodes.filter(c => c.expiresAt && new Date(c.expiresAt) < new Date()).length, icon: Clock, color: "text-gray-500", bg: "bg-white/5" },
+          { label: mounted ? t("promo_codes.title") : "", value: promoCodes.length, icon: Zap, color: "text-red-400", bg: "bg-red-500/5" },
         ].map((stat, index) => (
           <motion.div
-            key={stat.label}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -199,7 +207,7 @@ export default function AdminPromoCodesPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{stat.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{mounted ? stat.label : ""}</p>
               </div>
             </Card>
           </motion.div>
@@ -213,7 +221,7 @@ export default function AdminPromoCodesPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder="ค้นหารหัสส่วนลด หรือเงื่อนไข..."
+              placeholder={mounted ? t("promo_codes.search_placeholder") : ""}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -226,12 +234,12 @@ export default function AdminPromoCodesPage() {
                 onClick={() => setFilterActive(status)}
                 className={cn(
                   "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                  filterActive === status 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  filterActive === status
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {status === "all" ? "All Status" : status === "active" ? "Running" : "Paused"}
+                {mounted ? (status === "all" ? t("promo_codes.filter.all") : status === "active" ? t("promo_codes.active") : t("promo_codes.inactive")) : ""}
               </button>
             ))}
           </div>
@@ -245,19 +253,19 @@ export default function AdminPromoCodesPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading promo codes...</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">Coupon Code</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Discount Info</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Conditions</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Usage Pulse</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Expiration</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Status</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">Actions</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("promo_codes.code") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("promo_codes.discount") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("promo_codes.min_purchase") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("promo_codes.usage_count") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("promo_codes.expires_at") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("common.status") : ""}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{mounted ? t("common.actions") : ""}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -277,7 +285,7 @@ export default function AdminPromoCodesPage() {
                         <button
                           onClick={() => copyToClipboard(promo.code)}
                           className="p-2 rounded-lg bg-white/5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                          title="Copy Code"
+                          title={mounted ? t("common.copy") : ""}
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -286,28 +294,25 @@ export default function AdminPromoCodesPage() {
                     <td className="px-6 py-6">
                       <div>
                         <p className="font-black text-red-500 text-lg">
-                          {promo.type === "PERCENTAGE" ? `${promo.discount}% OFF` : formatPrice(promo.discount)}
+                          {mounted ? (promo.type === "PERCENTAGE" ? `${promo.discount}% OFF` : formatPrice(promo.discount)) : ""}
                         </p>
-                        {promo.maxDiscount && (
-                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-tighter">Capped at {formatPrice(promo.maxDiscount)}</p>
-                        )}
                       </div>
                     </td>
                     <td className="px-6 py-6">
                       {promo.minPurchase ? (
                         <div className="flex items-center gap-2">
                           <Shield className="w-3.5 h-3.5 text-gray-600" />
-                          <span className="text-sm text-gray-300 font-bold">Min. {formatPrice(promo.minPurchase)}</span>
+                          <span className="text-sm text-gray-300 font-bold">{formatPrice(promo.minPurchase)}</span>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-gray-600 uppercase font-black">No Min. Spend</span>
+                        <span className="text-[10px] text-gray-600 uppercase font-black">{mounted ? t("promo_codes.placeholders.no_min") : ""}</span>
                       )}
                     </td>
                     <td className="px-6 py-6">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                          <span className="text-gray-500">{promo.usedCount} Uses</span>
-                          <span className="text-white">{promo.usageLimit || "∞"}</span>
+                          <span className="text-gray-500">{promo.usedCount}</span>
+                          <span className="text-white">{promo.usageLimit || t("promo_codes.placeholders.unlimited")}</span>
                         </div>
                         {promo.usageLimit && (
                           <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -329,41 +334,41 @@ export default function AdminPromoCodesPage() {
                             "text-sm font-bold",
                             new Date(promo.expiresAt) < new Date() ? "text-red-900/50" : "text-gray-300"
                           )}>
-                            {new Date(promo.expiresAt).toLocaleDateString("th-TH")}
+                            {mounted ? new Date(promo.expiresAt).toLocaleDateString("th-TH") : ""}
                           </span>
-                          <span className="text-[10px] text-gray-600 font-black uppercase">Expiration</span>
+                          <span className="text-[10px] text-gray-600 font-black uppercase">{mounted ? t("promo_codes.table.expiration_label") : ""}</span>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-gray-600 uppercase font-black">Never Expires</span>
+                        <span className="text-[10px] text-gray-600 uppercase font-black">{mounted ? t("promo_codes.table.never_expires") : ""}</span>
                       )}
                     </td>
                     <td className="px-6 py-6">
                       <Badge className={cn(
                         "px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase tracking-widest transition-all duration-500 cursor-pointer",
-                        promo.isActive 
-                          ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                        promo.isActive
+                          ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                           : "bg-white/5 text-gray-500"
                       )}
-                      onClick={() => handleToggleActive(promo)}
+                        onClick={() => handleToggleActive(promo)}
                       >
-                        {promo.isActive ? "ACTIVE" : "PAUSED"}
+                        {mounted ? (promo.isActive ? t("promo_codes.active") : t("promo_codes.inactive")) : ""}
                       </Badge>
                     </td>
                     <td className="px-6 py-6">
                       <div className="flex items-center justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleEditPromo(promo)}
-                          className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
+                          className="w-10 h-10 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDeletePromo(promo)}
-                          className="w-10 h-10 rounded-xl hover:bg-red-500/10 text-red-500/50 hover:text-red-500 transition-all"
+                          className="w-10 h-10 rounded-xl hover:bg-red-600/10 text-red-600/30 hover:text-red-600 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -390,8 +395,8 @@ export default function AdminPromoCodesPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Tag className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No promo codes found</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">ลองเปลี่ยนเงื่อนไขการค้นหาหรือเพิ่มรหัสใหม่</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("promo_codes.no_codes") : ""}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{mounted ? t("promo_codes.no_codes_hint") : ""}</p>
           </div>
         )}
       </Card>
@@ -401,7 +406,7 @@ export default function AdminPromoCodesPage() {
       <PromoFormModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        promo={selectedPromo as any}
+        promo={selectedPromo as PromoCode}
         onSave={handleSavePromo}
       />
 
@@ -410,9 +415,9 @@ export default function AdminPromoCodesPage() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="ลบโค้ดส่วนลด"
-        message={`คุณต้องการลบโค้ด "${selectedPromo?.code}" หรือไม่?`}
-        confirmText="ลบโค้ด"
+        title={t("promo_codes.delete_title")}
+        message={t("promo_codes.delete_message", { code: selectedPromo?.code })}
+        confirmText={t("promo_codes.delete_confirm")}
         type="danger"
       />
     </div>

@@ -4,22 +4,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingCart,
   Users,
   User,
   Package,
-  ArrowUpRight,
-  ArrowDownRight,
-  Tag,
   Loader2,
   ImageOff,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   BarChart,
@@ -34,21 +27,28 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import Image from "next/image";
 import { Card, Badge } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
 
 export default function AdminAnalyticsPage() {
   const { t } = useTranslation("admin");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: res } = await adminApi.getAnalytics();
-      if (res && (res as any).success) {
-        setData((res as any).data);
+      const response = await adminApi.getAnalytics();
+      const res = response as unknown as { data: { success: boolean; data: any } };
+      if (res.data && res.data.success) {
+        setData(res.data.data);
       }
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
@@ -63,35 +63,33 @@ export default function AdminAnalyticsPage() {
 
   const stats = useMemo(() => [
     {
-      label: t("analytics.stats.revenue"),
+      label: mounted ? t("analytics.stats.revenue") : "",
       value: formatPrice(data?.summary?.totalRevenue || 0),
       icon: DollarSign,
       color: "text-red-400",
     },
     {
-      label: t("analytics.stats.orders"),
+      label: mounted ? t("analytics.stats.orders") : "",
       value: (data?.summary?.totalOrders || 0).toLocaleString(),
       icon: ShoppingCart,
       color: "text-red-400",
     },
     {
-      label: t("analytics.stats.users"),
+      label: mounted ? t("analytics.stats.users") : "",
       value: (data?.summary?.totalUsers || 0).toLocaleString(),
       icon: Users,
       color: "text-red-400",
     },
     {
-      label: t("analytics.stats.avg_order"),
+      label: mounted ? t("analytics.stats.avg_order") : "",
       value: formatPrice(data?.summary?.avgOrderValue || 0),
       icon: Package,
       color: "text-red-300",
     },
-  ], [data, t]);
+  ], [mounted, data, t]);
 
   const {
     revenueData = [],
-    dailyRevenueData = [],
-    categoryData = [],
     userGrowthData = [],
     hourlyOrdersData = [],
     paymentMethodData = [],
@@ -104,8 +102,6 @@ export default function AdminAnalyticsPage() {
   } = data?.charts || {};
 
   const safeRevenueData = useMemo(() => Array.isArray(revenueData) ? revenueData : [], [revenueData]);
-  const safeDailyRevenueData = useMemo(() => Array.isArray(dailyRevenueData) ? dailyRevenueData : [], [dailyRevenueData]);
-  const safeCategoryData = useMemo(() => Array.isArray(categoryData) ? categoryData : [], [categoryData]);
   const safeUserGrowthData = useMemo(() => Array.isArray(userGrowthData) ? userGrowthData : [], [userGrowthData]);
   const safeHourlyOrdersData = useMemo(() => Array.isArray(hourlyOrdersData) ? hourlyOrdersData : [], [hourlyOrdersData]);
   const safePaymentMethodData = useMemo(() => Array.isArray(paymentMethodData) ? paymentMethodData : [], [paymentMethodData]);
@@ -122,7 +118,7 @@ export default function AdminAnalyticsPage() {
       <div className="flex items-center justify-center min-h-[600px]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t("analytics.loading")}</p>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("analytics.loading") : ""}</p>
         </div>
       </div>
     );
@@ -131,18 +127,19 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="space-y-10 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 min-h-14">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("analytics.title")}</h1>
-          <p className="text-gray-400 mt-1">{t("analytics.subtitle")}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("analytics.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("analytics.subtitle") : ""}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <motion.div
-            key={stat.label}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -157,9 +154,9 @@ export default function AdminAnalyticsPage() {
               <div className="relative z-10">
                 <p className={cn(
                   "text-3xl font-black tracking-tighter mb-1 transition-colors duration-500",
-                  (stat.label.includes("รายได้") || stat.label.includes("ยอดขาย") || stat.value.toString().startsWith("฿")) ? "text-red-500" : "text-white group-hover:text-red-400"
-                )}>{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-black">{stat.label}</p>
+                  (stat.label === t("analytics.stats.revenue") || stat.label === t("dashboard.stats.total_revenue") || stat.value.toString().startsWith("฿")) ? "text-red-500" : "text-white group-hover:text-red-400"
+                )}>{mounted ? stat.value : ""}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-black">{mounted ? stat.label : ""}</p>
               </div>
             </Card>
           </motion.div>
@@ -168,7 +165,7 @@ export default function AdminAnalyticsPage() {
 
       <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-        <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.revenue_monthly")}</h2>
+        <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.revenue_monthly") : ""}</h2>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={safeRevenueData}>
@@ -180,16 +177,16 @@ export default function AdminAnalyticsPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
               <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v: number) => `฿${(v/1000).toFixed(0)}k`} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "transparent", 
-                  border: "none", 
+              <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v: number) => `฿${(v / 1000).toFixed(0)}k`} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "transparent",
+                  border: "none",
                   color: "#fff",
                   boxShadow: "none"
-                }} 
+                }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v: any) => [formatPrice(v), "รายได้"]} 
+                formatter={(v: any) => [formatPrice(v), mounted ? t("analytics.charts.revenue_label") : ""]}
               />
               <Area type="monotone" dataKey="revenue" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
             </AreaChart>
@@ -200,24 +197,24 @@ export default function AdminAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl h-full relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.user_growth")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.user_growth") : ""}</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={safeUserGrowthData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                 <XAxis dataKey="name" stroke="#666" fontSize={10} />
                 <YAxis stroke="#666" fontSize={10} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "transparent", 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "transparent",
                     border: "none",
                     color: "#fff",
                     boxShadow: "none"
-                  }} 
+                  }}
                   itemStyle={{ color: "#fff" }}
                 />
-                <Area type="monotone" dataKey="users" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} />
-                <Area type="monotone" dataKey="newUsers" stroke="#dc2626" fill="#dc2626" fillOpacity={0.2} />
+                <Area type="monotone" dataKey="users" name={mounted ? t("analytics.charts.users") : ""} stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} />
+                <Area type="monotone" dataKey="newUsers" name={mounted ? t("analytics.charts.new_users") : ""} stroke="#dc2626" fill="#dc2626" fillOpacity={0.2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -225,24 +222,24 @@ export default function AdminAnalyticsPage() {
 
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.hourly_orders")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.hourly_orders") : ""}</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={safeHourlyOrdersData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                 <XAxis dataKey="hour" stroke="#666" fontSize={10} />
                 <YAxis stroke="#666" fontSize={10} />
-                <Tooltip 
+                <Tooltip
                   cursor={false}
-                  contentStyle={{ 
-                    backgroundColor: "transparent", 
+                  contentStyle={{
+                    backgroundColor: "transparent",
                     border: "none",
                     color: "#fff",
                     boxShadow: "none"
-                  }} 
+                  }}
                   itemStyle={{ color: "#fff" }}
                 />
-                <Bar dataKey="orders" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="orders" name={mounted ? t("analytics.charts.orders") : ""} fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -252,26 +249,26 @@ export default function AdminAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl h-full relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.category_revenue")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.category_revenue") : ""}</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={safeCategoryRevenueData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                 <XAxis dataKey="month" stroke="#666" fontSize={10} />
-                <YAxis stroke="#666" fontSize={10} tickFormatter={(v: number) => `฿${(v/1000).toFixed(0)}k`} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "transparent", 
+                <YAxis stroke="#666" fontSize={10} tickFormatter={(v: number) => `฿${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "transparent",
                     border: "none",
                     color: "#fff",
                     boxShadow: "none"
-                  }} 
+                  }}
                   itemStyle={{ color: "#fff" }}
                 />
                 <Legend />
-                <Area type="monotone" dataKey="Script" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} />
-                <Area type="monotone" dataKey="UI" stroke="#dc2626" fill="#dc2626" fillOpacity={0.1} />
-                <Area type="monotone" dataKey="Bundle" stroke="#991b1b" fill="#991b1b" fillOpacity={0.1} />
+                <Area type="monotone" dataKey="Script" name={mounted ? t("products.categories.script") : ""} stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} />
+                <Area type="monotone" dataKey="UI" name={mounted ? t("products.categories.ui") : ""} stroke="#dc2626" fill="#dc2626" fillOpacity={0.1} />
+                <Area type="monotone" dataKey="Bundle" name={mounted ? t("products.categories.bundle") : ""} stroke="#991b1b" fill="#991b1b" fillOpacity={0.1} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -279,22 +276,22 @@ export default function AdminAnalyticsPage() {
 
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.payment_methods")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.payment_methods") : ""}</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={safePaymentMethodData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none">
                   {safePaymentMethodData.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "transparent", 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "transparent",
                     border: "none",
                     color: "#fff",
                     boxShadow: "none"
-                  }} 
+                  }}
                   itemStyle={{ color: "#fff" }}
-                  formatter={(v: any) => [`${v}%`, "สัดส่วน"]} 
+                  formatter={(v: any) => [`${v}%`, mounted ? t("analytics.charts.proportion_label") : ""]}
                 />
                 <Legend />
               </PieChart>
@@ -305,16 +302,16 @@ export default function AdminAnalyticsPage() {
 
       <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-        <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.table.best_sellers")}</h2>
+        <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.table.best_sellers") : ""}</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                <th className="px-8 py-5 text-left border-b border-white/5">{t("analytics.table.product")}</th>
-                <th className="px-8 py-5 text-left border-b border-white/5">{t("analytics.table.category")}</th>
-                <th className="px-8 py-5 text-right border-b border-white/5">{t("analytics.table.price")}</th>
-                <th className="px-8 py-5 text-right border-b border-white/5">{t("analytics.table.sold")}</th>
-                <th className="px-8 py-5 text-right border-b border-white/5">{t("analytics.table.revenue")}</th>
+                <th className="px-8 py-5 text-left border-b border-white/5">{mounted ? t("analytics.table.product") : ""}</th>
+                <th className="px-8 py-5 text-left border-b border-white/5">{mounted ? t("analytics.table.category") : ""}</th>
+                <th className="px-8 py-5 text-right border-b border-white/5">{mounted ? t("analytics.table.price") : ""}</th>
+                <th className="px-8 py-5 text-right border-b border-white/5">{mounted ? t("analytics.table.sold") : ""}</th>
+                <th className="px-8 py-5 text-right border-b border-white/5">{mounted ? t("analytics.table.revenue") : ""}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -322,9 +319,9 @@ export default function AdminAnalyticsPage() {
                 <tr key={product.name} className="hover:bg-white/2 transition-colors group">
                   <td className="px-8 py-6 font-bold text-white">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center overflow-hidden shrink-0 relative">
                         {product.image ? (
-                          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                          <Image src={product.image} alt={product.name} fill className="object-cover" />
                         ) : (
                           <ImageOff className="w-4 h-4 text-gray-600" />
                         )}
@@ -348,20 +345,20 @@ export default function AdminAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl h-full relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.customer_type")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.customer_type") : ""}</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={safeNewVsReturning} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none">
                   {safeNewVsReturning.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "transparent", 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "transparent",
                     border: "none",
                     color: "#fff",
                     boxShadow: "none"
-                  }} 
+                  }}
                   itemStyle={{ color: "#fff" }}
                 />
                 <Legend />
@@ -372,26 +369,26 @@ export default function AdminAnalyticsPage() {
 
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.top_buyers")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.top_buyers") : ""}</h2>
           <div className="space-y-4">
             {safeTopBuyers.map((buyer: any) => (
               <div key={buyer.name} className="p-4 rounded-xl bg-white/5 border border-white/5 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 overflow-hidden">
+                  <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 overflow-hidden relative">
                     {buyer.avatar ? (
-                      <img src={buyer.avatar} alt={buyer.name} className="w-full h-full object-cover" />
+                      <Image src={buyer.avatar} alt={buyer.name} fill className="object-cover" />
                     ) : (
                       <User className="w-5 h-5 text-red-500" />
                     )}
                   </div>
                   <div>
                     <p className="font-bold text-white">{buyer.name}</p>
-                    <p className="text-[10px] text-gray-500 uppercase font-black">{buyer.orders} Orders</p>
+                    <p className="text-[10px] text-gray-500 uppercase font-black">{buyer.orders} {mounted ? t("analytics.stats.orders") : ""}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-black text-red-500">{formatPrice(buyer.spent)}</p>
-                  <p className="text-[10px] text-gray-600 uppercase font-black">Total Spent</p>
+                  <p className="text-[10px] text-gray-600 uppercase font-black">{mounted ? t("users.table.total_spent") : ""}</p>
                 </div>
               </div>
             ))}
@@ -401,7 +398,7 @@ export default function AdminAnalyticsPage() {
 
       <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-        <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.conversion")}</h2>
+        <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.conversion") : ""}</h2>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={safeConversionData} margin={{ left: 40 }}>
@@ -409,7 +406,7 @@ export default function AdminAnalyticsPage() {
               <XAxis type="number" hide />
               <YAxis dataKey="name" type="category" stroke="#666" fontSize={12} width={100} />
               <Tooltip cursor={false} contentStyle={{ backgroundColor: "transparent", border: "none", boxShadow: "none" }} />
-              <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={30} />
+              <Bar dataKey="value" name={mounted ? t("analytics.charts.conversion") : ""} fill="#ef4444" radius={[0, 4, 4, 0]} barSize={30} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -418,7 +415,7 @@ export default function AdminAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.promo_performance")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.promo_performance") : ""}</h2>
           <div className="space-y-4">
             {safePromoPerformance.map((promo: any) => (
               <div key={promo.code} className="p-4 rounded-xl bg-white/5 border border-white/5 flex justify-between items-center">
@@ -428,7 +425,7 @@ export default function AdminAnalyticsPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-black text-red-500">{formatPrice(promo.revenue)}</p>
-                  <p className="text-[10px] text-gray-600 uppercase font-black">Generated Revenue</p>
+                  <p className="text-[10px] text-gray-600 uppercase font-black">{mounted ? t("analytics.charts.generated_revenue") : ""}</p>
                 </div>
               </div>
             ))}
@@ -437,7 +434,7 @@ export default function AdminAnalyticsPage() {
 
         <Card className="p-8 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl relative overflow-hidden h-full">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
-          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{t("analytics.charts.geo")}</h2>
+          <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{mounted ? t("analytics.charts.geo") : ""}</h2>
           <div className="space-y-6">
             {safeGeographicData.map((item: any) => (
               <div key={item.country} className="flex items-center gap-6 group/geo">

@@ -60,6 +60,12 @@ type FilterStatus = (typeof statusOptions)[number];
 
 export default function AdminLicensesPage() {
   const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 
@@ -76,8 +82,8 @@ export default function AdminLicensesPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isGranting, setIsGranting] = useState(false);
-  const [allUsers, setUsers] = useState<any[]>([]);
-  const [allProducts, setProducts] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [confirmRevoke, setConfirmRevoke] = useState<{ isOpen: boolean; id: string | null }>({
     isOpen: false,
     id: null,
@@ -118,8 +124,8 @@ export default function AdminLicensesPage() {
         adminApi.getUsers({ limit: 100 }),
         adminApi.getProducts({ limit: 100 }),
       ]);
-      if (uRes.data && (uRes.data as any).success) setUsers((uRes.data as any).data);
-      if (pRes.data && (pRes.data as any).success) setProducts((pRes.data as any).data);
+      if (uRes.data && (uRes.data as any).success) setAllUsers((uRes.data as any).data);
+      if (pRes.data && (pRes.data as any).success) setAllProducts((pRes.data as any).data);
     } catch (err) {
       console.error("Failed to fetch users/products:", err);
     }
@@ -130,7 +136,7 @@ export default function AdminLicensesPage() {
     setIsGrantOpen(true);
   };
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
     if (!grantData.userId || grantData.userId.trim() === "") {
       newErrors.userId = t("licenses.modals.grant.user_label");
@@ -145,7 +151,7 @@ export default function AdminLicensesPage() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [grantData, t]);
 
   const handleGrantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,11 +172,11 @@ export default function AdminLicensesPage() {
         setIsGrantOpen(false);
         setGrantData({ userId: "", productId: "", expiresAt: "" });
       } else {
-        alert((res.data as any)?.error || "Failed to grant license");
+        alert((res.data as any)?.error || t("licenses.errors.issue_failed"));
       }
     } catch (err: any) {
       console.error("Error granting license:", err);
-      alert(err.message || "เกิดข้อผิดพลาดในการออกไลเซนส์");
+      alert(err.message || t("licenses.errors.issue_failed"));
     } finally {
       setIsGranting(false);
     }
@@ -187,14 +193,15 @@ export default function AdminLicensesPage() {
       const res = await adminApi.revokeLicense(confirmRevoke.id);
       if (res.data && (res.data as any).success) {
         await fetchLicenses();
+        setConfirmRevoke({ isOpen: false, id: null });
       } else {
-        alert((res.data as any)?.error || "Failed to revoke license");
+        alert((res.data as any)?.error || t("licenses.errors.revoke_failed"));
       }
     } catch (err) {
       console.error("Error revoking license:", err);
-      alert("An error occurred while revoking the license");
+      alert(t("licenses.errors.revoke_error"));
     }
-  }, [confirmRevoke.id, fetchLicenses]);
+  }, [confirmRevoke.id, fetchLicenses, t]);
 
   const handleResetLicenseIp = useCallback(async () => {
     if (!confirmResetIp.id) return;
@@ -205,15 +212,15 @@ export default function AdminLicensesPage() {
         await fetchLicenses();
         setConfirmResetIp({ isOpen: false, id: null });
       } else {
-        alert((res.data as any)?.error || "Failed to reset IP");
+        alert((res.data as any)?.error || t("licenses.errors.reset_ip_failed"));
       }
     } catch (err) {
       console.error("Error resetting license IP:", err);
-      alert("An error occurred while resetting the license IP");
+      alert(t("licenses.errors.reset_ip_error"));
     } finally {
       setIsResettingIp(false);
     }
-  }, [confirmResetIp.id, fetchLicenses]);
+  }, [confirmResetIp.id, fetchLicenses, t]);
 
   useEffect(() => {
     fetchLicenses();
@@ -230,37 +237,37 @@ export default function AdminLicensesPage() {
     }), [searchQuery, filterStatus, licenses]);
 
   return (
-    <div className="space-y-10 relative overflow-hidden">
+    <div className="space-y-10 relative overflow-hidden pb-20">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
 
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 min-h-14">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("licenses.title")}</h1>
-          <p className="text-gray-400 mt-1">{t("licenses.subtitle")}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("licenses.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("licenses.subtitle") : ""}</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
           <Button
             onClick={handleGrantClick}
-            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300"
+            className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-xs transition-all duration-300 shrink-0 w-full sm:w-auto"
           >
             <Plus className="w-5 h-5 mr-2" />
-            {t("licenses.grant_btn")}
+            {mounted ? t("licenses.grant_btn") : ""}
           </Button>
-          <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
+          <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md h-auto lg:h-14 w-full lg:w-auto overflow-x-auto sm:overflow-visible">
             {statusOptions.map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 h-full whitespace-nowrap",
                   filterStatus === status
                     ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {status === "all" ? t("licenses.all") : statusConfig[status as LicenseStatus]?.label}
+                {mounted ? (status === "all" ? t("licenses.all") : statusConfig[status as LicenseStatus]?.label) : ""}
               </button>
             ))}
           </div>
@@ -270,18 +277,18 @@ export default function AdminLicensesPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: t("licenses.stats.total"), value: stats?.licenses?.total || 0, icon: Key, color: "text-white", bg: "bg-white/5" },
-          { label: t("licenses.stats.active"), value: stats?.licenses?.active || 0, icon: CheckCircle, color: "text-red-500", bg: "bg-red-500/10" },
-          { label: t("licenses.stats.expired"), value: stats?.licenses?.expired || 0, icon: Clock, color: "text-gray-500", bg: "bg-white/5" },
-          { label: t("licenses.stats.revoked"), value: stats?.licenses?.revoked || 0, icon: Ban, color: "text-red-800", bg: "bg-red-900/20" },
+          { label: mounted ? t("licenses.stats.total") : "", value: stats?.licenses?.total || 0, icon: Key, color: "text-white", bg: "bg-white/5" },
+          { label: mounted ? t("licenses.stats.active") : "", value: stats?.licenses?.active || 0, icon: CheckCircle, color: "text-red-500", bg: "bg-red-500/10" },
+          { label: mounted ? t("licenses.stats.expired") : "", value: stats?.licenses?.expired || 0, icon: Clock, color: "text-gray-500", bg: "bg-white/5" },
+          { label: mounted ? t("licenses.stats.revoked") : "", value: stats?.licenses?.revoked || 0, icon: Ban, color: "text-red-800", bg: "bg-red-900/20" },
         ].map((stat, index) => (
           <motion.div
-            key={stat.label}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-md hover:border-red-500/30 transition-all duration-500 group shadow-xl relative overflow-hidden">
+            <Card className="p-6 border border-white/5 bg-white/2 backdrop-blur-md hover:border-red-500/30 transition-all duration-500 group shadow-xl relative overflow-hidden">
               <div className="absolute inset-0 bg-linear-to-br from-red-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center justify-between mb-4 relative z-10">
                 <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center border border-white/10 transition-all duration-500 shadow-inner", stat.bg)}>
@@ -290,7 +297,7 @@ export default function AdminLicensesPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{stat.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black" suppressHydrationWarning>{stat.label}</p>
               </div>
             </Card>
           </motion.div>
@@ -298,21 +305,21 @@ export default function AdminLicensesPage() {
       </div>
 
       {/* Search Filter */}
-      <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-md shadow-xl relative overflow-hidden">
+      <Card className="p-6 border border-white/5 bg-white/2 backdrop-blur-md shadow-xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 to-transparent" />
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
           <Input
-            placeholder={t("licenses.search_placeholder")}
+            placeholder={mounted ? t("licenses.search_placeholder") : ""}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
+            className="pl-12 bg-white/5 border-white/10 rounded-2xl focus:border-red-500/50 transition-all py-6 font-medium text-white h-14"
           />
         </div>
       </Card>
 
       {/* Licenses Table */}
-      <Card className="border-white/5 bg-white/2 backdrop-blur-md shadow-2xl relative overflow-hidden">
+      <Card className="border border-white/5 bg-white/2 backdrop-blur-md shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
         <div className="overflow-x-auto">
           {loading ? (
@@ -324,13 +331,13 @@ export default function AdminLicensesPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("licenses.table.details")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("licenses.table.product")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("licenses.table.owner")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("licenses.table.node")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("licenses.table.status")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("licenses.table.issued")}</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">{t("licenses.table.actions")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("licenses.table.details") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("licenses.table.product") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("licenses.table.owner") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("licenses.table.node") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("licenses.table.status") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("licenses.table.issued") : ""}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{mounted ? t("licenses.table.actions") : ""}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -368,7 +375,7 @@ export default function AdminLicensesPage() {
                         <div className="flex items-center gap-2">
                           <Globe className="w-3.5 h-3.5 text-gray-600" />
                           <code className="text-xs text-gray-400 font-mono font-bold">
-                            {license.ipAddress || t("licenses.table.unrestricted")}
+                            {mounted ? (license.ipAddress || t("licenses.table.unrestricted")) : ""}
                           </code>
                         </div>
                       </td>
@@ -378,15 +385,15 @@ export default function AdminLicensesPage() {
                           status.bg,
                           status.text
                         )}>
-                          {status.label}
+                          {mounted ? status.label : ""}
                         </Badge>
                       </td>
                       <td className="px-6 py-6 text-sm text-gray-400 font-bold">
-                        {new Date(license.createdAt).toLocaleDateString("th-TH")}
+                        <span>{mounted ? new Date(license.createdAt).toLocaleDateString("th-TH") : ""}</span>
                       </td>
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all">
+                          <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all">
                             <Eye className="w-4 h-4" />
                           </Button>
                           {license.status === "ACTIVE" && license.ipAddress && (
@@ -394,7 +401,7 @@ export default function AdminLicensesPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => setConfirmResetIp({ isOpen: true, id: license.id })}
-                              className="w-10 h-10 rounded-xl hover:bg-blue-500/10 text-blue-500/50 hover:text-blue-500 transition-all"
+                              className="w-10 h-10 rounded-xl hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-500 transition-all"
                               title="Reset IP"
                             >
                               <RotateCcw className="w-4 h-4" />
@@ -405,7 +412,7 @@ export default function AdminLicensesPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => setConfirmRevoke({ isOpen: true, id: license.id })}
-                              className="w-10 h-10 rounded-xl hover:bg-red-900/20 text-red-500/50 hover:text-red-500 transition-all"
+                              className="w-10 h-10 rounded-xl hover:bg-red-900/20 text-red-500/30 hover:text-red-500 transition-all"
                               title="Revoke License"
                             >
                               <Ban className="w-4 h-4" />
@@ -425,8 +432,8 @@ export default function AdminLicensesPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Key className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{t("licenses.table.no_data")}</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">{t("licenses.table.no_data_subtitle")}</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("licenses.table.no_data") : ""}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{mounted ? t("licenses.table.no_data_subtitle") : ""}</p>
           </div>
         )}
       </Card>
@@ -568,7 +575,7 @@ export default function AdminLicensesPage() {
                     onClick={() => setIsGrantOpen(false)}
                     className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-xs text-gray-500 hover:text-white hover:bg-white/5"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -598,9 +605,9 @@ export default function AdminLicensesPage() {
         isOpen={confirmResetIp.isOpen}
         onClose={() => setConfirmResetIp({ isOpen: false, id: null })}
         onConfirm={handleResetLicenseIp}
-        title="Reset License IP"
-        message="Are you sure you want to reset the IP address for this license? The user will need to verify from their new server IP."
-        confirmText={isResettingIp ? "Resetting..." : "Reset IP"}
+        title={t("licenses.modals.reset_ip.title")}
+        message={t("licenses.modals.reset_ip.message")}
+        confirmText={isResettingIp ? t("licenses.modals.reset_ip.processing") : t("licenses.modals.reset_ip.confirm")}
         type="warning"
       />
     </div>

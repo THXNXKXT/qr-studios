@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Save, Loader2, Percent, DollarSign, Ticket, Settings, Calendar, MousePointer2 } from "lucide-react";
 import { Button, Input, Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface PromoCode {
   id?: string;
@@ -39,6 +40,7 @@ const defaultPromo: PromoCode = {
 };
 
 export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModalProps) {
+  const { t } = useTranslation("admin");
   const [formData, setFormData] = useState<PromoCode>(defaultPromo);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -60,29 +62,29 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.code || formData.code.trim().length < 3) {
-      newErrors.code = "รหัสส่วนลดต้องมีความยาวอย่างน้อย 3 ตัวอักษร";
+      newErrors.code = t("promo_codes.errors.code_length");
     }
-    
+
     if (formData.discount === undefined || formData.discount === null || formData.discount <= 0) {
-      newErrors.discount = "ส่วนลดต้องมากกว่า 0";
+      newErrors.discount = t("promo_codes.errors.discount_positive");
     } else if (formData.type === "PERCENTAGE" && formData.discount > 100) {
-      newErrors.discount = "ส่วนลดแบบเปอร์เซ็นต์ต้องไม่เกิน 100%";
+      newErrors.discount = t("promo_codes.errors.discount_percentage");
     }
 
     if (formData.minPurchase !== undefined && formData.minPurchase !== null && formData.minPurchase < 0) {
-      newErrors.minPurchase = "ยอดซื้อขั้นต่ำต้องไม่น้อยกว่า 0";
+      newErrors.minPurchase = t("promo_codes.errors.min_purchase");
     }
 
     if (formData.maxDiscount !== undefined && formData.maxDiscount !== null && formData.maxDiscount <= 0) {
-      newErrors.maxDiscount = "ส่วนลดสูงสุดต้องมากกว่า 0";
+      newErrors.maxDiscount = t("promo_codes.errors.max_discount");
     }
 
     if (formData.usageLimit !== undefined && formData.usageLimit !== null && formData.usageLimit < 1) {
-      newErrors.usageLimit = "จำนวนสิทธิ์การใช้งานต้องอย่างน้อย 1 ครั้ง";
+      newErrors.usageLimit = t("promo_codes.errors.usage_limit");
     }
 
     if (formData.expiresAt && new Date(formData.expiresAt) <= new Date()) {
-      newErrors.expiresAt = "วันหมดอายุต้องเป็นเวลาในอนาคต";
+      newErrors.expiresAt = t("promo_codes.errors.expires_future");
     }
 
     setErrors(newErrors);
@@ -105,7 +107,7 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
       onClose();
     } catch (error: any) {
       console.error("Error saving promo:", error);
-      alert(error.message || "เกิดข้อผิดพลาดในการบันทึกโค้ดส่วนลด");
+      alert(error.message || t("promo_codes.errors.save_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +145,7 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
         >
           <Card className="flex flex-col max-h-[90vh] overflow-hidden border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl shadow-2xl relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-600 via-red-500 to-transparent" />
-            
+
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/2">
               <div className="flex items-center gap-4">
@@ -152,16 +154,16 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-white uppercase tracking-tight">
-                    {isEditing ? "Edit Promo Code" : "Create New Promo"}
+                    {isEditing ? t("promo_codes.modals.form.edit_title") : t("promo_codes.modals.form.create_title")}
                   </h2>
                   <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest opacity-60">
-                    Configure discounts and usage limits
+                    {t("promo_codes.modals.form.subtitle")}
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 type="button"
-                onClick={onClose} 
+                onClick={onClose}
                 className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all group"
               >
                 <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -174,28 +176,28 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <Ticket className="w-4 h-4 text-red-500" />
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Basic Information</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("promo_codes.modals.form.basic_info")}</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Promo Code</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("promo_codes.modals.form.code_label")}</label>
                     <div className="flex gap-2">
                       <Input
                         value={formData.code || ""}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                        placeholder="e.g. NEWYEAR2024"
+                        placeholder={t("promo_codes.modals.form.placeholders.code")}
                         className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6 font-mono"
                         error={errors.code}
                       />
                       <Button type="button" variant="secondary" onClick={generateCode} className="h-12 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest">
-                        Random
+                        {t("common.random")}
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Discount Value</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("promo_codes.modals.form.discount_value")}</label>
                     <div className="relative">
                       <Input
                         type="number"
@@ -213,8 +215,8 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
 
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { id: "PERCENTAGE", label: "Percentage (%)", icon: Percent },
-                    { id: "FIXED", label: "Fixed Amount (฿)", icon: DollarSign },
+                    { id: "PERCENTAGE", label: t("promo_codes.types.percentage"), icon: Percent },
+                    { id: "FIXED", label: t("promo_codes.types.fixed_amount"), icon: DollarSign },
                   ].map((t) => (
                     <button
                       key={t.id}
@@ -222,8 +224,8 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
                       onClick={() => setFormData({ ...formData, type: t.id as any })}
                       className={cn(
                         "flex items-center justify-center gap-3 p-4 rounded-2xl border transition-all group",
-                        formData.type === t.id 
-                          ? "bg-red-500/10 border-red-500/40 text-red-500" 
+                        formData.type === t.id
+                          ? "bg-red-500/10 border-red-500/40 text-red-500"
                           : "bg-white/5 border-white/10 text-gray-500 hover:border-white/20"
                       )}
                     >
@@ -238,27 +240,27 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <Settings className="w-4 h-4 text-blue-500" />
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Usage Conditions</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("promo_codes.modals.form.conditions_title")}</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Min Purchase (฿)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("promo_codes.modals.form.min_purchase")}</label>
                     <Input
                       type="number"
                       value={formData.minPurchase || ""}
                       onChange={(e) => setFormData({ ...formData, minPurchase: e.target.value ? Number(e.target.value) : null })}
-                      placeholder="No Minimum"
+                      placeholder={t("promo_codes.modals.form.placeholders.no_min")}
                       className="bg-white/5 border-white/10 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Max Discount (฿)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("promo_codes.modals.form.max_discount")}</label>
                     <Input
                       type="number"
                       value={formData.maxDiscount || ""}
                       onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value ? Number(e.target.value) : null })}
-                      placeholder="Unlimited"
+                      placeholder={t("promo_codes.modals.form.placeholders.unlimited")}
                       disabled={formData.type === "FIXED"}
                       className="bg-white/5 border-white/10 rounded-xl py-6"
                     />
@@ -267,17 +269,17 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Usage Limit</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("promo_codes.modals.form.usage_limit")}</label>
                     <Input
                       type="number"
                       value={formData.usageLimit || ""}
                       onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value ? Number(e.target.value) : null })}
-                      placeholder="Unlimited"
+                      placeholder={t("promo_codes.modals.form.placeholders.unlimited")}
                       className="bg-white/5 border-white/10 rounded-xl py-6"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Expiration Date</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("promo_codes.modals.form.expiration_date")}</label>
                     <Input
                       type="date"
                       value={formData.expiresAt || ""}
@@ -298,16 +300,16 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
                     <Save className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Active Status</h4>
-                    <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest">Enable or disable this promo code</p>
+                    <h4 className="text-xs font-black text-white uppercase tracking-widest">{t("promo_codes.modals.form.active_status")}</h4>
+                    <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest">{t("promo_codes.modals.form.active_status_desc")}</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-red-600 transition-colors"></div>
                 </label>
@@ -315,14 +317,14 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 pt-4">
-                <Button 
+                <Button
                   type="button"
-                  variant="ghost" 
-                  onClick={onClose} 
+                  variant="ghost"
+                  onClick={onClose}
                   disabled={isLoading}
                   className="flex-1 text-gray-400 hover:text-white uppercase font-black text-[10px] tracking-widest py-8"
                 >
-                  Discard
+                  {t("common.discard")}
                 </Button>
                 <Button
                   type="submit"
@@ -332,12 +334,12 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing...</span>
+                      <span>{t("common.processing")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4" />
-                      <span>{isEditing ? "Update Promo" : "Publish Promo"}</span>
+                      <span>{isEditing ? t("promo_codes.modals.form.update_btn") : t("promo_codes.modals.form.publish_btn")}</span>
                     </div>
                   )}
                 </Button>

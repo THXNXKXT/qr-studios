@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Download,
@@ -18,15 +18,16 @@ import {
 } from "lucide-react";
 import { Card, Button, Badge } from "@/components/ui";
 import { adminApi } from "@/lib/api";
-import { formatPrice, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type ExportType = "products" | "orders" | "users" | "commissions" | "licenses" | "reviews";
 
 interface ExportOption {
   id: ExportType;
-  label: string;
-  description: string;
-  icon: any;
+  labelKey: string;
+  descriptionKey: string;
+  icon: React.ElementType;
   color: string;
   bg: string;
 }
@@ -34,48 +35,48 @@ interface ExportOption {
 const exportOptions: ExportOption[] = [
   {
     id: "orders",
-    label: "คำสั่งซื้อ",
-    description: "ข้อมูลรายการสั่งซื้อทั้งหมด สถานะการชำระเงิน และยอดรวม",
+    labelKey: "export.options.orders.label",
+    descriptionKey: "export.options.orders.description",
     icon: ShoppingCart,
     color: "text-red-500",
     bg: "bg-red-500/10",
   },
   {
     id: "products",
-    label: "สินค้า",
-    description: "รายชื่อสินค้า ราคา คลังสินค้า และหมวดหมู่",
+    labelKey: "export.options.products.label",
+    descriptionKey: "export.options.products.description",
     icon: Package,
     color: "text-amber-500",
     bg: "bg-amber-500/10",
   },
   {
     id: "users",
-    label: "ผู้ใช้งาน",
-    description: "รายชื่อผู้ใช้ อีเมล บทบาท และยอดเงินคงเหลือ",
+    labelKey: "export.options.users.label",
+    descriptionKey: "export.options.users.description",
     icon: Users,
     color: "text-blue-500",
     bg: "bg-blue-500/10",
   },
   {
     id: "commissions",
-    label: "รายการจ้างทำ",
-    description: "ข้อมูลการจ้างทำสคริปต์/UI และสถานะการดำเนินงาน",
+    labelKey: "export.options.commissions.label",
+    descriptionKey: "export.options.commissions.description",
     icon: ClipboardList,
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
   {
     id: "licenses",
-    label: "ลิขสิทธิ์ (Licenses)",
-    description: "ข้อมูล License Key และการผูก IP ของลูกค้า",
+    labelKey: "export.options.licenses.label",
+    descriptionKey: "export.options.licenses.description",
     icon: Key,
     color: "text-purple-500",
     bg: "bg-purple-500/10",
   },
   {
     id: "reviews",
-    label: "รีวิวสินค้า",
-    description: "คะแนนและข้อคิดเห็นจากลูกค้าต่อสินค้าต่างๆ",
+    labelKey: "export.options.reviews.label",
+    descriptionKey: "export.options.reviews.description",
     icon: Star,
     color: "text-yellow-500",
     bg: "bg-yellow-500/10",
@@ -84,7 +85,12 @@ const exportOptions: ExportOption[] = [
 
 export default function ExportPage() {
   const [exporting, setExporting] = useState<ExportType | null>(null);
-  const [timeRange, setTimeRange] = useState("all");
+  const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const downloadCSV = useCallback((csvContent: string, fileName: string) => {
     const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
@@ -102,13 +108,13 @@ export default function ExportPage() {
     setExporting(type);
     try {
       let csvContent = "";
-      let fileName = `${type}_export_${new Date().toISOString().split('T')[0]}.csv`;
+      const fileName = `${type}_export_${new Date().toISOString().split('T')[0]}.csv`;
 
       switch (type) {
         case "orders": {
-          const { data } = await adminApi.getOrders({ limit: 5000 });
-          if (data && (data as any).success) {
-            const orders = (data as any).data || [];
+          const { data: res } = await adminApi.getOrders({ limit: 5000 }) as { data: { success: boolean; data: any[] } };
+          if (res && res.success) {
+            const orders = res.data || [];
             const headers = ["Order ID", "Date", "Customer", "Email", "Products", "Total", "Discount", "Status", "Payment"];
             const rows = orders.map((o: any) => [
               o.id,
@@ -121,15 +127,15 @@ export default function ExportPage() {
               o.status,
               o.paymentMethod
             ]);
-            csvContent = [headers.join(","), ...rows.map((r: any[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+            csvContent = [headers.join(","), ...rows.map((r: (string | number)[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
           }
           break;
         }
 
         case "products": {
-          const { data } = await adminApi.getProducts({ limit: 5000 });
-          if (data && (data as any).success) {
-            const products = (data as any).data || [];
+          const { data: res } = await adminApi.getProducts({ limit: 5000 }) as { data: { success: boolean; data: any[] } };
+          if (res && res.success) {
+            const products = res.data || [];
             const headers = ["ID", "Name", "Category", "Price", "Original Price", "Stock", "Featured", "Flash Sale", "Flash Sale Price"];
             const rows = products.map((p: any) => [
               p.id,
@@ -142,15 +148,15 @@ export default function ExportPage() {
               p.isFlashSale ? "Yes" : "No",
               p.flashSalePrice || 0
             ]);
-            csvContent = [headers.join(","), ...rows.map((r: any[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+            csvContent = [headers.join(","), ...rows.map((r: (string | number)[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
           }
           break;
         }
 
         case "users": {
-          const { data } = await adminApi.getUsers({ limit: 5000 });
-          if (data && (data as any).success) {
-            const users = (data as any).data || [];
+          const { data: res } = await adminApi.getUsers({ limit: 5000 }) as { data: { success: boolean; data: any[] } };
+          if (res && res.success) {
+            const users = res.data || [];
             const headers = ["ID", "Username", "Email", "Discord ID", "Role", "Balance", "Total Spent", "Orders", "Banned", "Created At"];
             const rows = users.map((u: any) => [
               u.id,
@@ -164,15 +170,15 @@ export default function ExportPage() {
               u.isBanned ? "Yes" : "No",
               new Date(u.createdAt).toLocaleString("th-TH")
             ]);
-            csvContent = [headers.join(","), ...rows.map((r: any[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+            csvContent = [headers.join(","), ...rows.map((r: (string | number)[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
           }
           break;
         }
 
         case "commissions": {
-          const { data } = await adminApi.getCommissions({ limit: 5000 });
-          if (data && (data as any).success) {
-            const commissions = (data as any).data || [];
+          const { data: res } = await adminApi.getCommissions({ limit: 5000 }) as { data: { success: boolean; data: any[] } };
+          if (res && res.success) {
+            const commissions = res.data || [];
             const headers = ["ID", "Title", "Customer", "Budget", "Status", "Created At"];
             const rows = commissions.map((c: any) => [
               c.id,
@@ -182,15 +188,15 @@ export default function ExportPage() {
               c.status,
               new Date(c.createdAt).toLocaleString("th-TH")
             ]);
-            csvContent = [headers.join(","), ...rows.map((r: any[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+            csvContent = [headers.join(","), ...rows.map((r: (string | number)[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
           }
           break;
         }
 
         case "licenses": {
-          const { data } = await adminApi.getLicenses({ limit: 5000 });
-          if (data && (data as any).success) {
-            const licenses = (data as any).data || [];
+          const { data: res } = await adminApi.getLicenses({ limit: 5000 }) as { data: { success: boolean; data: any[] } };
+          if (res && res.success) {
+            const licenses = res.data || [];
             const headers = ["ID", "License Key", "Product", "User", "IP Addresses", "Status", "Expires At"];
             const rows = licenses.map((l: any) => [
               l.id,
@@ -201,15 +207,15 @@ export default function ExportPage() {
               l.status,
               l.expiresAt ? new Date(l.expiresAt).toLocaleString("th-TH") : "Never"
             ]);
-            csvContent = [headers.join(","), ...rows.map((r: any[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+            csvContent = [headers.join(","), ...rows.map((r: (string | number)[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
           }
           break;
         }
 
         case "reviews": {
-          const { data } = await adminApi.getReviews({ limit: 5000 });
-          if (data && (data as any).success) {
-            const reviews = (data as any).data || [];
+          const { data: res } = await adminApi.getReviews({ limit: 5000 }) as { data: { success: boolean; data: any[] } };
+          if (res && res.success) {
+            const reviews = res.data || [];
             const headers = ["ID", "Product", "User", "Rating", "Comment", "Verified", "Created At"];
             const rows = reviews.map((r: any) => [
               r.id,
@@ -220,7 +226,7 @@ export default function ExportPage() {
               r.isVerified ? "Yes" : "No",
               new Date(r.createdAt).toLocaleString("th-TH")
             ]);
-            csvContent = [headers.join(","), ...rows.map((r: any[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+            csvContent = [headers.join(","), ...rows.map((r: (string | number)[]) => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
           }
           break;
         }
@@ -229,11 +235,11 @@ export default function ExportPage() {
       if (csvContent) {
         downloadCSV(csvContent, fileName);
       } else {
-        alert("ไม่พบข้อมูลที่จะส่งออก หรือเกิดข้อผิดพลาดในการดึงข้อมูล");
+        alert(t("export.errors.no_data"));
       }
     } catch (err) {
       console.error(`Failed to export ${type}:`, err);
-      alert("เกิดข้อผิดพลาดในการส่งออกข้อมูล");
+      alert(t("export.errors.export_failed"));
     } finally {
       setExporting(null);
     }
@@ -245,13 +251,13 @@ export default function ExportPage() {
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
 
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 min-h-14">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Export Data</h1>
-          <p className="text-gray-400 mt-1">ส่งออกข้อมูลในระบบเป็นไฟล์ CSV เพื่อนำไปใช้งานต่อ</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("export.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("export.subtitle") : ""}</p>
         </div>
-        <div className="flex items-center gap-3 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
-          <Badge variant="secondary" className="bg-red-500/10 text-red-500 border-none px-3 py-1 font-black uppercase tracking-widest text-[10px]">
+        <div className="flex items-center gap-3 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md h-auto lg:h-14">
+          <Badge variant="secondary" className="bg-red-500/10 text-red-500 border-none px-4 h-full font-black uppercase tracking-widest text-[10px] flex items-center justify-center rounded-xl">
             <FileSpreadsheet className="w-3 h-3 mr-1.5" />
             CSV Format Only
           </Badge>
@@ -266,10 +272,9 @@ export default function ExportPage() {
             <AlertCircle className="w-6 h-6 text-red-500" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white mb-1">คำแนะนำการส่งออก</h3>
+            <h3 className="text-lg font-bold text-white mb-1">{mounted ? t("export.info.title") : ""}</h3>
             <p className="text-sm text-gray-400 leading-relaxed">
-              การส่งออกข้อมูลจะดึงข้อมูลล่าสุดจากฐานข้อมูลโดยตรง ไฟล์ที่ได้จะเป็นรูปแบบ CSV ซึ่งสามารถเปิดได้ด้วย Excel, Google Sheets หรือโปรแกรม Spreadsheet อื่นๆ 
-              หากคุณมีข้อมูลจำนวนมาก (มากกว่า 5,000 รายการ) อาจใช้เวลาในการเตรียมไฟล์สักครู่
+              {mounted ? t("export.info.description") : ""}
             </p>
           </div>
         </div>
@@ -286,7 +291,7 @@ export default function ExportPage() {
           >
             <Card className="group p-6 border-white/5 bg-white/2 backdrop-blur-md hover:border-red-500/30 transition-all duration-500 shadow-xl relative overflow-hidden flex flex-col h-full">
               <div className="absolute inset-0 bg-linear-to-br from-red-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              
+
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border border-white/10 transition-all duration-500 shadow-inner", option.bg)}>
                   <option.icon className={cn("w-7 h-7", option.color)} />
@@ -296,12 +301,12 @@ export default function ExportPage() {
                 )}
               </div>
 
-              <div className="relative z-10 mb-8 flex-1">
-                <h3 className="text-xl font-black text-white tracking-tight uppercase mb-2 group-hover:text-red-400 transition-colors">
-                  {option.label}
+              <div className="flex-1 text-left relative z-10">
+                <h3 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-red-400 transition-colors">
+                  {mounted ? t(option.labelKey) : ""}
                 </h3>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                  {option.description}
+                <p className="text-xs text-gray-500 font-bold leading-relaxed mt-1">
+                  {mounted ? t(option.descriptionKey) : ""}
                 </p>
               </div>
 
@@ -310,13 +315,13 @@ export default function ExportPage() {
                 disabled={exporting !== null}
                 className={cn(
                   "relative z-10 w-full h-12 rounded-xl font-black uppercase tracking-widest text-xs transition-all duration-300",
-                  exporting === option.id 
-                    ? "bg-red-900/40 text-red-500/50 cursor-not-allowed" 
+                  exporting === option.id
+                    ? "bg-red-900/40 text-red-500/50 cursor-not-allowed"
                     : "bg-white/5 hover:bg-red-600 text-white border border-white/10 hover:border-red-600 hover:shadow-lg hover:shadow-red-600/20"
                 )}
               >
                 <Download className="w-4 h-4 mr-2" />
-                {exporting === option.id ? "กำลังส่งออก..." : "ส่งออกข้อมูล"}
+                <span>{mounted ? (exporting === option.id ? t("export.exporting") : t("export.export_btn")) : ""}</span>
               </Button>
             </Card>
           </motion.div>
@@ -335,12 +340,12 @@ export default function ExportPage() {
           <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-md opacity-50 cursor-not-allowed">
             <div className="flex items-center gap-4 mb-4 text-gray-500">
               <Clock className="w-5 h-5" />
-              <h3 className="font-bold">กรองตามช่วงเวลา (Coming Soon)</h3>
+              <h3 className="font-bold">{mounted ? t("export.advanced.time_range") : ""}</h3>
             </div>
             <div className="flex gap-2">
-              {["7 วัน", "30 วัน", "ทั้งหมด"].map((t) => (
-                <div key={t} className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-600">
-                  {t}
+              {[0, 1, 2].map((idx) => (
+                <div key={idx} className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-600">
+                  {mounted ? t(`export.advanced.time_options.${idx}`) : ""}
                 </div>
               ))}
             </div>
@@ -349,12 +354,12 @@ export default function ExportPage() {
           <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-md opacity-50 cursor-not-allowed">
             <div className="flex items-center gap-4 mb-4 text-gray-500">
               <Filter className="w-5 h-5" />
-              <h3 className="font-bold">รูปแบบไฟล์เพิ่มเติม (Coming Soon)</h3>
+              <h3 className="font-bold">{mounted ? t("export.advanced.file_formats") : ""}</h3>
             </div>
             <div className="flex gap-2">
-              {["Excel (.xlsx)", "JSON", "PDF"].map((f) => (
-                <div key={f} className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-600">
-                  {f}
+              {["Excel (.xlsx)", "JSON", "PDF"].map((format, idx) => (
+                <div key={idx} className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-600">
+                  {mounted ? format : ""}
                 </div>
               ))}
             </div>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
+import NextImage from "next/image";
 import {
   Search,
   Eye,
@@ -51,16 +52,26 @@ const roleConfig: Record<string, { icon: any; bg: string; text: string }> = {
 
 export default function AdminUsersPage() {
   const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterTier, setFilterTier] = useState<MemberTier | "all">("all");
   const [users, setUsers] = useState<UserData[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    users: { total: number; today: number; tiers: Record<string, number> };
+    orders: { completed: number };
+    revenue: { total: number };
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBanOpen, setIsBanOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null); // Keeping any for now due to complexity of Order type vs UI usage
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -75,11 +86,11 @@ export default function AdminUsersPage() {
           tier: filterTier !== "all" ? filterTier : undefined
         }),
         adminApi.getStats()
-      ]);
+      ]) as [{ data: { success: boolean; data: UserData[] } }, { data: { success: boolean; data: { users: { total: number; today: number; tiers: Record<string, number> }; orders: { completed: number }; revenue: { total: number } } } }];
 
-      if (usersRes.data && (usersRes.data as any).success) {
-        setUsers((usersRes.data as any).data || []);
-        setCurrentPage(1); // Reset to page 1 on filter/search change
+      if (usersRes.data && usersRes.data.success) {
+        setUsers(usersRes.data.data || []);
+        setCurrentPage(1);
       }
       if (statsRes.data && statsRes.data.success) {
         setStats(statsRes.data.data);
@@ -109,9 +120,9 @@ export default function AdminUsersPage() {
 
   const handleViewOrder = useCallback(async (orderId: string) => {
     try {
-      const { data: res } = await adminApi.getOrderById(orderId);
-      if (res && (res as any).success) {
-        setSelectedOrder((res as any).data);
+      const { data: res } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: any } };
+      if (res && res.success) {
+        setSelectedOrder(res.data);
         setIsDetailOpen(true);
       }
     } catch (err) {
@@ -121,12 +132,12 @@ export default function AdminUsersPage() {
 
   const handleUpdateOrderStatus = useCallback(async (orderId: string, status: string) => {
     try {
-      const res = await adminApi.updateOrderStatus(orderId, status);
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.updateOrderStatus(orderId, status) as { data: { success: boolean } };
+      if (res.data && res.data.success) {
         if (selectedOrder?.id === orderId) {
-          const { data: detailRes } = await adminApi.getOrderById(orderId);
-          if (detailRes && (detailRes as any).success) {
-            setSelectedOrder((detailRes as any).data);
+          const { data: detailRes } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: any } };
+          if (detailRes && detailRes.success) {
+            setSelectedOrder(detailRes.data);
           }
         }
       }
@@ -150,11 +161,11 @@ export default function AdminUsersPage() {
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  const handleSaveUser = useCallback(async (userData: any) => {
+  const handleSaveUser = useCallback(async (userData: Partial<UserData>) => {
     if (!selectedUser) return;
     try {
       // Handle balance update if changed
-      if (userData.balance !== selectedUser.balance) {
+      if (userData.balance !== undefined && userData.balance !== selectedUser.balance) {
         const diff = userData.balance - selectedUser.balance;
         await adminApi.updateUserBalance(selectedUser.id, {
           amount: Math.abs(diff),
@@ -163,12 +174,12 @@ export default function AdminUsersPage() {
       }
 
       // Handle role update if changed
-      if (userData.role !== selectedUser.role) {
+      if (userData.role !== undefined && userData.role !== selectedUser.role) {
         await adminApi.updateUserRole(selectedUser.id, userData.role.toUpperCase());
       }
 
       // Handle points update if changed
-      if (userData.points !== selectedUser.points) {
+      if (userData.points !== undefined && userData.points !== selectedUser.points) {
         const diff = userData.points - selectedUser.points;
         await adminApi.updateUserPoints(selectedUser.id, {
           amount: Math.abs(diff),
@@ -180,9 +191,9 @@ export default function AdminUsersPage() {
       setIsFormOpen(false);
     } catch (err) {
       console.error("Error updating user:", err);
-      alert("Failed to update user");
+      alert(t("users.errors.update_failed"));
     }
-  }, [selectedUser, fetchUsers]);
+  }, [selectedUser, fetchUsers, t]);
 
   const handleConfirmBan = useCallback(async () => {
     if (!selectedUser) return;
@@ -196,7 +207,7 @@ export default function AdminUsersPage() {
       setIsBanOpen(false);
     } catch (err) {
       console.error("Error toggling ban status:", err);
-      alert("Failed to update ban status");
+      alert(t("users.errors.ban_failed"));
     }
   }, [selectedUser, fetchUsers]);
 
@@ -208,16 +219,16 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("users.title")}</h1>
-          <p className="text-gray-400 mt-1">{t("users.subtitle")}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("users.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("users.subtitle") : ""}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md h-auto lg:h-14">
           {["all", "admin", "moderator", "vip", "user"].map((role) => (
             <button
               key={role}
               onClick={() => setFilterRole(role)}
               className={cn(
-                "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
+                "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest h-full",
                 filterRole === role
                   ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                   : "text-gray-500 hover:text-white hover:bg-white/5"
@@ -252,7 +263,7 @@ export default function AdminUsersPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{stat.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black" suppressHydrationWarning>{stat.label}</p>
               </div>
             </Card>
           </motion.div>
@@ -285,7 +296,7 @@ export default function AdminUsersPage() {
                   tier.bg
                 )} />
                 <p className="text-2xl mb-1">{tier.icon}</p>
-                <p className={cn("text-[10px] font-black uppercase tracking-tighter mb-1", tier.color)}>{t(`users.tiers.${tier.name.toLowerCase()}`)}</p>
+                <p className={cn("text-[10px] font-black uppercase tracking-tighter mb-1", tier.color)} suppressHydrationWarning>{t(`users.tiers.${tier.name.toLowerCase()}`)}</p>
                 <p className="text-xl font-black text-white">{count}</p>
                 <p className="text-[8px] text-gray-500 uppercase font-bold">{t("users.filter.members")}</p>
                 {isActive && (
@@ -305,7 +316,7 @@ export default function AdminUsersPage() {
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
           <Input
-            placeholder={t("users.search_placeholder")}
+            placeholder={mounted ? t("users.search_placeholder") : ""}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -322,21 +333,21 @@ export default function AdminUsersPage() {
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t("common.loading")}</p>
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
               </div>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.identity")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.role")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.tier")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.points")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.balance")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.total_spent")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("users.table.status")}</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">{t("users.table.actions")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.identity")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.role")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.tier")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.points")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.balance")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.total_spent")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5" suppressHydrationWarning>{t("users.table.status")}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5" suppressHydrationWarning>{t("users.table.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -353,9 +364,9 @@ export default function AdminUsersPage() {
                     >
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden">
+                          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500 overflow-hidden relative">
                             {user.avatar ? (
-                              <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
+                              <NextImage src={user.avatar} alt={user.username} fill className="object-cover" />
                             ) : (
                               <span className="text-lg font-black text-red-500">
                                 {user.username.charAt(0).toUpperCase()}
@@ -417,7 +428,11 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-6">
                         <div className="flex items-center justify-end gap-2">
                           <Link href={`/admin/users/${user.id}`} className="hidden">
-                            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-10 h-10 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>
@@ -425,7 +440,7 @@ export default function AdminUsersPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleEditUser(user)}
-                            className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
+                            className="w-10 h-10 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -436,8 +451,8 @@ export default function AdminUsersPage() {
                             className={cn(
                               "w-10 h-10 rounded-xl transition-all",
                               !user.isBanned
-                                ? "text-red-500/50 hover:bg-red-900/20 hover:text-red-500"
-                                : "text-red-400 hover:bg-red-500/10 hover:text-red-400"
+                                ? "text-red-500/40 hover:bg-red-900/20 hover:text-red-500"
+                                : "text-red-400/40 hover:bg-red-500/10 hover:text-red-400"
                             )}
                           >
                             {!user.isBanned ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -466,8 +481,8 @@ export default function AdminUsersPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Users className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{t("users.no_users")}</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">{t("users.no_users_subtitle")}</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("users.no_users") : ""}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{mounted ? t("users.no_users_subtitle") : ""}</p>
           </div>
         )}
       </Card>
@@ -503,7 +518,7 @@ export default function AdminUsersPage() {
           items: selectedOrder.items.map((item: any, i: number) => ({
             id: item.id || `item-${i}`,
             productId: item.productId,
-            productName: item.product?.name || "Unknown Product",
+            productName: item.product?.name || t("common.unknown_product"),
             productImage: item.product?.images?.[0],
             price: item.price,
             quantity: item.quantity,

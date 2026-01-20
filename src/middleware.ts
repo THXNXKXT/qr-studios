@@ -4,6 +4,29 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const backendToken = request.cookies.get('auth_token')?.value;
+  const nextAuthToken = 
+    request.cookies.get('next-auth.session-token')?.value || 
+    request.cookies.get('__Secure-next-auth.session-token')?.value;
+  
+  const isAuthenticated = !!(backendToken || nextAuthToken);
+
+  // Redirect authenticated users away from auth pages
+  if (pathname.startsWith('/auth') && isAuthenticated) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // Admin routes security
+  if (pathname.startsWith('/admin')) {
+    // If no tokens found, or potentially invalid, redirect
+    if (!isAuthenticated) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth/login';
+      url.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Protected routes that require authentication
   const protectedRoutes = ['/dashboard'];
   
@@ -37,5 +60,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/admin/:path*',
+    '/auth/:path*',
   ],
 };

@@ -54,12 +54,12 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.username || formData.username.trim().length < 2) newErrors.username = "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร";
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "รูปแบบอีเมลไม่ถูกต้อง";
-    if (!formData.discordId || formData.discordId.trim().length < 1) newErrors.discordId = "กรุณากรอก Discord ID";
+    if (!formData.username || formData.username.trim().length < 2) newErrors.username = t("users.errors.username_length");
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = t("users.errors.email_invalid");
+    if (!formData.discordId || formData.discordId.trim().length < 1) newErrors.discordId = t("users.errors.discord_id_required");
 
-    if (formData.balance < 0) newErrors.balance = "ยอดเงินไม่สามารถติดลบได้";
-    if (formData.points < 0) newErrors.points = "แต้มสะสมไม่สามารถติดลบได้";
+    if (formData.balance < 0) newErrors.balance = t("users.errors.balance_negative");
+    if (formData.points < 0) newErrors.points = t("users.errors.points_negative");
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -77,7 +77,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
       onClose();
     } catch (error: any) {
       console.error("Error saving user:", error);
-      alert(error.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูลผู้ใช้");
+      alert(error.message || t("users.errors.save_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +142,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                       <Input
                         value={formData.username || ""}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        placeholder="JohnDoe"
+                        placeholder={t("users.modals.form.placeholders.username")}
                         className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6 pl-12"
                         error={errors.username}
                       />
@@ -157,7 +157,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                         type="email"
                         value={formData.email || ""}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="john@example.com"
+                        placeholder={t("users.modals.form.placeholders.email")}
                         className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6 pl-12"
                         error={errors.email}
                         disabled={isEditing}
@@ -173,7 +173,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
                     <Input
                       value={formData.discordId || ""}
                       onChange={(e) => setFormData({ ...formData, discordId: e.target.value })}
-                      placeholder="852147963258741032"
+                      placeholder={t("users.modals.form.placeholders.discord_id")}
                       className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6 pl-12 font-mono"
                       error={errors.discordId}
                       disabled={isEditing}

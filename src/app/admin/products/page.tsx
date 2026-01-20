@@ -42,26 +42,33 @@ function normalizeProducts(raw: unknown): Product[] {
   const arr = Array.isArray(raw) ? raw : [];
   return arr
     .filter(Boolean)
-    .map((p: any) => {
-      const images = Array.isArray(p?.images) ? p.images.filter(isSafeImageSrc) : [];
-      const thumbnail = isSafeImageSrc(p?.thumbnail) ? p.thumbnail : undefined;
+    .map((p: unknown) => {
+      const item = p as Record<string, any>;
+      const images = Array.isArray(item?.images) ? item.images.filter(isSafeImageSrc) : [];
+      const thumbnail = isSafeImageSrc(item?.thumbnail) ? item.thumbnail : undefined;
       return {
-        ...p,
-        id: typeof p?.id === "string" ? p.id : String(p?.id ?? ""),
-        name: typeof p?.name === "string" ? p.name : String(p?.name ?? ""),
-        category: (p?.category ?? "").toString(),
+        ...item,
+        id: typeof item?.id === "string" ? item.id : String(item?.id ?? ""),
+        name: typeof item?.name === "string" ? item.name : String(item?.name ?? ""),
+        category: (item?.category ?? "").toString(),
         thumbnail,
         images,
-        features: Array.isArray(p?.features) ? p.features : [],
-        tags: Array.isArray(p?.tags) ? p.tags : [],
-        isActive: p?.isActive !== undefined ? Boolean(p.isActive) : true,
+        features: Array.isArray(item?.features) ? item.features : [],
+        tags: Array.isArray(item?.tags) ? item.tags : [],
+        isActive: item?.isActive !== undefined ? Boolean(item.isActive) : true,
       } as Product;
     })
-    .filter((p) => Boolean((p as any).id));
+    .filter((p) => Boolean(p.id));
 }
 
 export default function AdminProductsPage() {
   const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -76,9 +83,9 @@ export default function AdminProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await adminApi.getProducts();
-      if (data && (data as any).success) {
-        const rawProducts = (data as any).data;
+      const { data: res } = await adminApi.getProducts() as { data: { success: boolean; data: Product[] } };
+      if (res && res.success) {
+        const rawProducts = res.data;
         setProducts(normalizeProducts(rawProducts));
       }
     } catch (err) {
@@ -132,48 +139,48 @@ export default function AdminProductsPage() {
     if (!selectedProduct) return;
     try {
       // Standard delete is now Archive (Soft Delete)
-      const res = await adminApi.deleteProduct(selectedProduct.id);
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.deleteProduct(selectedProduct.id) as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         await fetchProducts();
         setIsDeleteOpen(false);
       } else {
-        alert((res.data as any)?.error || t("products.errors.archive_fail"));
+        alert(res.data?.error || t("products.errors.archive_fail"));
       }
     } catch (err) {
       console.error("Error archiving product:", err);
       alert(t("products.errors.archive_error"));
     }
-  }, [selectedProduct, fetchProducts]);
+  }, [selectedProduct, fetchProducts, t]);
 
   const handleConfirmHardDelete = useCallback(async () => {
     if (!selectedProduct) return;
     try {
-      const res = await adminApi.hardDeleteProduct(selectedProduct.id);
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.hardDeleteProduct(selectedProduct.id) as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         await fetchProducts();
         setIsHardDeleteOpen(false);
       } else {
-        alert((res.data as any)?.error || t("products.errors.delete_fail"));
+        alert(res.data?.error || t("products.errors.delete_fail"));
       }
     } catch (err) {
       console.error("Error permanently deleting product:", err);
       alert(t("products.errors.delete_error"));
     }
-  }, [selectedProduct, fetchProducts]);
+  }, [selectedProduct, fetchProducts, t]);
 
   const handleRestoreProduct = useCallback(async (product: Product) => {
     try {
-      const res = await adminApi.updateProduct(product.id, { isActive: true });
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.updateProduct(product.id, { isActive: true }) as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         await fetchProducts();
       } else {
-        alert((res.data as any)?.error || t("products.errors.restore_fail"));
+        alert(res.data?.error || t("products.errors.restore_fail"));
       }
     } catch (err) {
       console.error("Error restoring product:", err);
       alert(t("products.errors.restore_error"));
     }
-  }, [fetchProducts]);
+  }, [fetchProducts, t]);
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -190,15 +197,15 @@ export default function AdminProductsPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("products.title")}</h1>
-          <p className="text-gray-400 mt-1">{t("products.subtitle")}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("products.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("products.subtitle") : ""}</p>
         </div>
         <Button
           onClick={handleAddProduct}
-          className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300"
+          className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-xs transition-all duration-300 shrink-0 w-full lg:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
-          {t("products.add_new")}
+          {mounted ? t("products.add_new") : ""}
         </Button>
       </div>
 
@@ -209,7 +216,7 @@ export default function AdminProductsPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder={t("products.search_placeholder")}
+              placeholder={mounted ? t("products.search_placeholder") : ""}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -227,7 +234,7 @@ export default function AdminProductsPage() {
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {cat === "all" ? t("products.all_items") : t(`products.categories.${cat.toLowerCase()}`)}
+                <span >{mounted ? (cat === "all" ? t("products.all_items") : t(`products.categories.${cat.toLowerCase()}`)) : ""}</span>
               </button>
             ))}
           </div>
@@ -241,19 +248,19 @@ export default function AdminProductsPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t("products.table.loading")}</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("products.table.loading") : ""}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("products.table.info")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("products.table.category")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("products.table.price")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("products.table.points")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("products.table.inventory")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("products.table.status")}</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">{t("products.table.actions")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("products.table.info") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("products.table.category") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("products.table.price") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("products.table.points") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("products.table.inventory") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("products.table.status") : ""}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{mounted ? t("products.table.actions") : ""}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -287,7 +294,7 @@ export default function AdminProductsPage() {
                           ) : (
                             <>
                               <ImageOff className="w-5 h-5 text-gray-600 mb-0.5" />
-                              <span className="text-[8px] font-black uppercase tracking-widest text-gray-600">{t("products.table.no_image")}</span>
+                              <span className="text-[8px] font-black uppercase tracking-widest text-gray-600">{mounted ? t("products.table.no_image") : ""}</span>
                             </>
                           )}
                         </div>
@@ -306,21 +313,21 @@ export default function AdminProductsPage() {
                       <div>
                         {isProductOnFlashSale(product) ? (
                           <>
-                            <p className="font-black text-red-500 text-lg">{formatPrice(product.flashSalePrice!)}</p>
+                            <p className="font-black text-red-500 text-lg" suppressHydrationWarning>{formatPrice(product.flashSalePrice!)}</p>
                             <div className="flex items-center gap-2">
-                              <p className="text-[10px] text-gray-600 line-through font-bold">
+                              <p className="text-[10px] text-gray-600 line-through font-bold" suppressHydrationWarning>
                                 {formatPrice(product.price)}
                               </p>
                               <Badge className="bg-red-500/10 text-red-500 border-none text-[8px] font-black px-1.5 py-0">
-                                {t("products.table.flash_sale")}
+                                {mounted ? t("products.table.flash_sale") : ""}
                               </Badge>
                             </div>
                           </>
                         ) : (
                           <>
-                            <p className="font-black text-white text-lg">{formatPrice(product.price)}</p>
+                            <p className="font-black text-white text-lg" suppressHydrationWarning>{formatPrice(product.price)}</p>
                             {product.originalPrice && (
-                              <p className="text-[10px] text-gray-600 line-through font-bold">
+                              <p className="text-[10px] text-gray-600 line-through font-bold" suppressHydrationWarning>
                                 {formatPrice(product.originalPrice)}
                               </p>
                             )}
@@ -342,7 +349,7 @@ export default function AdminProductsPage() {
                             product.stock > 0 ? "bg-red-400" : "bg-gray-600"
                         )} />
                         <span className="font-black text-white text-sm">
-                          {product.stock === -1 ? t("products.table.unlimited") : product.stock}
+                          {mounted ? (product.stock === -1 ? t("products.table.unlimited") : product.stock) : ""}
                         </span>
                       </div>
                     </td>
@@ -354,11 +361,11 @@ export default function AdminProductsPage() {
                             ? "bg-green-500/10 text-green-500"
                             : "bg-orange-500/10 text-orange-500"
                         )}>
-                          {product.isActive ? t("products.table.active") : t("products.table.archived")}
+                          {mounted ? (product.isActive ? t("products.table.active") : t("products.table.archived")) : ""}
                         </Badge>
                         {product.isFeatured && (
                           <Badge className="bg-red-600 text-white shadow-lg shadow-red-600/20 px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase tracking-widest w-fit">
-                            {t("products.table.featured")}
+                            {mounted ? t("products.table.featured") : ""}
                           </Badge>
                         )}
                       </div>
@@ -366,7 +373,12 @@ export default function AdminProductsPage() {
                     <td className="px-6 py-6">
                       <div className="flex items-center justify-end gap-2">
                         <Link href={`/products/${product.id}`} target="_blank">
-                          <Button variant="ghost" size="icon" title={t("common.view")} className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={t("common.view")}
+                            className="w-10 h-10 rounded-xl hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                         </Link>
@@ -375,7 +387,7 @@ export default function AdminProductsPage() {
                           size="icon"
                           title={t("common.edit")}
                           onClick={() => handleEditProduct(product)}
-                          className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
+                          className="w-10 h-10 rounded-xl hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -389,7 +401,7 @@ export default function AdminProductsPage() {
                               setSelectedProduct(product);
                               setIsDeleteOpen(true);
                             }}
-                            className="w-10 h-10 rounded-xl hover:bg-orange-500/10 text-orange-500/50 hover:text-orange-500 transition-all"
+                            className="w-10 h-10 rounded-xl hover:bg-orange-500/10 text-orange-500/40 hover:text-orange-500 transition-all"
                           >
                             <Archive className="w-4 h-4" />
                           </Button>
@@ -399,7 +411,7 @@ export default function AdminProductsPage() {
                             size="icon"
                             title={t("common.restore")}
                             onClick={() => handleRestoreProduct(product)}
-                            className="w-10 h-10 rounded-xl hover:bg-green-500/10 text-green-500/50 hover:text-green-500 transition-all"
+                            className="w-10 h-10 rounded-xl hover:bg-green-500/10 text-green-500/40 hover:text-green-500 transition-all"
                           >
                             <RotateCcw className="w-4 h-4" />
                           </Button>
@@ -440,8 +452,8 @@ export default function AdminProductsPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Package className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{t("products.table.no_products")}</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">{t("products.table.no_products_subtitle")}</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("products.table.no_products") : ""}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{mounted ? t("products.table.no_products_subtitle") : ""}</p>
           </div>
         )}
       </Card>

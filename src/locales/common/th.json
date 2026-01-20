@@ -671,7 +671,12 @@
     "receive": "รับ",
     "view_all": "ดูทั้งหมด",
     "see_more": "ดูเพิ่มเติม",
-    "try_again": "ลองใหม่อีกครั้ง",
+    "try_again": "ลองอีกครั้ง",
+    "pagination": {
+      "page": "หน้า {{current}} จาก {{total}}",
+      "previous": "ก่อนหน้า",
+      "next": "ถัดไป"
+    },
     "product": "สินค้า"
   },
   "notifications_page": {

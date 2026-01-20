@@ -77,3 +77,7 @@ temp_*.txt
 
 # OS
 Thumbs.db
+src/locales/admin/th.json.utf8
+src/locales/admin/th.json.bak
+reconstruct_th.py
+stable_reconstruct_locales.py

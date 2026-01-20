@@ -11,7 +11,45 @@
     "confirm": "ยืนยัน",
     "actions": "การจัดการ",
     "status": "สถานะ",
-    "processing": "กำลังดำเนินการ..."
+    "processing": "กำลังดำเนินการ...",
+    "add": "เพิ่ม",
+    "hide": "ซ่อน",
+    "show": "แสดง",
+    "copy": "คัดลอก",
+    "copy_key": "คัดลอกคีย์",
+    "reset_ip": "รีเซ็ต IP",
+    "revoke": "ระงับสิทธิ์",
+    "unknown_product": "ไม่ทราบชื่อสินค้า",
+    "guest": "ลูกค้าทั่วไป",
+    "invalid_date": "วันที่ไม่ถูกต้อง",
+    "random": "สุ่ม",
+    "discard": "ยกเลิก",
+    "broadcasting": "กำลังประกาศ...",
+    "saving": "กำลังบันทึก...",
+    "pagination": {
+      "page": "หน้า {{current}} จาก {{total}}",
+      "previous": "ก่อนหน้า",
+      "next": "ถัดไป",
+      "first": "หน้าแรก",
+      "last": "หน้าสุดท้าย"
+    }
+  },
+  "admin_pin": {
+    "title": "ยืนยันตัวตน",
+    "subtitle": "โปรดกรอกรหัส PIN 6 หลักเพื่อเข้าถึงหน้าจัดการระบบ",
+    "invalid_pin": "รหัส PIN ไม่ถูกต้อง",
+    "verifying": "กำลังตรวจสอบ...",
+    "secure_access": "ระบบป้องกันความปลอดภัยขั้นสูง",
+    "settings_title": "รหัส PIN สำหรับผู้ดูแลระบบ",
+    "settings_subtitle": "รหัส 6 หลักเพื่อความปลอดภัยในการเข้าถึงหน้าจัดการระบบ",
+    "current_pin": "รหัส PIN ปัจจุบัน",
+    "new_pin": "รหัส PIN ใหม่",
+    "confirm_pin": "ยืนยันรหัส PIN ใหม่",
+    "update_btn": "อัปเดตรหัส PIN",
+    "update_success": "อัปเดตรหัส PIN สำเร็จ",
+    "update_error": "ไม่สามารถอัปเดตรหัส PIN ได้",
+    "pin_mismatch": "รหัส PIN ใหม่ไม่ตรงกัน",
+    "pin_length": "รหัส PIN ต้องมี 6 หลัก"
   },
   "sidebar": {
     "admin_panel": "แผงควบคุม",
@@ -53,13 +91,15 @@
       "subtitle": "5 รายการล่าสุด",
       "view_all": "ดูทั้งหมด",
       "no_orders": "ไม่มีคำสั่งซื้อล่าสุด",
-      "status_completed": "สำเร็จ"
+      "status_completed": "สำเร็จ",
+      "more_items": "+{{count}} รายการ"
     },
     "best_sellers": {
       "title": "สินค้าขายดี",
       "subtitle": "สินค้าที่มีผลงานดีที่สุด",
       "no_data": "ไม่มีข้อมูลสินค้า",
-      "sales": "ยอดขาย"
+      "sales": "ยอดขาย",
+      "sales_count": "{{count}} ยอดขาย"
     },
     "low_stock": {
       "title": "สินค้าใกล้หมด",
@@ -109,7 +149,27 @@
       "delete_fail": "เกิดข้อผิดพลาดในการลบสินค้าถาวร",
       "delete_error": "เกิดข้อผิดพลาดขณะดำเนินการลบสินค้าถาวร",
       "restore_fail": "เกิดข้อผิดพลาดในการกู้คืนสินค้า",
-      "restore_error": "เกิดข้อผิดพลาดขณะดำเนินการกู้คืนสินค้า"
+      "restore_error": "เกิดข้อผิดพลาดขณะดำเนินการกู้คืนสินค้า",
+      "upload_cover_failed": "อัปโหลดรูปหน้าปกไม่สำเร็จ",
+      "upload_gallery_failed": "อัปโหลดรูปภาพประกอบบางส่วนไม่สำเร็จ",
+      "upload_file_failed": "อัปโหลดไฟล์สินค้าไม่สำเร็จ",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึกสินค้า",
+      "name_required": "กรุณากรอกชื่อสินค้า",
+      "slug_required": "กรุณากรอก Slug สำหรับ URL",
+      "description_required": "กรุณากรอกรายละเอียดสินค้า",
+      "price_invalid": "กรุณากรอกราคาที่ถูกต้อง (ต้องไม่น้อยกว่า 0)",
+      "original_price_invalid": "ราคาเดิมต้องไม่น้อยกว่า 0",
+      "stock_invalid": "สต็อกต้องระบุเป็นตัวเลข (0 สำหรับไม่จำกัด)",
+      "points_invalid": "แต้มสะสมต้องไม่น้อยกว่า 0",
+      "category_required": "กรุณาเลือกหมวดหมู่สินค้า",
+      "thumbnail_required": "กรุณาเลือกรูปหน้าปกสินค้า",
+      "flash_price_invalid": "กรุณากรอกราคา Flash Sale ที่ถูกต้อง",
+      "flash_ends_required": "กรุณาระบุเวลาสิ้นสุด Flash Sale",
+      "flash_ends_invalid": "กรุณาระบุเวลาสิ้นสุด Flash Sale ให้ถูกต้อง",
+      "flash_ends_future": "เวลาสิ้นสุดต้องเป็นเวลาในอนาคต",
+      "download_file_required": "กรุณาอัปโหลดไฟล์สินค้าสำหรับดาวน์โหลด",
+      "some_files_skipped": "บางไฟล์ไม่ใช่รูปภาพและถูกข้ามไป",
+      "image_only": "กรุณาเลือกไฟล์รูปภาพเท่านั้น"
     },
     "modals": {
       "archive": {
@@ -156,6 +216,14 @@
           "add_image": "เพิ่มรูป",
           "pending": "รออัปโหลด"
         },
+        "placeholders": {
+          "name": "เช่น Advanced Scoreboard",
+          "slug": "advanced-scoreboard",
+          "description": "อธิบายรายละเอียดสินค้าของคุณ...",
+          "none": "ไม่มี",
+          "stock": "เช่น 100",
+          "version": "1.0.0"
+        },
         "settings": {
           "pricing_title": "ราคาและแต้มสะสม",
           "sale_price": "ราคาขาย",
@@ -200,7 +268,7 @@
   },
   "analytics": {
     "title": "วิเคราะห์ข้อมูล",
-    "subtitle": "เจาะลึกข้อมูลการขายและพฤติกรรมผู้ใช้งาน",
+    "subtitle": "เจาะลึกข้อมูลการขายและพฤติกรรมผู้ใช้งานของ QR Studio",
     "loading": "กำลังประมวลผลข้อมูลวิเคราะห์...",
     "stats": {
       "revenue": "รายได้รวม",
@@ -218,7 +286,13 @@
       "top_buyers": "ลูกค้ายอดเยี่ยม",
       "conversion": "อัตราการสั่งซื้อ (Conversion)",
       "promo_performance": "ประสิทธิภาพโปรโมโค้ด",
-      "geo": "ข้อมูลภูมิศาสตร์"
+      "geo": "ข้อมูลภูมิศาสตร์",
+      "revenue_label": "รายได้",
+      "proportion_label": "สัดส่วน",
+      "users": "ผู้ใช้งานทั้งหมด",
+      "new_users": "ผู้ใช้งานใหม่",
+      "orders": "คำสั่งซื้อ",
+      "generated_revenue": "รายได้ที่สร้าง"
     },
     "table": {
       "best_sellers": "สินค้าขายดี",
@@ -272,121 +346,27 @@
         "title": "ระงับไลเซนส์",
         "message": "คุณแน่ใจหรือไม่ว่าต้องการระงับไลเซนส์นี้? ผู้ใช้จะไม่สามารถใช้งานสินค้าได้อีกต่อไป",
         "confirm": "ยืนยันการระงับ"
+      },
+      "reset_ip": {
+        "title": "รีเซ็ต IP ไลเซนส์",
+        "message": "คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตที่อยู่ IP สำหรับไลเซนส์นี้? ผู้ใช้จะต้องยืนยันตัวตนใหม่จากเซิร์ฟเวอร์ IP ใหม่",
+        "confirm": "รีเซ็ต IP",
+        "processing": "กำลังรีเซ็ต..."
       }
-    }
-  },
-  "lucky_wheel": {
-    "title": "จัดการวงล้อเสี่ยงโชค",
-    "subtitle": "ตั้งค่าของรางวัลและความน่าจะเป็นสำหรับวงล้อ",
-    "status_label": "สถานะระบบ",
-    "status_active": "เปิดใช้งาน",
-    "status_inactive": "ปิดใช้งาน",
-    "add_reward": "เพิ่มรางวัล",
-    "total_prob_warning": "คำเตือน: ผลรวมความน่าจะเป็นไม่ถูกต้อง",
-    "total_prob_subtitle": "ผลรวมปัจจุบันคือ {{total}} ควรตั้งค่าให้รวมกันได้เท่ากับ 1.0 (100%) เพื่อความแม่นยำ",
-    "reward_type_points": "แต้ม",
-    "reward_type_balance": "เงิน",
-    "probability_label": "ความน่าจะเป็น",
-    "errors": {
-      "name_required": "กรุณากรอกชื่อรางวัล",
-      "value_invalid": "กรุณากรอกมูลค่าที่ถูกต้อง (ต้องไม่น้อยกว่า 0)",
-      "prob_invalid": "ความน่าจะเป็นต้องอยู่ระหว่าง 0 ถึง 1 (เช่น 0.1 สำหรับ 10%)",
-      "color_invalid": "กรุณาเลือกสีที่ถูกต้อง",
-      "save_failed": "เกิดข้อผิดพลาดในการบันทึกรางวัล"
-    },
-    "modals": {
-      "add_title": "เพิ่มรางวัลใหม่",
-      "edit_title": "แก้ไขรางวัล",
-      "info_section": "ข้อมูลของรางวัล",
-      "name_label": "ชื่อรางวัล *",
-      "name_placeholder": "เช่น 50 แต้ม, แจ็คพอต",
-      "type_label": "ประเภท",
-      "type_points": "แต้ม (Points)",
-      "type_balance": "เงิน (Balance)",
-      "value_label": "มูลค่า *"
-    }
-  },
-  "export": {
-    "title": "Export Data",
-    "subtitle": "ส่งออกข้อมูลในระบบเป็นไฟล์ CSV เพื่อนำไปใช้งานต่อ",
-    "options": {
-      "orders": "คำสั่งซื้อ",
-      "orders_desc": "ข้อมูลรายการสั่งซื้อทั้งหมด สถานะการชำระเงิน และยอดรวม",
-      "products": "สินค้า",
-      "products_desc": "รายชื่อสินค้า ราคา คลังสินค้า และหมวดหมู่",
-      "users": "ผู้ใช้งาน",
-      "users_desc": "รายชื่อผู้ใช้ อีเมล บทบาท และยอดเงินคงเหลือ",
-      "commissions": "รายการจ้างทำ",
-      "commissions_desc": "ข้อมูลการจ้างทำสคริปต์/UI และสถานะการดำเนินงาน",
-      "licenses": "ลิขสิทธิ์ (Licenses)",
-      "licenses_desc": "ข้อมูล License Key และการผูก IP ของลูกค้า",
-      "reviews": "รีวิวสินค้า",
-      "reviews_desc": "คะแนนและข้อคิดเห็นจากลูกค้าต่อสินค้าต่างๆ"
-    },
-    "guide_title": "คำแนะนำการส่งออก",
-    "guide_desc": "การส่งออกข้อมูลจะดึงข้อมูลล่าสุดจากฐานข้อมูลโดยตรง ไฟล์ที่ได้จะเป็นรูปแบบ CSV ซึ่งสามารถเปิดได้ด้วย Excel, Google Sheets หรือโปรแกรม Spreadsheet อื่นๆ หากคุณมีข้อมูลจำนวนมาก (มากกว่า 5,000 รายการ) อาจใช้เวลาในการเตรียมไฟล์สักครู่",
-    "btn_export": "ส่งออกข้อมูล",
-    "btn_exporting": "กำลังส่งออก...",
-    "coming_soon": "(เร็วๆ นี้)",
-    "coming_soon_filter": "กรองตามช่วงเวลา (เร็วๆ นี้)",
-    "coming_soon_formats": "รูปแบบไฟล์เพิ่มเติม (เร็วๆ นี้)",
-    "time_options": [
-      "7 วัน",
-      "30 วัน",
-      "ทั้งหมด"
-    ],
-    "headers": {
-      "order_id": "เลขที่คำสั่งซื้อ",
-      "date": "วันที่",
-      "customer_name": "ชื่อลูกค้า",
-      "customer_email": "อีเมลลูกค้า",
-      "products": "สินค้า",
-      "total": "ยอดรวม",
-      "status": "สถานะ",
-      "payment_method": "วิธีการชำระเงิน"
     },
     "errors": {
-      "no_data": "ไม่พบข้อมูลที่จะส่งออก หรือเกิดข้อผิดพลาดในการดึงข้อมูล",
-      "failed": "เกิดข้อผิดพลาดในการส่งออกข้อมูล"
-    }
-  },
-  "flash_sale": {
-    "title": "Flash Sale Management",
-    "subtitle": "บริหารจัดการโปรโมชั่น Flash Sale และสินค้าลดราคาแบบจำกัดเวลา",
-    "add_btn": "สร้าง Flash Sale ใหม่",
-    "setup_title": "Setup Flash Sale",
-    "setup_subtitle": "กำหนดราคาและเวลาสิ้นสุดโปรโมชั่น",
-    "select_product_title": "Select Product",
-    "select_product_subtitle": "เลือกสินค้าที่ต้องการเข้าร่วม Flash Sale",
-    "search_placeholder": "ค้นหาสินค้า...",
-    "price_section": "การตั้งค่าราคาพิเศษ",
-    "price_label": "ราคา Flash Sale (บาท) *",
-    "discount_label": "ลด {{percent}}%",
-    "save_amount": "ประหยัด: {{amount}}",
-    "period_section": "ระยะเวลาโปรโมชั่น",
-    "end_time_label": "วันเวลาที่สิ้นสุด *",
-    "btn_saving": "กำลังบันทึก...",
-    "btn_save": "บันทึกการตั้งค่า",
-    "errors": {
-      "price_invalid": "กรุณากรอกราคา Flash Sale ที่ถูกต้อง",
-      "price_too_high": "ราคาต้องถูกกว่าราคาปกติ ({{price}})",
-      "ends_required": "กรุณาระบุเวลาสิ้นสุด",
-      "ends_future": "เวลาสิ้นสุดต้องเป็นเวลาในอนาคต",
-      "save_failed": "เกิดข้อผิดพลาดในการบันทึก"
-    },
-    "modals": {
-      "remove": {
-        "title": "ยกเลิก Flash Sale",
-        "message": "คุณต้องการยกเลิกสถานะ Flash Sale ของสินค้า \"{{name}}\" ใช่หรือไม่? ราคาสินค้าจะกลับไปเป็นราคาปกติ",
-        "confirm": "ยืนยันการยกเลิก"
-      }
+      "issue_failed": "เกิดข้อผิดพลาดในการออกไลเซนส์",
+      "revoke_failed": "ไม่สามารถระงับไลเซนส์ได้",
+      "revoke_error": "เกิดข้อผิดพลาดขณะระงับไลเซนส์",
+      "reset_ip_failed": "ไม่สามารถรีเซ็ต IP ได้",
+      "reset_ip_error": "เกิดข้อผิดพลาดขณะรีเซ็ต IP ไลเซนส์"
     }
   },
   "orders": {
-    "title": "Order Management",
+    "title": "จัดการคำสั่งซื้อ",
     "subtitle": "ติดตามและบริหารจัดการรายการสั่งซื้อทั้งหมดในระบบ",
     "search_placeholder": "ค้นหา Order ID, ชื่อลูกค้า หรืออีเมล...",
-    "no_orders": "No orders found",
+    "no_orders": "ไม่พบคำสั่งซื้อ",
     "no_orders_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือรอคำสั่งซื้อใหม่",
     "status": {
       "completed": "สำเร็จ",
@@ -405,6 +385,14 @@
       "actions": "การจัดการ",
       "more_items": "+{{count}} รายการ",
       "view_details": "ดูรายละเอียด"
+    },
+    "export": {
+      "btn_export": "ส่งออก CSV",
+      "btn_exporting": "กำลังส่งออก...",
+      "errors": {
+        "no_data": "ไม่พบข้อมูลสำหรับส่งออก",
+        "export_failed": "การส่งออกล้มเหลว"
+      }
     },
     "filter": {
       "all": "คำสั่งซื้อทั้งหมด"
@@ -439,10 +427,10 @@
     }
   },
   "users": {
-    "title": "User Management",
+    "title": "จัดการผู้ใช้งาน",
     "subtitle": "บริหารจัดการบัญชีผู้ใช้งาน สิทธิ์การใช้งาน และตรวจสอบสถานะทั้งหมด",
     "search_placeholder": "ค้นหาด้วย Username, Email หรือ Discord ID...",
-    "no_users": "No users found",
+    "no_users": "ไม่พบผู้ใช้งาน",
     "no_users_subtitle": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือนำเข้าข้อมูลใหม่",
     "stats": {
       "total": "บัญชีโปรไฟล์",
@@ -516,10 +504,414 @@
         "btn_discard": "ยกเลิก",
         "btn_update": "อัปเดตข้อมูล",
         "btn_create": "สร้างบัญชี",
-        "btn_syncing": "กำลังบันทึก..."
+        "btn_syncing": "กำลังบันทึก...",
+        "placeholders": {
+          "username": "JohnDoe",
+          "email": "john@example.com",
+          "discord_id": "852147963258741032"
+        }
       },
       "update_fail": "ไม่สามารถอัปเดตข้อมูลผู้ใช้ได้",
       "ban_fail": "ไม่สามารถเปลี่ยนสถานะการระงับได้"
+    },
+    "errors": {
+      "username_length": "ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร",
+      "email_invalid": "รูปแบบอีเมลไม่ถูกต้อง",
+      "discord_id_required": "กรุณากรอก Discord ID",
+      "balance_negative": "ยอดเงินไม่สามารถติดลบได้",
+      "points_negative": "แต้มสะสมไม่สามารถติดลบได้",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึกข้อมูลผู้ใช้"
+    }
+  },
+  "commissions": {
+    "title": "จัดการคอมมิชชัน",
+    "subtitle": "ติดตามและบริหารจัดการรายการจ้างทำทั้งหมด",
+    "search_placeholder": "ค้นหาด้วยชื่อเรื่อง, ชื่อลูกค้า หรือ ID...",
+    "no_commissions": "ไม่พบรายการคอมมิชชัน",
+    "filter": {
+      "all": "ทั้งหมด"
+    },
+    "status": {
+      "pending": "รอรับงาน",
+      "accepted": "รับงานแล้ว",
+      "in_progress": "กำลังดำเนินการ",
+      "completed": "เสร็จสิ้น",
+      "cancelled": "ยกเลิก"
+    },
+    "stats": {
+      "total_requests": "รายการทั้งหมด",
+      "pending_review": "รอตรวจสอบ",
+      "in_progress": "กำลังทำ",
+      "completed": "สำเร็จแล้ว"
+    },
+    "card": {
+      "created_at": "วันที่จ้าง",
+      "budget": "งบประมาณ",
+      "attachment": "ไฟล์แนบ",
+      "manage_btn": "จัดการงาน"
+    },
+    "admin_notes_label": "บันทึกจากผู้ดูแล",
+    "modal": {
+      "title": "จัดการสถานะงาน",
+      "update_status": "อัปเดตสถานะ",
+      "admin_notes": "บันทึกจากผู้ดูแล",
+      "notes_hint": "ข้อความนี้จะแสดงให้ลูกค้าเห็น",
+      "notes_placeholder": "กรอกรายละเอียดความคืบหน้า หรือเหตุผลการเปลี่ยนสถานะ...",
+      "update_btn": "บันทึกการเปลี่ยนแปลง"
+    },
+    "errors": {
+      "update_failed": "ไม่สามารถอัปเดตสถานะได้"
+    }
+  },
+  "lucky_wheel": {
+    "title": "จัดการวงล้อเสี่ยงโชค",
+    "subtitle": "ตั้งค่าของรางวัลและความน่าจะเป็นสำหรับวงล้อ",
+    "system_status": "สถานะระบบ",
+    "enabled": "เปิดใช้งาน",
+    "disabled": "ปิดใช้งาน",
+    "add_reward": "เพิ่มรางวัล",
+    "edit_reward": "แก้ไขรางวัล",
+    "add_new_reward": "เพิ่มรางวัลใหม่",
+    "save_changes": "บันทึกการแก้ไข",
+    "cancel": "ยกเลิก",
+    "reward_info": "ข้อมูลของรางวัล",
+    "reward_name": "ชื่อรางวัล",
+    "reward_name_placeholder": "เช่น 50 แต้ม, แจ็คพอต",
+    "type": "ประเภท",
+    "type_points": "แต้ม (Points)",
+    "type_balance": "เงิน (Balance)",
+    "points_label": "แต้ม",
+    "balance_label": "เงิน",
+    "value": "มูลค่า",
+    "reward_value": "มูลค่า",
+    "settings_chances": "การตั้งค่าและโอกาส",
+    "probability": "ความน่าจะเป็น (0-1)",
+    "probability_label": "ความน่าจะเป็น (0-1)",
+    "probability_hint": "โอกาสได้รับ: {{percent}}%",
+    "color": "สีประจำรางวัล",
+    "reward_color": "สีประจำรางวัล",
+    "enable_reward": "เปิดใช้งานรางวัลนี้",
+    "probability_warning": "คำเตือน: ผลรวมความน่าจะเป็นไม่ถูกต้อง",
+    "probability_warning_desc": "ผลรวมปัจจุบันคือ {{total}} ควรตั้งค่าให้รวมกันได้เท่ากับ 1.0 (100%) เพื่อความแม่นยำ",
+    "confirm_delete_title": "ยืนยันการลบรางวัล",
+    "confirm_delete_msg": "คุณแน่ใจหรือไม่ว่าต้องการลบรางวัลนี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
+    "delete_reward": "ลบรางวัล",
+    "save_reward": "บันทึกข้อมูล",
+    "update_reward": "อัปเดตข้อมูล",
+    "errors": {
+      "name_required": "กรุณากรอกชื่อรางวัล",
+      "value_invalid": "กรุณากรอกมูลค่าที่ถูกต้อง (ต้องไม่น้อยกว่า 0)",
+      "probability_invalid": "ความน่าจะเป็นต้องอยู่ระหว่าง 0 ถึง 1 (เช่น 0.1 สำหรับ 10%)",
+      "color_invalid": "กรุณาเลือกสีที่ถูกต้อง",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึกรางวัล"
+    }
+  },
+  "flash_sale": {
+    "title": "จัดการ Flash Sale",
+    "subtitle": "ตั้งค่าราคาพิเศษและระยะเวลาโปรโมชัน",
+    "add_flash_sale": "เพิ่ม Flash Sale",
+    "edit_flash_sale": "แก้ไข Flash Sale",
+    "search_placeholder": "ค้นหาสินค้า...",
+    "select_product": "เลือกสินค้า",
+    "flash_price": "ราคา Flash Sale",
+    "end_time": "เวลาสิ้นสุด",
+    "active": "กำลังใช้งาน",
+    "expired": "หมดอายุ",
+    "upcoming": "กำลังจะมาถึง",
+    "cancel_flash_sale": "ยกเลิก Flash Sale",
+    "confirm_cancel": "ยืนยันการยกเลิก",
+    "time_remaining": "เวลาที่เหลือ",
+    "discount_percent": "ลด {{percent}}%",
+    "original_price": "ราคาปกติ",
+    "active_sales": "Flash Sale ที่ใช้งานอยู่",
+    "ending_soon": "ใกล้หมดเวลา",
+    "avg_discount": "ส่วนลดเฉลี่ย",
+    "hours_left": "{{count}} ชั่วโมง",
+    "no_active_sales": "ไม่มี Flash Sale ที่ใช้งานอยู่",
+    "create_first": "สร้าง Flash Sale แรกของคุณ",
+    "table": {
+      "product": "สินค้า",
+      "original_price": "ราคาปกติ",
+      "sale_price": "ราคาลด",
+      "ending_at": "สิ้นสุดเมื่อ",
+      "time_left": "เวลาที่เหลือ",
+      "actions": "การจัดการ"
+    },
+    "errors": {
+      "price_invalid": "กรุณากรอกราคา Flash Sale ที่ถูกต้อง",
+      "end_time_required": "กรุณาระบุเวลาสิ้นสุด",
+      "end_time_future": "เวลาสิ้นสุดต้องเป็นเวลาในอนาคต",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึก",
+      "price_must_be_lower": "ราคาต้องถูกกว่าราคาปกติ ({{price}})"
+    },
+    "modals": {
+      "remove": {
+        "title": "ยกเลิก Flash Sale",
+        "message": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิก Flash Sale ของ \"{{name}}\"?",
+        "confirm": "ยืนยันการยกเลิก"
+      },
+      "edit": {
+        "title": "ตั้งค่า Flash Sale",
+        "subtitle": "กำหนดราคาและเวลาสิ้นสุดโปรโมชั่น",
+        "pricing_settings": "การตั้งค่าราคาพิเศษ",
+        "price_label": "ราคา Flash Sale (บาท) *",
+        "discount_badge": "ลด {{percent}}%",
+        "save_badge": "ประหยัด: {{amount}}",
+        "duration_settings": "ระยะเวลาโปรโมชั่น",
+        "end_time_label": "วันเวลาที่สิ้นสุด *",
+        "cancel": "ยกเลิก",
+        "saving": "กำลังบันทึก...",
+        "save": "บันทึกการตั้งค่า"
+      },
+      "add": {
+        "title": "เลือกสินค้า",
+        "subtitle": "เลือกสินค้าที่ต้องการเข้าร่วม Flash Sale",
+        "search_placeholder": "ค้นหาสินค้า...",
+        "available": "พร้อมขาย",
+        "no_products": "ไม่พบสินค้า",
+        "close": "ปิดหน้าต่าง"
+      }
+    }
+  },
+  "settings": {
+    "title": "ตั้งค่าระบบ",
+    "subtitle": "จัดการการตั้งค่าทั้งหมดของระบบ",
+    "tabs": {
+      "general": "ทั่วไป",
+      "payment": "การชำระเงิน",
+      "security": "ความปลอดภัย",
+      "contact": "ติดต่อสอบถาม",
+      "system": "ระบบหลังบ้าน"
+    },
+    "default_description": "ปรับแต่งค่าการทำงานของระบบในส่วนนี้",
+    "save": "บันทึกการตั้งค่า",
+    "saved": "บันทึกแล้ว",
+    "saving": "กำลังบันทึก...",
+    "no_settings": "ไม่มีการตั้งค่าในหมวดหมู่นี้",
+    "loading": "กำลังโหลดการตั้งค่า..."
+  },
+  "audit_logs_page": {
+    "title": "บันทึกกิจกรรมระบบ",
+    "subtitle": "ตรวจสอบประวัติการใช้งานและการเปลี่ยนแปลงข้อมูลโดยผู้ดูแลระบบ",
+    "search_placeholder": "ค้นหาด้วยชื่อแอดมิน, กิจกรรม หรือ Entity ID...",
+    "no_logs": "ไม่พบประวัติกิจกรรม",
+    "table": {
+      "admin": "ผู้ดำเนินการ",
+      "action": "กิจกรรม",
+      "entity": "เป้าหมาย",
+      "timestamp": "วันเวลา",
+      "details": "รายละเอียด"
+    },
+    "modal": {
+      "title": "รายละเอียดกิจกรรม",
+      "old_data": "ข้อมูลเดิม",
+      "new_data": "ข้อมูลใหม่",
+      "ip_address": "ที่อยู่ IP",
+      "user_agent": "เบราว์เซอร์/อุปกรณ์"
+    },
+    "system": "ระบบ"
+  },
+  "export": {
+    "title": "ส่งออกข้อมูล",
+    "subtitle": "ดาวน์โหลดข้อมูลระบบในรูปแบบต่างๆ",
+    "info": {
+      "title": "คำแนะนำการส่งออก",
+      "description": "การส่งออกข้อมูลจะดึงข้อมูลล่าสุดจากฐานข้อมูลโดยตรง ไฟล์ที่ได้จะเป็นรูปแบบ CSV ซึ่งสามารถเปิดได้ด้วย Excel, Google Sheets หรือโปรแกรม Spreadsheet อื่นๆ หากคุณมีข้อมูลจำนวนมาก (มากกว่า 5,000 รายการ) อาจใช้เวลาในการเตรียมไฟล์สักครู่"
+    },
+    "options": {
+      "orders": {
+        "label": "คำสั่งซื้อ",
+        "description": "ข้อมูลรายการสั่งซื้อทั้งหมด สถานะการชำระเงิน และยอดรวม"
+      },
+      "products": {
+        "label": "สินค้า",
+        "description": "รายชื่อสินค้า ราคา คลังสินค้า และหมวดหมู่"
+      },
+      "users": {
+        "label": "ผู้ใช้งาน",
+        "description": "รายชื่อผู้ใช้ อีเมล บทบาท และยอดเงินคงเหลือ"
+      },
+      "commissions": {
+        "label": "รายการจ้างทำ",
+        "description": "ข้อมูลการจ้างทำสคริปต์/UI และสถานะการดำเนินงาน"
+      },
+      "licenses": {
+        "label": "ลิขสิทธิ์ (Licenses)",
+        "description": "ข้อมูล License Key และการผูก IP ของลูกค้า"
+      },
+      "reviews": {
+        "label": "รีวิวสินค้า",
+        "description": "คะแนนและข้อคิดเห็นจากลูกค้าต่อสินค้าต่างๆ"
+      }
+    },
+    "export_btn": "ส่งออก",
+    "exporting": "กำลังส่งออก...",
+    "advanced": {
+      "title": "Advanced Settings",
+      "time_range": "กรองตามช่วงเวลา (Coming Soon)",
+      "time_options": {
+        "0": "7 วัน",
+        "1": "30 วัน",
+        "2": "ทั้งหมด"
+      },
+      "file_formats": "รูปแบบไฟล์เพิ่มเติม (Coming Soon)"
+    }
+  },
+  "reviews": {
+    "title": "จัดการรีวิว",
+    "subtitle": "ตรวจสอบและจัดการรีวิวจากลูกค้า",
+    "search_placeholder": "ค้นหาในเนื้อหารีวิว...",
+    "delete_title": "ลบรีวิว",
+    "delete_message": "คุณต้องการลบรีวิวนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้",
+    "delete_confirm": "ลบรีวิว",
+    "stats": {
+      "total": "รีวิวทั้งหมด",
+      "verified": "รีวิวที่ยืนยันแล้ว",
+      "avg_rating": "คะแนนเฉลี่ย",
+      "products_reviewed": "สินค้าที่มีรีวิว"
+    },
+    "table": {
+      "user_product": "ผู้ใช้และสินค้า",
+      "rating": "คะแนน",
+      "comment": "ข้อคิดเห็น",
+      "date": "วันที่",
+      "actions": "การจัดการ"
+    },
+    "no_reviews": "ไม่พบข้อมูลรีวิว",
+    "filter": {
+      "all": "ทั้งหมด",
+      "verified": "ยืนยันแล้ว",
+      "pending": "รอตรวจสอบ"
+    },
+    "actions": {
+      "verify": "ยืนยันรีวิว",
+      "unverify": "ยกเลิกการยืนยัน"
+    }
+  },
+  "promo_codes": {
+    "title": "จัดการโค้ดส่วนลด",
+    "subtitle": "สร้างและจัดการโค้ดส่วนลดสำหรับลูกค้า",
+    "search_placeholder": "ค้นหารหัสส่วนลด หรือเงื่อนไข",
+    "add_code": "เพิ่มโค้ดใหม่",
+    "edit_code": "แก้ไขโค้ด",
+    "code": "รหัสส่วนลด",
+    "discount": "ส่วนลด",
+    "type_percent": "เปอร์เซ็นต์",
+    "type_fixed": "จำนวนเงิน",
+    "min_purchase": "ยอดขั้นต่ำ",
+    "max_uses": "จำนวนครั้งที่ใช้ได้",
+    "usage_count": "ใช้ไปแล้ว",
+    "expires_at": "หมดอายุ",
+    "active": "ใช้งาน",
+    "inactive": "ปิดใช้งาน",
+    "expired": "หมดอายุ",
+    "delete_title": "ลบโค้ดส่วนลด",
+    "delete_message": "คุณต้องการลบโค้ดนี้หรือไม่?",
+    "delete_confirm": "ลบโค้ด",
+    "no_codes": "ไม่พบโค้ดส่วนลด",
+    "no_codes_hint": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือเพิ่มรหัสใหม่",
+    "placeholders": {
+      "no_min": "ไม่มีขั้นต่ำ",
+      "unlimited": "ไม่จำกัด"
+    },
+    "table": {
+      "expiration_label": "วันหมดอายุ",
+      "never_expires": "ไม่มีวันหมดอายุ"
+    },
+    "errors": {
+      "save_fail": "บันทึกโค้ดส่วนลดไม่สำเร็จ",
+      "delete_fail": "ลบโค้ดส่วนลดไม่สำเร็จ",
+      "code_length": "รหัสส่วนลดต้องมีความยาวอย่างน้อย 3 ตัวอักษร",
+      "discount_positive": "ส่วนลดต้องมากกว่า 0",
+      "discount_percentage": "ส่วนลดแบบเปอร์เซ็นต์ต้องไม่เกิน 100%",
+      "min_purchase": "ยอดซื้อขั้นต่ำต้องไม่น้อยกว่า 0",
+      "max_discount": "ส่วนลดสูงสุดต้องมากกว่า 0",
+      "usage_limit": "จำนวนสิทธิ์การใช้งานต้องอย่างน้อย 1 ครั้ง",
+      "expires_future": "วันหมดอายุต้องเป็นเวลาในอนาคต",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึกโค้ดส่วนลด"
+    },
+    "types": {
+      "percentage": "เปอร์เซ็นต์ (%)",
+      "fixed_amount": "จำนวนเงิน (บาท)"
+    },
+    "modals": {
+      "form": {
+        "edit_title": "แก้ไขโค้ดส่วนลด",
+        "create_title": "สร้างโปรโมชั่นใหม่",
+        "subtitle": "กำหนดส่วนลดและเงื่อนไขการใช้งาน",
+        "basic_info": "ข้อมูลพื้นฐาน",
+        "code_label": "รหัสส่วนลด",
+        "discount_value": "มูลค่าส่วนลด",
+        "conditions_title": "เงื่อนไขการใช้งาน",
+        "min_purchase": "ยอดซื้อขั้นต่ำ (บาท)",
+        "max_discount": "ส่วนลดสูงสุด (บาท)",
+        "usage_limit": "จำนวนสิทธิ์ทั้งหมด",
+        "expiration_date": "วันหมดอายุ",
+        "active_status": "สถานะการใช้งาน",
+        "active_status_desc": "เปิดหรือปิดการใช้งานโค้ดนี้",
+        "update_btn": "อัปเดตโปรโมชั่น",
+        "publish_btn": "สร้างโปรโมชั่น",
+        "placeholders": {
+          "code": "เช่น NEWYEAR2024",
+          "no_min": "ไม่มีขั้นต่ำ",
+          "unlimited": "ไม่จำกัด"
+        }
+      }
+    }
+  },
+  "announcements": {
+    "title": "จัดการประกาศ",
+    "subtitle": "สร้างและจัดการประกาศสำหรับหน้าเว็บไซต์",
+    "add_announcement": "เพิ่มประกาศใหม่",
+    "edit_announcement": "แก้ไขประกาศ",
+    "content": "เนื้อหาประกาศ",
+    "type": {
+      "info": "ข้อมูล",
+      "warning": "คำเตือน",
+      "success": "สำเร็จ",
+      "error": "ข้อผิดพลาด"
+    },
+    "active": "เปิดใช้งาน",
+    "inactive": "ปิดใช้งาน",
+    "starts_at": "เริ่มแสดง",
+    "ends_at": "สิ้นสุดการแสดง",
+    "delete_title": "ลบประกาศ",
+    "delete_message": "คุณต้องการลบประกาศนี้หรือไม่?",
+    "delete_confirm": "ลบประกาศ",
+    "no_announcements": "ไม่มีประกาศ",
+    "card": {
+      "image_index": "รูปภาพที่ {{index}}"
+    },
+    "errors": {
+      "title_required": "กรุณากรอกหัวข้อประกาศ",
+      "content_required": "กรุณากรอกเนื้อหาประกาศ",
+      "ends_after_starts": "วันที่สิ้นสุดต้องอยู่หลังจากวันที่เริ่ม",
+      "ends_future": "วันที่สิ้นสุดต้องเป็นเวลาในอนาคต",
+      "save_failed": "เกิดข้อผิดพลาดในการบันทึกประกาศ"
+    },
+    "modals": {
+      "form": {
+        "edit_title": "แก้ไขประกาศ",
+        "create_title": "สร้างประกาศใหม่",
+        "subtitle": "ประกาศอัปเดตให้กับลูกค้าทุกคน",
+        "message_details": "รายละเอียดข้อความ",
+        "headline": "หัวข้อเรื่อง",
+        "content": "เนื้อหาประกาศ",
+        "visual_media": "สื่อประกอบ",
+        "drop_assets": "ลากไฟล์รูปภาพมาวางที่นี่",
+        "paste_url": "หรือวางลิงก์รูปภาพ",
+        "active_attachments": "รูปภาพที่เลือก",
+        "schedule_title": "กำหนดเวลาประกาศ",
+        "go_live_date": "วันที่เริ่มแสดง",
+        "end_date": "วันที่สิ้นสุด",
+        "public_visibility": "แสดงต่อสาธารณะ",
+        "update_btn": "อัปเดตประกาศ",
+        "publish_btn": "เริ่มประกาศทันที",
+        "placeholders": {
+          "headline": "เช่น อัปเดตระบบใหม่ 2.0",
+          "content": "เขียนรายละเอียดประกาศที่นี่..."
+        }
+      }
     }
   }
 }

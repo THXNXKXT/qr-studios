@@ -154,7 +154,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         if (res.data && (res.data as any).success) {
           currentThumbnail = (res.data as any).data.url;
         } else {
-          throw new Error("อัปโหลดรูปหน้าปกไม่สำเร็จ");
+          throw new Error(t("products.errors.upload_cover_failed"));
         }
       }
 
@@ -166,7 +166,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
           if (res.data && (res.data as any).success) {
             currentImages.push((res.data as any).data.url);
           } else {
-            throw new Error("อัปโหลดรูปภาพประกอบบางส่วนไม่สำเร็จ");
+            throw new Error(t("products.errors.upload_gallery_failed"));
           }
         });
       }
@@ -178,7 +178,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
           currentDownloadUrl = (res.data as any).data.url;
           currentDownloadFileKey = (res.data as any).data.key;
         } else {
-          throw new Error("อัปโหลดไฟล์สินค้าไม่สำเร็จ");
+          throw new Error(t("products.errors.upload_file_failed"));
         }
       }
 
@@ -218,12 +218,12 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
           });
           setErrors(backendErrors);
         } else {
-          alert(errorData?.message || "เกิดข้อผิดพลาดในการบันทึกสินค้า");
+          alert(errorData?.message || t("products.errors.save_failed"));
         }
       }
     } catch (error: any) {
       console.error("Error saving product:", error);
-      alert(error.message || "เกิดข้อผิดพลาดในการบันทึกสินค้า");
+      alert(error.message || t("products.errors.save_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -231,53 +231,53 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name || formData.name.trim().length < 1) newErrors.name = "กรุณากรอกชื่อสินค้า";
-    if (!formData.slug || formData.slug.trim().length < 1) newErrors.slug = "กรุณากรอก Slug สำหรับ URL";
-    if (!formData.description || formData.description.trim().length < 1) newErrors.description = "กรุณากรอกรายละเอียดสินค้า";
+    if (!formData.name || formData.name.trim().length < 1) newErrors.name = t("products.errors.name_required");
+    if (!formData.slug || formData.slug.trim().length < 1) newErrors.slug = t("products.errors.slug_required");
+    if (!formData.description || formData.description.trim().length < 1) newErrors.description = t("products.errors.description_required");
 
     if (formData.price === undefined || formData.price === null || formData.price < 0) {
-      newErrors.price = "กรุณากรอกราคาที่ถูกต้อง (ต้องไม่น้อยกว่า 0)";
+      newErrors.price = t("products.errors.price_invalid");
     }
 
     if (formData.originalPrice !== undefined && formData.originalPrice !== null && formData.originalPrice < 0) {
-      newErrors.originalPrice = "ราคาเดิมต้องไม่น้อยกว่า 0";
+      newErrors.originalPrice = t("products.errors.original_price_invalid");
     }
 
     if (formData.stock === undefined || formData.stock === null || formData.stock < 0) {
-      newErrors.stock = "สต็อกต้องระบุเป็นตัวเลข (0 สำหรับไม่จำกัด)";
+      newErrors.stock = t("products.errors.stock_invalid");
     }
 
     if (formData.rewardPoints !== undefined && formData.rewardPoints !== null && formData.rewardPoints < 0) {
-      newErrors.rewardPoints = "แต้มสะสมต้องไม่น้อยกว่า 0";
+      newErrors.rewardPoints = t("products.errors.points_invalid");
     }
 
     if (!formData.category) {
-      newErrors.category = "กรุณาเลือกหมวดหมู่สินค้า";
+      newErrors.category = t("products.errors.category_required");
     }
 
     if (!formData.thumbnail && !thumbnailFile) {
-      newErrors.thumbnail = "กรุณาเลือกรูปหน้าปกสินค้า";
+      newErrors.thumbnail = t("products.errors.thumbnail_required");
     }
 
     if (formData.isFlashSale) {
       if (formData.flashSalePrice === undefined || formData.flashSalePrice === null || formData.flashSalePrice < 0) {
-        newErrors.flashSalePrice = "กรุณากรอกราคา Flash Sale ที่ถูกต้อง";
+        newErrors.flashSalePrice = t("products.errors.flash_price_invalid");
       }
       if (!formData.flashSaleEnds) {
-        newErrors.flashSaleEnds = "กรุณาระบุเวลาสิ้นสุด Flash Sale";
+        newErrors.flashSaleEnds = t("products.errors.flash_ends_required");
       } else {
         const endsAt = new Date(formData.flashSaleEnds);
         if (Number.isNaN(endsAt.getTime())) {
-          newErrors.flashSaleEnds = "กรุณาระบุเวลาสิ้นสุด Flash Sale ให้ถูกต้อง";
+          newErrors.flashSaleEnds = t("products.errors.flash_ends_invalid");
         } else if (endsAt <= new Date()) {
-          newErrors.flashSaleEnds = "เวลาสิ้นสุดต้องเป็นเวลาในอนาคต";
+          newErrors.flashSaleEnds = t("products.errors.flash_ends_future");
         }
       }
     }
 
     if (formData.isDownloadable) {
       if (!productFile && !formData.downloadUrl) {
-        newErrors.downloadUrl = "กรุณาอัปโหลดไฟล์สินค้าสำหรับดาวน์โหลด";
+        newErrors.downloadUrl = t("products.errors.download_file_required");
       }
     }
 
@@ -336,7 +336,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
       }));
 
     if (newSelectedFiles.length < files.length) {
-      alert('บางไฟล์ไม่ใช่รูปภาพและถูกข้ามไป');
+      alert(t("products.errors.some_files_skipped"));
     }
 
     setGalleryFiles(prev => [...prev, ...newSelectedFiles]);
@@ -357,7 +357,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      alert(t("products.errors.image_only"));
       return;
     }
 
@@ -485,7 +485,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 setFormData({ ...formData, name, slug: generateSlug(name) });
                                 if (errors.name) setErrors({ ...errors, name: "" });
                               }}
-                              placeholder="e.g. Advanced Scoreboard"
+                              placeholder={t("products.modals.form.placeholders.name")}
                               className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6"
                               error={errors.name}
                             />
@@ -497,7 +497,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             <Input
                               value={formData.slug || ""}
                               onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                              placeholder="advanced-scoreboard"
+                              placeholder={t("products.modals.form.placeholders.slug")}
                               className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6"
                               error={errors.slug}
                             />
@@ -511,7 +511,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                           <textarea
                             value={formData.description || ""}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Describe your product..."
+                            placeholder={t("products.modals.form.placeholders.description")}
                             rows={6}
                             className={cn(
                               "w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 resize-none transition-all font-medium",
@@ -545,7 +545,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             <Input
                               value={formData.version || ""}
                               onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                              placeholder="1.0.0"
+                              placeholder={t("products.modals.form.placeholders.version")}
                               className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6"
                             />
                           </div>
@@ -677,7 +677,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                   type="number"
                                   value={formData.originalPrice || ""}
                                   onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value ? Number(e.target.value) : undefined })}
-                                  placeholder="None"
+                                  placeholder={t("products.modals.form.placeholders.none")}
                                   className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl"
                                 />
                               </div>

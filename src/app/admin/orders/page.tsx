@@ -36,7 +36,7 @@ type Order = {
   updatedAt?: string;
 };
 
-const statusConfig: Record<string, { icon: any; bg: string; text: string }> = {
+const statusConfig: Record<OrderStatus, { icon: React.ElementType; bg: string; text: string }> = {
   COMPLETED: { icon: CheckCircle, bg: "bg-red-500/10", text: "text-red-400" },
   PENDING: { icon: Clock, bg: "bg-red-900/20", text: "text-red-500/70" },
   PROCESSING: { icon: Clock, bg: "bg-red-500/5", text: "text-red-300" },
@@ -54,17 +54,23 @@ export default function AdminOrdersPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mounted, setMounted] = useState(false); // Add mounted state
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []); // Set mounted on client
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await adminApi.getOrders({
+      const { data: res } = await adminApi.getOrders({
         status: filterStatus === "all" ? undefined : filterStatus,
         search: searchQuery || undefined
-      });
-      if (data && (data as any).success) {
-        setOrders((data as any).data || []);
+      }) as { data: { success: boolean; data: Order[] } };
+
+      if (res && res.success) {
+        setOrders(res.data || []);
         setCurrentPage(1); // Reset to page 1 on search/filter change
       }
     } catch (err) {
@@ -80,9 +86,9 @@ export default function AdminOrdersPage() {
 
   const handleViewOrder = useCallback(async (order: Order) => {
     try {
-      const { data: res } = await adminApi.getOrderById(order.id);
-      if (res && (res as any).success) {
-        setSelectedOrder((res as any).data);
+      const { data: res } = await adminApi.getOrderById(order.id) as { data: { success: boolean; data: Order } };
+      if (res && res.success) {
+        setSelectedOrder(res.data);
         setIsDetailOpen(true);
       }
     } catch (err) {
@@ -95,18 +101,18 @@ export default function AdminOrdersPage() {
 
   const handleUpdateStatus = useCallback(async (orderId: string, status: string) => {
     try {
-      const res = await adminApi.updateOrderStatus(orderId, status);
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.updateOrderStatus(orderId, status) as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         await fetchOrders();
         // If the modal is open and showing the updated order, update it too
         if (selectedOrder?.id === orderId) {
-          const { data: detailRes } = await adminApi.getOrderById(orderId);
-          if (detailRes && (detailRes as any).success) {
-            setSelectedOrder((detailRes as any).data);
+          const { data: detailRes } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: Order } };
+          if (detailRes && detailRes.success) {
+            setSelectedOrder(detailRes.data);
           }
         }
       } else {
-        alert((res.data as any)?.error || "Failed to update order status");
+        alert(res.data?.error || "Failed to update order status");
       }
     } catch (err) {
       console.error("Error updating order status:", err);
@@ -116,17 +122,17 @@ export default function AdminOrdersPage() {
 
   const handleResendReceipt = useCallback(async (orderId: string) => {
     try {
-      const res = await adminApi.resendOrderReceipt(orderId);
-      if (res.data && (res.data as any).success) {
+      const res = await adminApi.resendOrderReceipt(orderId) as { data: { success: boolean; error?: string } };
+      if (res.data && res.data.success) {
         alert(t("orders.messages.receipt_sent"));
       } else {
-        alert((res.data as any)?.error || t("orders.messages.receipt_fail"));
+        alert(res.data?.error || t("orders.messages.receipt_fail"));
       }
     } catch (err) {
       console.error("Error resending receipt:", err);
       alert("An error occurred while resending the receipt");
     }
-  }, []);
+  }, [t]);
 
   const paginatedOrders = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -139,29 +145,30 @@ export default function AdminOrdersPage() {
     setIsExporting(true);
     try {
       // Fetch more orders for export (e.g., 1000 items)
-      const { data } = await adminApi.getOrders({
+      const { data: res } = await adminApi.getOrders({
         status: filterStatus === "all" ? undefined : filterStatus,
         search: searchQuery || undefined,
         limit: 1000
-      });
+      }) as { data: { success: boolean; data: Order[] } };
 
-      if (data && (data as any).success) {
-        const exportData = (data as any).data || [];
+      if (res && res.success) {
+        const exportData = res.data || [];
         if (exportData.length === 0) {
-          alert(t("export.errors.no_data"));
+          alert(t("orders.export.errors.no_data"));
           return;
         }
 
         // CSV Headers
+        // CSV Headers
         const headers = [
-          "Order ID",
-          "Date",
-          "Customer Name",
-          "Customer Email",
-          "Products",
-          "Total",
-          "Status",
-          "Payment Method"
+          t("orders.export.id"),
+          t("orders.export.date"),
+          t("orders.export.customer_name"),
+          t("orders.export.customer_email"),
+          t("orders.export.products"),
+          t("orders.export.total"),
+          t("orders.export.status"),
+          t("orders.export.payment_method")
         ];
 
         // Format data for CSV
@@ -179,7 +186,7 @@ export default function AdminOrdersPage() {
         // Construct CSV content
         const csvContent = [
           headers.join(","),
-          ...rows.map((row: any[]) => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+          ...rows.map((row: (string | number)[]) => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
         ].join("\n");
 
         // Create blob and download
@@ -194,11 +201,11 @@ export default function AdminOrdersPage() {
       }
     } catch (err) {
       console.error("Failed to export orders:", err);
-      alert("Failed to export orders. Please try again.");
+      alert(t("orders.export.errors.export_failed"));
     } finally {
       setIsExporting(false);
     }
-  }, [filterStatus, searchQuery]);
+  }, [filterStatus, searchQuery, t]);
 
   return (
     <div className="space-y-10 relative overflow-hidden">
@@ -208,20 +215,22 @@ export default function AdminOrdersPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{t("orders.title")}</h1>
-          <p className="text-gray-400 mt-1">{t("orders.subtitle")}</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("orders.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("orders.subtitle") : ""}</p>
         </div>
         <Button
           onClick={handleExport}
           disabled={isExporting}
-          className="bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl px-6 py-6 font-black uppercase tracking-widest transition-all duration-300 disabled:opacity-50"
+          className="bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-xs transition-all duration-300 disabled:opacity-50 shrink-0 w-full lg:w-auto"
         >
           {isExporting ? (
             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
           ) : (
             <Download className="w-5 h-5 mr-2" />
           )}
-          {isExporting ? t("export.btn_exporting") : t("export.btn_export")}
+          <span>
+            {mounted ? (isExporting ? t("orders.export.btn_exporting") : t("orders.export.btn_export")) : ""}
+          </span>
         </Button>
       </div>
 
@@ -232,28 +241,30 @@ export default function AdminOrdersPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder={t("orders.search_placeholder")}
+              placeholder={mounted ? t("orders.search_placeholder") : ""}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
             />
           </div>
-          <div className="flex flex-wrap gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
-            {["all", "COMPLETED", "PENDING", "PROCESSING", "CANCELLED", "REFUNDED"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={cn(
-                  "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest",
-                  filterStatus === status
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
-                    : "text-gray-500 hover:text-white hover:bg-white/5"
-                )}
-              >
-                {status === "all" ? t("orders.filter.all") : t(`orders.status.${status.toLowerCase()}`)}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md h-auto lg:h-14">
+          {["all", "COMPLETED", "PENDING", "PROCESSING", "CANCELLED", "REFUNDED"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={cn(
+                "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest h-full",
+                filterStatus === status
+                  ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+                  : "text-gray-500 hover:text-white hover:bg-white/5"
+              )}
+            >
+              <span>
+                {mounted ? (status === "all" ? t("orders.filter.all") : t(`orders.status.${status.toLowerCase()}`)) : ""}
+              </span>
+            </button>
+          ))}
+        </div>
         </div>
       </Card>
 
@@ -264,19 +275,19 @@ export default function AdminOrdersPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{t("common.loading")}</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.order_id")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.customer")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.products")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.total")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.status")}</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">{t("orders.table.date")}</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">{t("orders.table.actions")}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("orders.table.order_id") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("orders.table.customer") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("orders.table.products") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("orders.table.total") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("orders.table.status") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("orders.table.date") : ""}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{mounted ? t("orders.table.actions") : ""}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -308,12 +319,12 @@ export default function AdminOrdersPage() {
                             </div>
                           ))}
                           {order.items.length > 2 && (
-                            <p className="text-[10px] text-gray-500 uppercase font-black ml-5">{t("orders.table.more_items", { count: order.items.length - 2 })}</p>
+                            <p className="text-[10px] text-gray-500 uppercase font-black ml-5">{mounted ? t("orders.table.more_items", { count: order.items.length - 2 }) : ""}</p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-6">
-                        <p className="font-black text-red-500 text-lg">{formatPrice(order.total)}</p>
+                        <p className="font-black text-red-500 text-lg">{mounted ? formatPrice(order.total) : ""}</p>
                       </td>
                       <td className="px-6 py-6">
                         <Badge className={cn(
@@ -321,25 +332,25 @@ export default function AdminOrdersPage() {
                           status.bg,
                           status.text
                         )}>
-                          {t(`orders.status.${order.status.toLowerCase()}`)}
+                          {mounted ? t(`orders.status.${order.status.toLowerCase()}`) : ""}
                         </Badge>
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex flex-col">
-                          <span className="text-sm text-gray-300 font-bold">{new Date(order.createdAt).toLocaleDateString("th-TH")}</span>
-                          <span className="text-[10px] text-gray-500 uppercase font-black">{new Date(order.createdAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}</span>
+                          <span className="text-sm text-gray-300 font-bold">{mounted ? new Date(order.createdAt).toLocaleDateString("th-TH") : ""}</span>
+                          <span className="text-[10px] text-gray-600 font-black uppercase">{mounted ? new Date(order.createdAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            title={t("orders.table.view_details")}
                             onClick={() => handleViewOrder(order)}
-                            className="rounded-xl px-4 hover:bg-red-500/10 hover:text-red-400 font-black uppercase tracking-widest text-[10px] transition-all"
+                            className="w-10 h-10 rounded-2xl text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all"
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
+                            <Eye className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>
@@ -365,8 +376,8 @@ export default function AdminOrdersPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <ShoppingCart className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{t("orders.no_orders")}</p>
-            <p className="text-gray-600 text-sm mt-2 relative z-10">{t("orders.no_orders_subtitle")}</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("orders.no_orders") : ""}</p>
+            <p className="text-gray-600 text-sm mt-2 relative z-10">{mounted ? t("orders.no_orders_subtitle") : ""}</p>
           </div>
         )}
       </Card>
@@ -379,7 +390,7 @@ export default function AdminOrdersPage() {
           items: selectedOrder.items.map((item: any, i: number) => ({
             id: item.id || `item-${i}`,
             productId: item.productId,
-            productName: item.product?.name || "Unknown Product",
+            productName: item.product?.name || (mounted ? t("common.unknown_product") : ""),
             productImage: item.product?.images?.[0],
             price: item.price,
             quantity: item.quantity,

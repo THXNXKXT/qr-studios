@@ -667,18 +667,6 @@
     "no_results": "No results found",
     "no_image": "No Image",
     "start_at": "Starting at",
-    "receive": "Receive",
-    "product": "Product",
-    "date_locale": "en",
-    "view_all": "View All",
-    "see_more": "See More",
-    "try_again": "Try Again"
-  },
-  "notifications_page": {
-    "title": "Notifications",
-    "desc": "Stay updated with latest news and your account activity.",
-    "read_all": "Mark all as read",
-    "empty_title": "No notifications yet",
     "empty_desc": "You will receive notifications when there are new updates or orders.",
     "mark_as_read": "Mark as read"
   },

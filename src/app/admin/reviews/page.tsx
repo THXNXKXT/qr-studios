@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Search,
   Trash2,
@@ -11,15 +11,14 @@ import {
   Calendar,
   Loader2,
   MessageSquare,
-  AlertTriangle,
   CheckCircle2,
   CheckCircle,
-  XCircle,
 } from "lucide-react";
-import { Card, Button, Input, Badge } from "@/components/ui";
+import { Card, Button, Input } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 type Review = {
   id: string;
@@ -47,7 +46,15 @@ export default function AdminReviewsPage() {
   const [filterRating, setFilterRole] = useState("all");
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    reviews: { total: number; verified: number; avgRating: number };
+  } | null>(null);
+  const { t } = useTranslation("admin");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
@@ -58,13 +65,13 @@ export default function AdminReviewsPage() {
           rating: filterRating === "all" ? undefined : parseInt(filterRating),
         }),
         adminApi.getStats()
-      ]);
+      ]) as [{ data: { success: boolean; data: Review[] } }, { data: { success: boolean; data: Record<string, any> } }];
 
-      if (reviewsRes.data && (reviewsRes.data as any).success) {
-        setReviews((reviewsRes.data as any).data || []);
+      if (reviewsRes.data && reviewsRes.data.success) {
+        setReviews(reviewsRes.data.data || []);
       }
       if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data);
+        setStats(statsRes.data.data as { reviews: { total: number; verified: number; avgRating: number } });
       }
     } catch (err) {
       console.error("Failed to fetch reviews:", err);
@@ -85,21 +92,23 @@ export default function AdminReviewsPage() {
   const handleConfirmDelete = async () => {
     if (!selectedReview) return;
     try {
-      const { data: res } = await adminApi.deleteReview(selectedReview.id);
-      if (res && (res as any).success) {
+      const response = await adminApi.deleteReview(selectedReview.id);
+      const res = response as unknown as { data: { success: boolean } };
+      if (res.data && res.data.success) {
         setReviews((prev) => prev.filter((r) => r.id !== selectedReview.id));
         setIsDeleteOpen(false);
       }
     } catch (err) {
       console.error("Failed to delete review:", err);
-      alert("Failed to delete review");
+      alert(mounted ? t("reviews.errors.delete_failed") : "");
     }
   };
 
   const handleToggleVerify = async (review: Review) => {
     try {
-      const { data: res } = await adminApi.toggleReviewVerification(review.id);
-      if (res && (res as any).success) {
+      const response = await adminApi.toggleReviewVerification(review.id);
+      const res = response as unknown as { data: { success: boolean } };
+      if (res.data && res.data.success) {
         setReviews((prev) =>
           prev.map((r) =>
             r.id === review.id ? { ...r, isVerified: !r.isVerified } : r
@@ -108,7 +117,7 @@ export default function AdminReviewsPage() {
       }
     } catch (err) {
       console.error("Failed to toggle review verification:", err);
-      alert("Failed to update verification status");
+      alert(mounted ? t("reviews.errors.verify_failed") : "");
     }
   };
 
@@ -116,25 +125,45 @@ export default function AdminReviewsPage() {
     <div className="space-y-10 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[160px] -z-10" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Reviews Management</h1>
-          <p className="text-gray-400 mt-1">บริหารจัดการความคิดเห็นและคะแนนรีวิวจากลูกค้า</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">{mounted ? t("reviews.title") : ""}</h1>
+          <p className="text-gray-400 mt-1">{mounted ? t("reviews.subtitle") : ""}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md h-auto lg:h-14">
+          {["all", "5", "4", "3", "2", "1"].map((rating) => (
+            <button
+              key={rating}
+              onClick={() => setFilterRole(rating)}
+              className={cn(
+                "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest flex items-center gap-2 h-full",
+                filterRating === rating
+                  ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+                  : "text-gray-500 hover:text-white hover:bg-white/5"
+              )}
+            >
+              {mounted ? (rating === "all" ? t("reviews.filter.all") : (
+                <>
+                  {rating} <Star className="w-3 h-3 fill-current" />
+                </>
+              )) : ""}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Reviews", value: stats?.reviews?.total || 0, icon: MessageSquare, color: "text-white", bg: "bg-white/5" },
-          { label: "Verified Reviews", value: stats?.reviews?.verified || 0, icon: CheckCircle2, color: "text-red-500", bg: "bg-red-500/10" },
-          { label: "Average Rating", value: stats?.reviews?.avgRating || 0, icon: Star, color: "text-red-400", bg: "bg-red-500/5" },
-          { label: "Products Reviewed", value: new Set(reviews.map(r => r.productId)).size, icon: Package, color: "text-red-800", bg: "bg-red-900/20" },
+          { label: mounted ? t("reviews.stats.total") : "", value: stats?.reviews?.total || 0, icon: MessageSquare, color: "text-white", bg: "bg-white/5" },
+          { label: mounted ? t("reviews.stats.verified") : "", value: stats?.reviews?.verified || 0, icon: CheckCircle2, color: "text-red-500", bg: "bg-red-500/10" },
+          { label: mounted ? t("reviews.stats.avg_rating") : "", value: stats?.reviews?.avgRating || 0, icon: Star, color: "text-red-400", bg: "bg-red-500/5" },
+          { label: mounted ? t("reviews.stats.products_reviewed") : "", value: new Set(reviews.map(r => r.productId)).size, icon: Package, color: "text-red-800", bg: "bg-red-900/20" },
         ].map((stat, index) => (
           <motion.div
-            key={stat.label}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -148,7 +177,7 @@ export default function AdminReviewsPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{stat.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{mounted ? stat.label : ""}</p>
               </div>
             </Card>
           </motion.div>
@@ -162,7 +191,7 @@ export default function AdminReviewsPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-red-500 transition-colors" />
             <Input
-              placeholder="ค้นหาในเนื้อหารีวิว..."
+              placeholder={mounted ? t("reviews.search_placeholder") : ""}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-white/5 border-white/10 rounded-xl focus:border-red-500/50 transition-all py-6 font-medium text-white"
@@ -175,16 +204,16 @@ export default function AdminReviewsPage() {
                 onClick={() => setFilterRole(rating)}
                 className={cn(
                   "px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 uppercase tracking-widest flex items-center gap-2",
-                  filterRating === rating 
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
+                  filterRating === rating
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {rating === "all" ? "All Stars" : (
+                {mounted ? (rating === "all" ? t("reviews.filter.all") : (
                   <>
                     {rating} <Star className="w-3 h-3 fill-current" />
                   </>
-                )}
+                )) : ""}
               </button>
             ))}
           </div>
@@ -198,17 +227,17 @@ export default function AdminReviewsPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-red-600" />
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Loading reviews...</p>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-6 py-5 text-left border-b border-white/5">User & Product</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Rating</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Comment</th>
-                  <th className="px-6 py-5 text-left border-b border-white/5">Date</th>
-                  <th className="px-6 py-5 text-right border-b border-white/5">Actions</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("reviews.table.user_product") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("reviews.table.rating") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("reviews.table.comment") : ""}</th>
+                  <th className="px-6 py-5 text-left border-b border-white/5">{mounted ? t("reviews.table.date") : ""}</th>
+                  <th className="px-6 py-5 text-right border-b border-white/5">{mounted ? t("reviews.table.actions") : ""}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -254,7 +283,7 @@ export default function AdminReviewsPage() {
                       <div className="flex items-center gap-2 text-gray-500">
                         <Calendar className="w-3.5 h-3.5" />
                         <span className="text-[10px] font-black uppercase">
-                          {new Date(review.createdAt).toLocaleDateString("th-TH")}
+                          {mounted ? new Date(review.createdAt).toLocaleDateString("th-TH") : ""}
                         </span>
                       </div>
                     </td>
@@ -268,9 +297,9 @@ export default function AdminReviewsPage() {
                             "w-10 h-10 rounded-xl transition-all",
                             review.isVerified
                               ? "text-green-500 hover:bg-green-500/10"
-                              : "text-gray-500 hover:bg-white/5"
+                              : "text-gray-500 hover:bg-green-500/10 hover:text-green-500"
                           )}
-                          title={review.isVerified ? "ยกเลิกการยืนยัน" : "ยืนยันรีวิว"}
+                          title={review.isVerified ? (mounted ? t("reviews.actions.unverify") : "") : (mounted ? t("reviews.actions.verify") : "")}
                         >
                           {review.isVerified ? <CheckCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                         </Button>
@@ -278,7 +307,7 @@ export default function AdminReviewsPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteClick(review)}
-                          className="w-10 h-10 rounded-xl hover:bg-red-500/10 text-red-500/50 hover:text-red-500 transition-all"
+                          className="w-10 h-10 rounded-xl text-red-500/30 hover:bg-red-500/10 hover:text-red-500 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -295,7 +324,7 @@ export default function AdminReviewsPage() {
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <MessageSquare className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />
-            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">No reviews found</p>
+            <p className="text-gray-500 font-black uppercase tracking-widest relative z-10">{mounted ? t("reviews.no_reviews") : ""}</p>
           </div>
         )}
       </Card>
@@ -305,9 +334,9 @@ export default function AdminReviewsPage() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="ลบรีวิว"
-        message="คุณต้องการลบรีวิวนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
-        confirmText="ลบรีวิว"
+        title={t("reviews.delete_title")}
+        message={t("reviews.delete_message")}
+        confirmText={t("reviews.delete_confirm")}
         type="danger"
       />
     </div>

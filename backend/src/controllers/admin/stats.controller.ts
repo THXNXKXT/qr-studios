@@ -155,6 +155,7 @@ async function getTopProductsInternal() {
             id: true,
             name: true,
             images: true,
+            thumbnail: true,
         }
     });
 
@@ -166,7 +167,7 @@ async function getTopProductsInternal() {
                 name: p.name,
                 sales: completedOrderItems.length,
                 revenue: completedOrderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                image: (p.images as string[])?.[0]
+                image: p.thumbnail || (p.images as string[])?.[0],
             };
         })
         .sort((a, b) => b.sales - a.sales);
@@ -312,6 +313,7 @@ export const statsController = {
                     }
                 },
                 columns: {
+                    id: true,
                     name: true,
                     category: true,
                     price: true,
@@ -385,10 +387,11 @@ export const statsController = {
             productSales: productsResult.map(p => {
                 const completedItems = p.orderItems.filter(item => item.order.status === 'COMPLETED');
                 return {
+                    id: p.id, // Added: include id for dashboard best sellers
                     name: p.name,
                     category: p.category,
                     price: p.price,
-                    image: (p as any).thumbnail || (p.images as string[])?.[0], // Fixed: include image for best sellers
+                    image: p.thumbnail || (p.images as string[])?.[0], // Fixed: include image for best sellers
                     sales: completedItems.length,
                     revenue: completedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
                 };

@@ -215,6 +215,7 @@ export const productsService = {
           price: true,
           originalPrice: true,
           category: true,
+          thumbnail: true,
           images: true,
           isNew: true,
           isFeatured: true,
@@ -222,6 +223,7 @@ export const productsService = {
           flashSalePrice: true,
           flashSaleEnds: true,
           rewardPoints: true,
+          stock: true, // Added: stock for display
           version: true,
           isActive: true,
         }
@@ -267,6 +269,7 @@ export const productsService = {
           price: true,
           originalPrice: true,
           category: true,
+          thumbnail: true,
           images: true,
           isNew: true,
           isFeatured: true,
@@ -274,6 +277,7 @@ export const productsService = {
           flashSalePrice: true,
           flashSaleEnds: true,
           rewardPoints: true,
+          stock: true, // Added: stock for display
           version: true,
           isActive: true,
         }
@@ -317,11 +321,13 @@ export const productsService = {
           slug: true,
           price: true,
           category: true,
+          thumbnail: true,
           images: true,
           isFlashSale: true,
           flashSalePrice: true,
           flashSaleEnds: true,
           rewardPoints: true,
+          stock: true, // Added: stock for display
           version: true,
           isActive: true,
         }

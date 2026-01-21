@@ -414,7 +414,7 @@ export default function AdminDashboard() {
             id: item.id || `item-${i}`,
             productId: item.productId,
             productName: item.product?.name || "Unknown Product",
-            productImage: item.product?.images?.[0],
+            productImage: item.product?.thumbnail || item.product?.images?.[0],
             price: item.price,
             quantity: item.quantity,
             licenseKeys: (selectedOrder as any).licenses

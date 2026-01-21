@@ -64,13 +64,13 @@ function ProductsContent() {
     if (sort) setSortBy(sort);
   }, [searchParams]);
 
-  const fetchProducts = useCallback(async (isInitial = false) => {
-    if (isInitial) setLoading(true);
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
     try {
       const { data } = await productsApi.getAll({
         category: selectedCategory === "all" ? undefined : selectedCategory,
         search: searchQuery || undefined,
-        sort: sortBy
+        sort: sortBy === "price-low" ? "price-asc" : sortBy === "price-high" ? "price-desc" : sortBy
       });
 
       if (data && (data as any).success) {
@@ -84,12 +84,8 @@ function ProductsContent() {
   }, [selectedCategory, searchQuery, sortBy]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts(products.length === 0);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [fetchProducts, products.length]);
+    fetchProducts();
+  }, [fetchProducts]);
 
   const featuredProduct = useMemo(() => products.find(p => p.isFeatured), [products]);
 
@@ -129,47 +125,52 @@ function ProductsContent() {
       />
 
       {/* Products Grid */}
-      <section className="py-12">
+      <section className="py-12 min-h-[600px]">
         <div className="container mx-auto px-4">
-          {loading ? (
-            <ProductGridSkeleton />
-          ) : (
-            <AnimatePresence mode="wait">
-              {products.length > 0 ? (
-                <motion.div
-                  key={selectedCategory + sortBy + searchQuery}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
-                >
-                  {products.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} />
-                  ))}
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-20"
-                >
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-white/5 flex items-center justify-center">
-                    <Search className="w-10 h-10 text-gray-600" />
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div
+                key="skeleton"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ProductGridSkeleton />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={selectedCategory + sortBy + searchQuery}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {products.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                    {products.map((product, index) => (
+                      <ProductCard key={product.id} product={product} index={index} />
+                    ))}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {t("products.no_products")}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-6">
-                    {t("products.no_products_desc")}
-                  </p>
-                  <Button onClick={handleClearFilters} className="h-11 px-6 rounded-xl font-bold text-sm">
-                    {t("products.view_all")}
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          )}
+                ) : (
+                  <div className="text-center py-20">
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-white/5 flex items-center justify-center">
+                      <Search className="w-10 h-10 text-gray-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      {t("products.no_products")}
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-6">
+                      {t("products.no_products_desc")}
+                    </p>
+                    <Button onClick={handleClearFilters} className="h-11 px-6 rounded-xl font-bold text-sm">
+                      {t("products.view_all")}
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 

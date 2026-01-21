@@ -134,9 +134,9 @@ export const FlashSaleSection = memo(function FlashSaleSection() {
                   {/* Image */}
                   <Link href={`/products/${product.id}`}>
                     <div className="relative aspect-video bg-linear-to-br from-red-900/50 to-black overflow-hidden">
-                      {product.images[0] ? (
+                      {(product.thumbnail || product.images[0]) ? (
                         <Image
-                          src={product.images[0]}
+                          src={product.thumbnail || product.images[0]}
                           alt={product.name}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-110"

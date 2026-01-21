@@ -87,9 +87,9 @@ export function ProductsHero({
                 
                 <div className="flex items-start gap-6 relative z-10">
                   <div className="relative w-40 h-40 rounded-2xl overflow-hidden bg-linear-to-br from-red-900/40 to-black shrink-0 border border-white/5 shadow-2xl">
-                    {featuredProduct.images?.[0] ? (
+                    {(featuredProduct.thumbnail || featuredProduct.images?.[0]) ? (
                       <Image 
-                        src={featuredProduct.images[0]} 
+                        src={featuredProduct.thumbnail || featuredProduct.images![0]} 
                         alt={featuredProduct.name} 
                         fill 
                         className="object-cover group-hover:scale-110 transition-transform duration-700" 

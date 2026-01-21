@@ -12,6 +12,14 @@ interface StockCounterProps {
 
 export function StockCounter({ stock, showIcon = true, className }: StockCounterProps) {
   const getStockStatus = () => {
+    if (stock === undefined || stock === null) {
+      return {
+        label: "มีสินค้า",
+        color: "text-red-400",
+        bgColor: "bg-red-500/20",
+        icon: CheckCircle,
+      };
+    }
     if (stock === -1) {
       return {
         label: "มีสินค้า",

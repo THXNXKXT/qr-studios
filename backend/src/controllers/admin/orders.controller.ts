@@ -58,7 +58,7 @@ export const ordersController = {
                     items: {
                         with: {
                             product: {
-                                columns: { id: true, name: true, slug: true, category: true }
+                                columns: { id: true, name: true, slug: true, category: true, thumbnail: true, images: true }
                             }
                         }
                     }
@@ -81,7 +81,7 @@ export const ordersController = {
                 items: {
                     with: {
                         product: {
-                            columns: { id: true, name: true, slug: true, category: true, version: true, downloadKey: true }
+                            columns: { id: true, name: true, slug: true, category: true, version: true, downloadKey: true, thumbnail: true, images: true }
                         }
                     }
                 },
@@ -112,7 +112,12 @@ export const ordersController = {
         if (status === 'COMPLETED' && oldOrder.status !== 'COMPLETED') {
             order = await ordersService.completeOrder(id);
         } else {
-            order = await ordersService.updateOrderStatus(id, status);
+            // Use db.update directly since updateOrderStatus might not be in the service
+            const [updated] = await db.update(schema.orders)
+                .set({ status, updatedAt: new Date() })
+                .where(eq(schema.orders.id, id))
+                .returning();
+            order = updated;
         }
 
         const admin = c.get('user') as any;

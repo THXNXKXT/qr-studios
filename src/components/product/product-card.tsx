@@ -73,7 +73,7 @@ export const ProductCard = memo(function ProductCard({ product, index = 0 }: Pro
         <Card className="group overflow-hidden hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10">
           {/* Image */}
           <div className="relative aspect-video bg-linear-to-br from-red-900/50 to-black overflow-hidden">
-            {product.thumbnail || product.images[0] ? (
+            {(product.thumbnail || product.images[0]) ? (
               <Image
                 src={product.thumbnail || product.images[0]}
                 alt={product.name}
@@ -93,16 +93,18 @@ export const ProductCard = memo(function ProductCard({ product, index = 0 }: Pro
             {/* Badges & Timer */}
             <div className="absolute top-3 left-3 flex flex-col gap-2 z-20">
               {product.isNew && (
-                <Badge variant="success" className="w-fit">{renderTranslation("products.card.new")}</Badge>
+                <Badge variant="success" className="w-fit px-3 py-1 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-green-500/20">
+                  {renderTranslation("products.card.new")}
+                </Badge>
               )}
               {isProductOnFlashSale(product) && (
                 <div className="flex flex-col gap-1.5">
-                  <Badge variant="destructive" className="gap-1 animate-pulse px-3 py-1 font-black uppercase tracking-widest text-[10px] w-fit">
+                  <Badge variant="destructive" className="gap-1 animate-pulse px-3 py-1 font-black uppercase tracking-widest text-[10px] w-fit shadow-lg shadow-red-500/30">
                     <Zap className="w-3.5 h-3.5 fill-white" />
                     Flash Sale -{Math.round((1 - (product.flashSalePrice || product.price) / (product.originalPrice || product.price)) * 100)}%
                   </Badge>
                   {product.flashSaleEnds && (
-                    <div className="bg-black/60 backdrop-blur-md border border-red-500/20 rounded-lg px-2 py-1 flex items-center gap-2 w-fit transition-opacity duration-300 group-hover:opacity-0">
+                    <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-2 py-1 flex items-center gap-2 w-fit transition-opacity duration-300 group-hover:opacity-0">
                       <FlashSaleTimer
                         endTime={product.flashSaleEnds}
                         variant="compact"
@@ -113,7 +115,7 @@ export const ProductCard = memo(function ProductCard({ product, index = 0 }: Pro
                 </div>
               )}
               {!isProductOnFlashSale(product) && product.originalPrice && (
-                <Badge variant="destructive" className="w-fit">
+                <Badge variant="destructive" className="w-fit px-3 py-1 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-red-500/30">
                   -{Math.round((1 - product.price / product.originalPrice) * 100)}%
                 </Badge>
               )}

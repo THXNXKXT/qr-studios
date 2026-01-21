@@ -265,13 +265,12 @@ export default function AdminFlashSalePage() {
                     >
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-500 shadow-inner">
-                            {product.images?.[0] ? (
+                          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-500 shadow-inner relative">
+                            {(product.thumbnail || product.images?.[0]) ? (
                               <Image
-                                src={product.images[0]}
+                                src={product.thumbnail || product.images![0]}
                                 alt={product.name}
-                                width={56}
-                                height={56}
+                                fill
                                 className="object-cover"
                               />
                             ) : (
@@ -390,11 +389,18 @@ export default function AdminFlashSalePage() {
 
                 {selectedProduct && (
                   <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/2 border border-white/5 group hover:border-red-500/20 transition-all">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white/5">
-                      {selectedProduct.images?.[0] ? (
-                        <Image src={selectedProduct.images[0]} alt="" width={56} height={56} className="object-cover" />
+                    <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white/5 relative bg-white/5">
+                      {(selectedProduct.thumbnail || selectedProduct.images?.[0]) ? (
+                        <Image
+                          src={selectedProduct.thumbnail || selectedProduct.images![0]}
+                          alt={selectedProduct.name}
+                          fill
+                          className="object-cover"
+                        />
                       ) : (
-                        <div className="w-full h-full bg-white/5 flex items-center justify-center"><ImageOff className="w-5 h-5 text-gray-600" /></div>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageOff className="w-5 h-5 text-gray-600" />
+                        </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -541,11 +547,18 @@ export default function AdminFlashSalePage() {
                       onClick={() => handleAddFlashSale(product)}
                       className="flex items-center gap-4 p-4 rounded-2xl bg-white/2 border border-white/5 hover:border-red-500/30 hover:bg-white/5 transition-all cursor-pointer group"
                     >
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 shrink-0">
-                        {product.images?.[0] ? (
-                          <Image src={product.images[0]} alt="" width={56} height={56} className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 shrink-0 relative">
+                        {(product.thumbnail || product.images?.[0]) ? (
+                          <Image
+                            src={product.thumbnail || product.images![0]}
+                            alt={product.name}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-6 h-6 text-gray-600" /></div>
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageOff className="w-6 h-6 text-gray-600" />
+                          </div>
                         )}
                       </div>
                       <div className="flex-1">

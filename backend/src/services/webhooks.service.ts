@@ -1,33 +1,54 @@
 import stripe from '../config/stripe';
+import { db } from '../db';
+import * as schema from '../db/schema';
+import { eq, and } from 'drizzle-orm';
 import { ordersService } from './orders.service';
 import { topupService } from './topup.service';
 import type Stripe from 'stripe';
 
 export const webhooksService = {
   async handleStripeWebhook(event: Stripe.Event) {
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await webhooksService.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
-        break;
+    // 1. Idempotency Check: Prevent duplicate processing of the same event
+    const existingEvent = await db.query.auditLogs.findFirst({
+      where: and(
+        eq(schema.auditLogs.action, 'STRIPE_WEBHOOK_PROCESSED'),
+        eq(schema.auditLogs.entityId, event.id)
+      )
+    });
 
-      case 'checkout.session.expired':
-        await webhooksService.handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
-        break;
+    if (existingEvent) {
+      console.log(`[STRIPE_WEBHOOK] Event ${event.id} already processed, skipping.`);
+      return;
+    }
 
-      case 'checkout.session.async_payment_failed':
-        await webhooksService.handlePaymentFailed(event.data.object as Stripe.Checkout.Session);
-        break;
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await webhooksService.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+          break;
 
-      case 'payment_intent.succeeded':
-        console.log('Payment intent succeeded:', event.data.object.id);
-        break;
+        case 'checkout.session.expired':
+          await webhooksService.handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+          break;
 
-      case 'payment_intent.payment_failed':
-        console.log('Payment intent failed:', event.data.object.id);
-        break;
+        case 'checkout.session.async_payment_failed':
+          await webhooksService.handlePaymentFailed(event.data.object as Stripe.Checkout.Session);
+          break;
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      // 2. Mark event as processed in Audit Logs
+      await db.insert(schema.auditLogs).values({
+        action: 'STRIPE_WEBHOOK_PROCESSED',
+        entity: 'StripeEvent',
+        entityId: event.id,
+        newData: { type: event.type },
+      });
+    } catch (error) {
+      console.error(`[STRIPE_WEBHOOK] Error processing event ${event.id}:`, error);
+      throw error; // Let the controller handle and respond to Stripe
     }
   },
 

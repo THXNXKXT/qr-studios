@@ -14,6 +14,8 @@ const TOPUP_PACKAGES = [
   { amount: 5000, bonus: 500 },
 ];
 
+import { discordService } from './discord.service';
+
 export const topupService = {
   getTopupPackages() {
     return TOPUP_PACKAGES.map((pkg) => ({
@@ -160,6 +162,9 @@ export const topupService = {
           newBalance: updatedUser.balance,
         }).catch(err => console.error('[EMAIL] Failed to send top-up confirmation:', err));
       }
+
+      // Notify via Discord
+      discordService.notifyNewTopup(transaction, updatedUser).catch(err => console.error('[DISCORD] Failed to send top-up notification:', err));
 
       return await tx.query.transactions.findFirst({ where: eq(schema.transactions.id, transactionId) });
     });

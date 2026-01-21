@@ -1,7 +1,7 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { db } from '../db';
 import * as schema from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, lt } from 'drizzle-orm';
 import { env } from '../config/env';
 import { UnauthorizedError } from '../utils/errors';
 
@@ -147,8 +147,14 @@ export const authService = {
       await db.insert(schema.blacklistedTokens).values({
         token,
         expiresAt: new Date(decoded.exp * 1000),
-      });
+      }).onConflictDoNothing();
     }
+  },
+
+  async cleanupExpiredBlacklistedTokens() {
+    const now = new Date();
+    await db.delete(schema.blacklistedTokens)
+      .where(lt(schema.blacklistedTokens.expiresAt, now));
   },
 
   async isTokenBlacklisted(token: string) {

@@ -315,6 +315,8 @@ export const statsController = {
                     name: true,
                     category: true,
                     price: true,
+                    thumbnail: true, // Added: include thumbnail for images
+                    images: true,    // Added: include images fallback
                 }
             }),
             db.select({
@@ -386,20 +388,31 @@ export const statsController = {
                     name: p.name,
                     category: p.category,
                     price: p.price,
+                    image: (p as any).thumbnail || (p.images as string[])?.[0], // Fixed: include image for best sellers
                     sales: completedItems.length,
                     revenue: completedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
                 };
             }).sort((a, b) => b.sales - a.sales).slice(0, 10),
             categoryRevenueData: Array.from({ length: Math.max(0, 6) }).map((_, i) => {
                 const date = new Date();
+                date.setDate(1); // Set to day 1 to avoid month skipping on the 31st
                 date.setMonth(date.getMonth() - (5 - i));
                 const monthName = date.toLocaleString('default', { month: 'short' });
                 const data: any = { month: monthName };
-                ['SCRIPT', 'UI', 'BUNDLE'].forEach(cat => {
-                    data[cat] = ordersResult
+                
+                // Map frontend display keys to database categories
+                const categoryMap: Record<string, string> = {
+                    'Script': 'SCRIPT',
+                    'UI': 'UI',
+                    'Bundle': 'BUNDLE'
+                };
+
+                Object.keys(categoryMap).forEach(displayKey => {
+                    const dbCat = categoryMap[displayKey];
+                    data[displayKey] = ordersResult
                         .filter(o => o.createdAt.getMonth() === date.getMonth() && o.createdAt.getFullYear() === date.getFullYear())
                         .flatMap(o => o.items)
-                        .filter(item => item.product.category === cat)
+                        .filter(item => item.product.category === dbCat)
                         .reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 });
                 return data;

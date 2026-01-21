@@ -67,8 +67,9 @@ export const products = pgTable('products', {
   isActiveIdx: index('products_is_active_idx').on(table.isActive),
   slugIdx: uniqueIndex('products_slug_idx').on(table.slug),
   createdAtIdx: index('products_created_at_idx').on(table.createdAt),
-})
-);
+  priceIdx: index('products_price_idx').on(table.price),
+  stockIdx: index('products_stock_idx').on(table.stock),
+}));
 
 export const licenses = pgTable('licenses', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -87,6 +88,7 @@ export const licenses = pgTable('licenses', {
   productIdIdx: index('licenses_product_id_idx').on(table.productId),
   statusIdx: index('licenses_status_idx').on(table.status),
   licenseKeyIdx: uniqueIndex('licenses_key_idx').on(table.licenseKey),
+  expiresAtIdx: index('licenses_expires_at_idx').on(table.expiresAt),
 }));
 
 export const licenseIpHistory = pgTable('license_ip_history', {
@@ -111,6 +113,7 @@ export const ipBlacklist = pgTable('ip_blacklist', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   ipAddressIdx: uniqueIndex('ip_blacklist_ip_idx').on(table.ipAddress),
+  createdAtIdx: index('ip_blacklist_created_at_idx').on(table.createdAt),
 }));
 
 export const orders = pgTable('orders', {
@@ -129,6 +132,7 @@ export const orders = pgTable('orders', {
   statusIdx: index('orders_status_idx').on(table.status),
   createdAtIdx: index('orders_created_at_idx').on(table.createdAt),
   paymentIntentIdx: index('orders_payment_intent_idx').on(table.paymentIntent),
+  totalIdx: index('orders_total_idx').on(table.total),
 }));
 
 export const orderItems = pgTable('order_items', {

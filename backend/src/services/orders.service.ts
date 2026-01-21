@@ -6,6 +6,8 @@ import { NotFoundError, BadRequestError } from '../utils/errors';
 import { emailService } from './email.service';
 import { getTierInfo } from '../utils/tiers';
 
+import { discordService } from './discord.service';
+
 export const ordersService = {
   async calculateFinalDiscount(userId: string, total: number, promoCodeData?: any | null, tx?: any) {
     const dbClient = tx || db;
@@ -381,13 +383,66 @@ export const ordersService = {
     });
   },
 
-  async updateOrderStatus(orderId: string, status: any) {
-    const [result] = await db.update(schema.orders)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(schema.orders.id, orderId))
-      .returning();
+  async payWithBalance(userId: string, orderId: string) {
+    return await db.transaction(async (tx) => {
+      // 1. Get order and user balance with lock
+      const order = await tx.query.orders.findFirst({
+        where: and(
+          eq(schema.orders.id, orderId),
+          eq(schema.orders.userId, userId)
+        ),
+      });
 
-    return result;
+      if (!order) {
+        throw new NotFoundError('Order not found');
+      }
+
+      if (order.status !== 'PENDING') {
+        throw new BadRequestError('Order is already processed');
+      }
+
+      const user = await tx.query.users.findFirst({
+        where: eq(schema.users.id, userId),
+      });
+
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+
+      if (user.balance < order.total) {
+        throw new BadRequestError('Insufficient balance');
+      }
+
+      // 2. Deduct balance
+      await tx.update(schema.users)
+        .set({ 
+          balance: sql`${schema.users.balance} - ${order.total}`,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.users.id, userId));
+
+      // 3. Update order status to PROCESSING
+      await tx.update(schema.orders)
+        .set({ 
+          status: 'PROCESSING',
+          paymentMethod: 'BALANCE',
+          updatedAt: new Date()
+        })
+        .where(eq(schema.orders.id, orderId));
+
+      // 4. Record transaction
+      await tx.insert(schema.transactions).values({
+        userId,
+        type: 'PURCHASE',
+        amount: -order.total,
+        status: 'COMPLETED',
+        paymentRef: orderId,
+        paymentMethod: 'BALANCE',
+      });
+
+      // 5. Complete the order (grant licenses, etc.)
+      return await this.completeOrder(orderId, tx);
+    });
   },
 
   async completeOrder(orderId: string, transactionClient?: any) {
@@ -600,8 +655,13 @@ export const ordersService = {
 
     if (result.alreadyCompleted || !result.order) return result.order;
 
-    // Send emails outside of transaction
+    // Notify via Discord
     const user = await db.query.users.findFirst({ where: eq(schema.users.id, result.order.userId) });
+    if (user) {
+      discordService.notifyNewOrder(result.emailOrder, user).catch(err => console.error('[DISCORD] Failed to send order notification:', err));
+    }
+
+    // Send emails outside of transaction
     if (user && user.email) {
       // 1. Send order confirmation
       emailService.sendOrderConfirmation(user.email, {

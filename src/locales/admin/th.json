@@ -206,7 +206,7 @@
           "description": "รายละเอียด",
           "category": "หมวดหมู่",
           "version": "เวอร์ชัน",
-          "stock": "สินค้าคงเหลือ (0 = ไม่จำกัด)",
+          "stock": "สินค้าคงเหลือ",
           "stock_placeholder": "0"
         },
         "media": {

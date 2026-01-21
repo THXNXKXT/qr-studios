@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Kanit } from "next/font/google";
 import "./globals.css";
-import { AuthProvider, I18nProvider } from "@/components/providers";
+import { AuthProvider, I18nProvider, QueryProvider } from "@/components/providers";
 
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -67,7 +67,7 @@ export const viewport: Viewport = {
   themeColor: "#dc2626",
 };
 
-import { BackToTop } from "@/components/ui";
+import { BackToTop, Toaster } from "@/components/ui";
 import { LuckyWheelTrigger } from "@/components/lucky-wheel/LuckyWheelTrigger";
 
 export default function RootLayout({
@@ -79,11 +79,14 @@ export default function RootLayout({
     <html lang="th" className="dark">
       <body className={`${kanit.variable} font-sans antialiased`}>
         <I18nProvider>
-          <AuthProvider>
-            {children}
-            <BackToTop />
-            <LuckyWheelTrigger />
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+              <BackToTop />
+              <Toaster />
+              <LuckyWheelTrigger />
+            </AuthProvider>
+          </QueryProvider>
         </I18nProvider>
       </body>
     </html>

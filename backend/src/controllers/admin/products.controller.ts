@@ -126,18 +126,48 @@ export const productsController = {
         console.log(`[ADMIN] Update Product request body for ${id}:`, JSON.stringify(body, null, 2));
 
         const data = updateProductSchema.parse(body);
-        console.log(`[ADMIN] Parsed update data for ${id}:`, JSON.stringify(data, null, 2));
-
         const [oldProduct] = await db.select().from(schema.products).where(eq(schema.products.id, id));
         if (!oldProduct) throw new NotFoundError('Product not found');
 
-        // If a new file is uploaded, delete the old one from R2
-        if (data.downloadFileKey && oldProduct.downloadFileKey && data.downloadFileKey !== oldProduct.downloadFileKey) {
-            try {
-                await storageService.deleteFile(oldProduct.downloadFileKey);
-                console.log(`[ADMIN] Deleted old product file: ${oldProduct.downloadFileKey}`);
-            } catch (error) {
-                console.error(`[ADMIN] Failed to delete old product file ${oldProduct.downloadFileKey}:`, error);
+        // 1. Handle Thumbnail Update Cleanup
+        if (data.thumbnail && oldProduct.thumbnail && data.thumbnail !== oldProduct.thumbnail) {
+            const oldKey = storageService.getKeyFromUrl(oldProduct.thumbnail);
+            if (oldKey) {
+                try {
+                    await storageService.deleteFile(oldKey);
+                    console.log(`[ADMIN] Deleted old thumbnail: ${oldKey}`);
+                } catch (error) {
+                    console.error(`[ADMIN] Failed to delete old thumbnail ${oldKey}:`, error);
+                }
+            }
+        }
+
+        // 2. Handle Gallery Images Cleanup (Remove images no longer in the list)
+        if (data.images && oldProduct.images) {
+            const removedImages = oldProduct.images.filter(img => !data.images?.includes(img));
+            for (const imgUrl of removedImages) {
+                const oldKey = storageService.getKeyFromUrl(imgUrl);
+                if (oldKey) {
+                    try {
+                        await storageService.deleteFile(oldKey);
+                        console.log(`[ADMIN] Deleted removed gallery image: ${oldKey}`);
+                    } catch (error) {
+                        console.error(`[ADMIN] Failed to delete gallery image ${oldKey}:`, error);
+                    }
+                }
+            }
+        }
+
+        // 3. Handle Download File Cleanup
+        if (data.downloadUrl && oldProduct.downloadUrl && data.downloadUrl !== oldProduct.downloadUrl) {
+            const oldKey = oldProduct.downloadFileKey || storageService.getKeyFromUrl(oldProduct.downloadUrl);
+            if (oldKey) {
+                try {
+                    await storageService.deleteFile(oldKey);
+                    console.log(`[ADMIN] Deleted old product file: ${oldKey}`);
+                } catch (error) {
+                    console.error(`[ADMIN] Failed to delete old product file ${oldKey}:`, error);
+                }
             }
         }
 
@@ -150,8 +180,6 @@ export const productsController = {
             isActive: data.isActive !== undefined ? data.isActive : oldProduct.isActive,
             updatedAt: new Date(),
         };
-
-        console.log(`[ADMIN] Updating product ${id}. New isActive: ${updateData.isActive}`);
 
         if (data.flashSaleEnds !== undefined) {
             updateData.flashSaleEnds = data.flashSaleEnds ? new Date(data.flashSaleEnds) : null;
@@ -207,24 +235,19 @@ export const productsController = {
         const [oldProduct] = await db.select().from(schema.products).where(eq(schema.products.id, id));
         if (!oldProduct) throw new NotFoundError('Product not found');
 
-        // Delete files from R2 only on hard delete
-        if (oldProduct.downloadFileKey) {
-            try {
-                await storageService.deleteFile(oldProduct.downloadFileKey);
-                console.log(`[ADMIN] Deleted product file: ${oldProduct.downloadFileKey}`);
-            } catch (error) {
-                console.error(`[ADMIN] Failed to delete R2 file for product ${id}:`, error);
-            }
-        }
-
+        // 1. Delete Product Folder from R2 (This handles thumbnail, gallery, and files)
+        // Since we now organize by products/{slug}/, deleting this prefix removes everything
         if (oldProduct.slug) {
             try {
-                await storageService.deleteFolder(`products/${oldProduct.slug}`);
+                const folderPath = `products/${oldProduct.slug}`;
+                await storageService.deleteFolder(folderPath);
+                console.log(`[ADMIN] Deleted R2 folder for product: ${folderPath}`);
             } catch (error) {
                 console.error(`[ADMIN] Failed to delete R2 folder for product ${oldProduct.slug}:`, error);
             }
         }
 
+        // 2. Remove from Database
         await db.delete(schema.products).where(eq(schema.products.id, id));
 
         const admin = c.get('user') as any;
@@ -239,32 +262,64 @@ export const productsController = {
     },
 
     async uploadFile(c: Context) {
-        const body = await c.req.parseBody();
-        const file = body['file'] as File;
-        const folder = (body['folder'] as string) || 'general';
+        try {
+            // Hono parseBody for multipart/form-data
+            const body = await c.req.parseBody();
+            const fileField = body['file'];
+            const folder = (body['folder'] as string) || 'general';
 
-        if (!file) {
-            throw new BadRequestError('No file uploaded');
+            console.log('[UPLOAD] Raw file field type:', typeof fileField);
+            
+            if (!fileField) {
+                console.error('[UPLOAD] No file field found in request');
+                throw new BadRequestError('No file uploaded');
+            }
+
+            // Hono returns File object for file fields
+            // We need to be careful as it might be a string if not sent correctly
+            if (typeof fileField === 'string') {
+                console.error('[UPLOAD] Received string instead of file. Check frontend FormData.');
+                throw new BadRequestError('Invalid file format received');
+            }
+
+            const file = fileField as unknown as File;
+            
+            // Check for name property safely
+            if (!file || typeof file.name !== 'string') {
+                console.error('[UPLOAD] File object missing name property:', file);
+                throw new BadRequestError('File name is missing or invalid');
+            }
+
+            const fileNameStr = file.name;
+            const extension = fileNameStr.includes('.') ? fileNameStr.split('.').pop() : 'bin';
+            const originalName = fileNameStr.includes('.') 
+                ? fileNameStr.split('.').slice(0, -1).join('.')
+                : fileNameStr;
+            
+            const sanitizedName = originalName
+                .replace(/[^a-zA-Z0-9ก-๙]/g, '-')
+                .replace(/-+/g, '-')
+                .toLowerCase();
+
+            const fileName = `${sanitizedName}-${nanoid(6)}.${extension}`;
+            const key = `${folder}/${fileName}`;
+
+            const buffer = await file.arrayBuffer();
+            const publicUrl = await storageService.uploadFile(key, new Uint8Array(buffer), file.type);
+
+            return success(c, {
+                url: publicUrl,
+                key: key,
+                name: fileNameStr,
+                type: file.type,
+                size: file.size,
+            }, 'File uploaded successfully');
+        } catch (error: any) {
+            console.error('[UPLOAD] Critical error:', error);
+            return c.json({
+                success: false,
+                message: error.message || 'Internal server error during upload'
+            }, error.status || 500);
         }
-
-        const extension = file.name.split('.').pop();
-        const originalName = file.name.split('.').slice(0, -1).join('.')
-            .replace(/[^a-zA-Z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .toLowerCase();
-
-        const fileName = `${originalName}-${nanoid(6)}.${extension}`;
-        const key = `${folder}/${fileName}`;
-
-        const buffer = await file.arrayBuffer();
-        const publicUrl = await storageService.uploadFile(key, new Uint8Array(buffer), file.type);
-
-        return success(c, {
-            url: publicUrl,
-            key: key,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-        }, 'File uploaded successfully');
     },
 };

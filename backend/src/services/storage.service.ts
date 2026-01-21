@@ -43,7 +43,9 @@ export const storageService = {
     });
 
     await s3Client.send(command);
-    return `${env.R2_PUBLIC_URL}/${key}`;
+    
+    const baseUrl = env.R2_PUBLIC_URL.endsWith('/') ? env.R2_PUBLIC_URL.slice(0, -1) : env.R2_PUBLIC_URL;
+    return `${baseUrl}/${key.startsWith('/') ? key.slice(1) : key}`;
   },
 
   /**
@@ -98,7 +100,20 @@ export const storageService = {
    * Get public URL for a file
    */
   getPublicUrl(key: string) {
-    return `${env.R2_PUBLIC_URL}/${key}`;
+    const baseUrl = env.R2_PUBLIC_URL.endsWith('/') ? env.R2_PUBLIC_URL.slice(0, -1) : env.R2_PUBLIC_URL;
+    return `${baseUrl}/${key.startsWith('/') ? key.slice(1) : key}`;
+  },
+
+  /**
+   * Extract key from a public URL
+   */
+  getKeyFromUrl(url: string): string | null {
+    const baseUrl = env.R2_PUBLIC_URL.endsWith('/') ? env.R2_PUBLIC_URL.slice(0, -1) : env.R2_PUBLIC_URL;
+    if (!url.startsWith(baseUrl)) return null;
+    
+    let key = url.replace(baseUrl, '');
+    if (key.startsWith('/')) key = key.slice(1);
+    return key;
   }
 };
 

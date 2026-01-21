@@ -199,3 +199,56 @@ export const createProductSchema = baseProductSchema.extend({
 });
 
 export const updateProductSchema = baseProductSchema.partial();
+
+export const updateSystemSettingSchema = z.object({
+  value: z.any(),
+});
+
+export const addToBlacklistSchema = z.object({
+  ipAddress: z.string().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/, 'Invalid IP address'),
+  reason: z.string().max(200).optional(),
+});
+
+export const auditLogQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  search: z.string().optional(),
+});
+
+export const adminOrdersQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  status: z.string().optional(),
+  search: z.string().optional(),
+});
+
+export const adminUsersQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  search: z.string().optional(),
+  role: z.string().optional(),
+  tier: z.string().optional(),
+});
+
+export const adminLicensesQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  status: z.string().optional(),
+  productId: z.string().uuid().optional(),
+  search: z.string().optional(),
+});
+
+export const adminReviewsQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  rating: z.string().regex(/^\d+$/).transform(Number).optional(),
+  productId: z.string().uuid().optional(),
+  search: z.string().optional(),
+});
+
+export const adminCommissionsQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  status: z.string().optional(),
+  userId: z.string().uuid().optional(),
+});

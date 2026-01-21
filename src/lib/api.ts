@@ -2,15 +2,29 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4001";
 
+import { toast } from "sonner";
 import { getAuthToken as getAuthTokenHelper } from "./auth-helper";
 import { ApiResponse, PaginatedResponse, AdminUsersParams } from "@/types/api";
+
+export interface ApiError {
+  message: string;
+  code?: string;
+  type?: string;
+  details?: any;
+  status?: number;
+}
+
+export interface ApiFetchResponse<T> {
+  data: T | null;
+  error: ApiError | null;
+}
 
 // Generic fetch wrapper with error handling and timeout
 export async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit,
   timeoutMs: number = 30000 // Increased to 30s default
-): Promise<{ data: T | null; error: string | null }> {
+): Promise<ApiFetchResponse<T>> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     try {
@@ -60,9 +74,26 @@ export async function apiFetch<T>(
 
     if (!response.ok) {
       const errorMsg = data.error || data.message || `HTTP Error: ${response.status}`;
+      const apiError: ApiError = {
+        message: typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg),
+        code: data.code,
+        type: data.type || 'API_ERROR',
+        details: data.details,
+        status: response.status
+      };
+
+      // Auto-toast for critical errors
+      if (response.status === 401) {
+        toast.error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+      } else if (response.status === 403) {
+        toast.error("คุณไม่มีสิทธิ์เข้าถึงส่วนนี้");
+      } else if (response.status >= 500) {
+        toast.error("เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่ภายหลัง");
+      }
+
       return {
         data: null,
-        error: typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg),
+        error: apiError,
       };
     }
 
@@ -70,11 +101,21 @@ export async function apiFetch<T>(
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('abort'))) {
-      return { data: null, error: "Request timed out or was cancelled" };
+      return { 
+        data: null, 
+        error: { 
+          message: "Request timed out or was cancelled",
+          type: 'TIMEOUT_ERROR',
+          status: 408
+        } 
+      };
     }
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Network error",
+      error: {
+        message: error instanceof Error ? error.message : "Network error",
+        type: 'NETWORK_ERROR'
+      },
     };
   }
 }
@@ -325,7 +366,6 @@ export const adminApi = {
     return apiFetch<{ url: string; key: string; name: string }>("/api/admin/upload", {
       method: "POST",
       body: formData,
-      // Note: Hono/apiFetch might need special handling for FormData if it default-sets JSON content-type
     });
   },
 

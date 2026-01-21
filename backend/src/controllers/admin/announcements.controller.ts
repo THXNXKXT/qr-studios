@@ -9,6 +9,7 @@ import * as schema from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { success } from '../../utils/response';
 import { NotFoundError } from '../../utils/errors';
+import { storageService } from '../../services/storage.service';
 import { auditService } from '../../services/audit.service';
 import { idParamSchema, createAnnouncementSchema } from '../../schemas';
 
@@ -58,6 +59,23 @@ export const announcementsController = {
         const [oldAnn] = await db.select().from(schema.announcements).where(eq(schema.announcements.id, id));
         if (!oldAnn) throw new NotFoundError('Announcement not found');
 
+        // Cleanup removed media from R2
+        if (data.media && oldAnn.media) {
+            const oldMedia = Array.isArray(oldAnn.media) ? oldAnn.media : [];
+            const removedMedia = oldMedia.filter((url: string) => !data.media?.includes(url));
+            for (const mediaUrl of removedMedia) {
+                const oldKey = storageService.getKeyFromUrl(mediaUrl);
+                if (oldKey) {
+                    try {
+                        await storageService.deleteFile(oldKey);
+                        console.log(`[ADMIN] Deleted removed announcement media: ${oldKey}`);
+                    } catch (error) {
+                        console.error(`[ADMIN] Failed to delete announcement media ${oldKey}:`, error);
+                    }
+                }
+            }
+        }
+
         const [updatedAnnouncement] = await db.update(schema.announcements)
             .set({
                 ...data,
@@ -85,6 +103,18 @@ export const announcementsController = {
         const { id } = idParamSchema.parse(c.req.param());
         const [oldAnn] = await db.select().from(schema.announcements).where(eq(schema.announcements.id, id));
         if (!oldAnn) throw new NotFoundError('Announcement not found');
+
+        // Delete associated media folder from R2
+        if (oldAnn.title) {
+            try {
+                const slug = oldAnn.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                const folderPath = `announcements/${slug}`;
+                await storageService.deleteFolder(folderPath);
+                console.log(`[ADMIN] Deleted R2 folder for announcement: ${folderPath}`);
+            } catch (error) {
+                console.error(`[ADMIN] Failed to delete R2 folder for announcement ${oldAnn.title}:`, error);
+            }
+        }
 
         await db.delete(schema.announcements).where(eq(schema.announcements.id, id));
 

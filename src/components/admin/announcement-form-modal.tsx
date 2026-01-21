@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Save, Loader2, Plus, Image as ImageIcon, Video, Trash2, Upload, Calendar, Megaphone, Layout } from "lucide-react";
-import { Button, Input, Card, Badge } from "@/components/ui";
+import { Button, Input, Card, Badge, FileUpload } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -62,9 +62,21 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
     setPendingFiles([]);
   }, [announcement, isOpen]);
 
+  // Clean up object URLs to avoid memory leaks
   useEffect(() => {
+    const urlsToRevoke: string[] = [];
+    pendingFiles.forEach(f => {
+      if (f.preview?.startsWith('blob:')) {
+        urlsToRevoke.push(f.preview);
+      }
+    });
+
     return () => {
-      pendingFiles.forEach(f => URL.revokeObjectURL(f.preview));
+      urlsToRevoke.forEach(url => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (e) {}
+      });
     };
   }, [pendingFiles]);
 
@@ -87,28 +99,6 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const newSelectedFiles = files.map(file => ({
-      file,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : ""
-    }));
-
-    setPendingFiles(prev => [...prev, ...newSelectedFiles]);
-    e.target.value = "";
-  };
-
-  const removePendingFile = (index: number) => {
-    setPendingFiles(prev => {
-      const updated = [...prev];
-      if (updated[index].preview) URL.revokeObjectURL(updated[index].preview);
-      updated.splice(index, 1);
-      return updated;
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -122,11 +112,15 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
 
       // Upload pending files
       if (pendingFiles.length > 0) {
-        const uploadPromises = pendingFiles.map(f => adminApi.uploadFile(f.file, 'announcements'));
+        const folderSlug = formData.title ? formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'temp';
+        const uploadPromises = pendingFiles.map(f => adminApi.uploadFile(f.file, `announcements/${folderSlug}`));
         const results = await Promise.all(uploadPromises);
+        
         results.forEach(res => {
           if (res.data && (res.data as any).success) {
             currentMedia.push((res.data as any).data.url);
+          } else {
+            throw new Error("Failed to upload some media files");
           }
         });
       }
@@ -162,6 +156,15 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
     setFormData({
       ...formData,
       media: formData.media.filter((_, i) => i !== index),
+    });
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => {
+      const updated = [...prev];
+      URL.revokeObjectURL(updated[index].preview);
+      updated.splice(index, 1);
+      return updated;
     });
   };
 
@@ -265,11 +268,13 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <label className="aspect-video w-full rounded-3xl border-2 border-dashed border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group">
-                        <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileSelect} />
-                        <Upload className="w-8 h-8 text-gray-600 group-hover:text-blue-500 transition-colors" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("announcements.modals.form.drop_assets")}</span>
-                      </label>
+                      <FileUpload
+                        label={t("announcements.modals.form.drop_assets")}
+                        accept={{ "image/*": [".jpeg", ".jpg", ".png", ".webp"] }}
+                        onFileSelect={(file) => setPendingFiles(prev => [...prev, { file, preview: URL.createObjectURL(file) }])}
+                        className="aspect-video w-full"
+                        autoUpload={false}
+                      />
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("announcements.modals.form.paste_url")}</label>
@@ -290,17 +295,23 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
                     <div className="space-y-3 max-h-[250px] overflow-y-auto no-scrollbar">
                       <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest ml-1">{t("announcements.modals.form.active_attachments")}</p>
                       <div className="grid grid-cols-2 gap-3">
+                        {/* Pending Local Files */}
                         {pendingFiles.map((f, index) => (
-                          <div key={"pending-" + index} className="relative aspect-square rounded-2xl bg-white/5 overflow-hidden group border border-blue-500/40">
-                            {f.preview && <img src={f.preview} alt="" className="w-full h-full object-cover opacity-40" />}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-[8px] font-black bg-blue-600 text-white px-2 py-0.5 rounded uppercase tracking-widest">{t("products.modals.form.media.pending")}</span>
+                          <div key={"pending-" + index} className="relative aspect-square rounded-2xl bg-white/5 overflow-hidden group border border-red-500/40 shadow-lg shadow-red-500/10">
+                            {f.preview && <img src={f.preview} alt="" className="w-full h-full object-cover opacity-60" />}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <span className="text-[8px] font-black bg-red-600 text-white px-2 py-0.5 rounded uppercase tracking-widest shadow-lg">{t("products.modals.form.media.pending")}</span>
                             </div>
-                            <button type="button" onClick={() => removePendingFile(index)} className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500">
+                            <button 
+                              type="button" 
+                              onClick={() => removePendingFile(index)} 
+                              className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 z-10 shadow-lg"
+                            >
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
+                        {/* Existing R2 Files */}
                         {formData.media.map((url, index) => (
                           <div key={"existing-" + index} className="relative aspect-square rounded-2xl bg-white/5 overflow-hidden group border border-white/10">
                             <img src={url} alt="" className="w-full h-full object-cover" />

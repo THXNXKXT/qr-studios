@@ -21,6 +21,7 @@ import {
   Loader2,
   Star,
 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { useTranslation } from "react-i18next";
 import { DashboardSidebar, SidebarSkeleton } from "@/components/dashboard/sidebar";
@@ -68,6 +69,7 @@ interface TopupTransaction {
 export default function DashboardPage() {
   const { t } = useTranslation("common");
   const { user, loading: authLoading, isSynced, isSyncing, refresh } = useAuth();
+  const queryClient = useQueryClient();
 
   const menuItems = useMemo(() => [
     { icon: User, label: t("dashboard.menu.profile"), href: "/dashboard" },
@@ -78,11 +80,38 @@ export default function DashboardPage() {
     { icon: History, label: t("dashboard.menu.topup_history"), href: "/dashboard/topup/history" },
     { icon: Settings, label: t("dashboard.menu.settings"), href: "/dashboard/settings" },
   ], [t]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [licenses, setLicenses] = useState<License[]>([]);
-  const [topups, setTopups] = useState<TopupTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedTopup, setSelectedTopup] = useState<TopupTransaction | null>(null);
+
+  // Using React Query for better synchronization and auto-refresh
+  const { 
+    data: dashboardData, 
+    isLoading: dataLoading, 
+    refetch,
+    isFetching
+  } = useQuery({
+    queryKey: ['dashboard', user?.id],
+    queryFn: async () => {
+      const [ordersRes, licensesRes, topupRes] = await Promise.all([
+        ordersApi.getAll(),
+        licensesApi.getAll(),
+        topupApi.getHistory()
+      ]);
+
+      return {
+        orders: (ordersRes.data as any)?.data || [],
+        licenses: (licensesRes.data as any)?.data || [],
+        topups: (topupRes.data as any)?.data || []
+      };
+    },
+    enabled: !!user?.id && isSynced,
+    staleTime: 1000 * 60, // 1 minute
+    refetchInterval: 1000 * 60 * 2, // Auto refresh every 2 minutes
+  });
+
+  const orders = dashboardData?.orders || [];
+  const licenses = dashboardData?.licenses || [];
+  const topups = dashboardData?.topups || [];
+  const loading = dataLoading;
 
   const calculateDaysAsMember = useCallback((createdAt: string | undefined) => {
     if (!createdAt) return 0;
@@ -98,41 +127,6 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const fetchData = useCallback(async (showLoading = false) => {
-    const token = getAuthToken();
-    if (!isSynced && !user?.id && token) return;
-    if (!user?.id && !token) {
-      setLoading(false);
-      return;
-    }
-
-    if (showLoading) setLoading(true);
-    
-    try {
-      const [ordersRes, licensesRes, topupRes] = await Promise.all([
-        ordersApi.getAll(),
-        licensesApi.getAll(),
-        topupApi.getHistory()
-      ]);
-
-      if (ordersRes.data && typeof ordersRes.data === 'object' && 'data' in ordersRes.data) {
-        setOrders((ordersRes.data as any).data || []);
-      }
-
-      if (licensesRes.data && typeof licensesRes.data === 'object' && 'data' in licensesRes.data) {
-        setLicenses((licensesRes.data as any).data || []);
-      }
-
-      if (topupRes.data && typeof topupRes.data === 'object' && 'data' in topupRes.data) {
-        setTopups((topupRes.data as any).data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, isSynced]);
-
   useEffect(() => {
     // Force refresh user data on dashboard mount to ensure latest totalSpent/points
     const forceRefresh = async () => {
@@ -141,16 +135,11 @@ export default function DashboardPage() {
         console.log('[Dashboard] Forcing profile refresh...');
         await refresh();
         // After profile sync, re-fetch dashboard specific data
-        fetchData();
+        refetch();
       }
     };
     forceRefresh();
-  }, [refresh, fetchData]);
-
-  // Keep this for subsequent manual refreshes or data updates
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  }, [refresh, refetch]);
 
   const stats = useMemo(() => [
     { icon: ShoppingBag, label: t("dashboard.stats.orders"), value: orders.length },
@@ -224,11 +213,11 @@ export default function DashboardPage() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => fetchData(true)}
-                disabled={loading}
+                onClick={() => refetch()}
+                disabled={isFetching}
                 className="text-gray-400 hover:text-red-400 gap-2 bg-white/5 hover:bg-white/10 rounded-xl px-4 h-10 border border-white/5"
               >
-                <Loader2 className={cn("w-4 h-4", loading && "animate-spin")} />
+                <Loader2 className={cn("w-4 h-4", isFetching && "animate-spin")} />
                 {t("dashboard.refresh")}
               </Button>
             </div>

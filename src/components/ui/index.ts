@@ -14,3 +14,5 @@ export { StockCounter } from "./stock-counter";
 export { FlashSaleTimer } from "./flash-sale-timer";
 export { PromoCodeInput } from "./promo-code-input";
 export { ReviewStars, ReviewSummary } from "./review-stars";
+export { Toaster } from "./toaster";
+export { FileUpload } from "./file-upload";

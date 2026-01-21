@@ -14,6 +14,14 @@ import {
   updateProductSchema,
   updateBalanceSchema,
   grantLicenseSchema,
+  updateSystemSettingSchema,
+  addToBlacklistSchema,
+  auditLogQuerySchema,
+  adminOrdersQuerySchema,
+  adminUsersQuerySchema,
+  adminLicensesQuerySchema,
+  adminReviewsQuerySchema,
+  adminCommissionsQuerySchema,
 } from '../schemas';
 
 const admin = new Hono();
@@ -27,13 +35,13 @@ admin.get('/stats/revenue-chart', adminController.getRevenueChartData);
 admin.get('/stats/low-stock', adminController.getLowStockProducts);
 admin.get('/stats/analytics', adminController.getAnalyticsData);
 admin.get('/settings', adminController.getSystemSettings);
-admin.patch('/settings/:key', adminController.updateSystemSetting);
-admin.get('/audit-logs', adminController.getAuditLogs);
+admin.patch('/settings/:key', zValidator('json', updateSystemSettingSchema), adminController.updateSystemSetting);
+admin.get('/audit-logs', zValidator('query', auditLogQuerySchema), adminController.getAuditLogs);
 
 admin.post('/upload', adminController.uploadFile);
 
-admin.get('/reviews', adminController.getAllReviews);
-admin.get('/licenses', adminController.getAllLicenses);
+admin.get('/reviews', zValidator('query', adminReviewsQuerySchema), adminController.getAllReviews);
+admin.get('/licenses', zValidator('query', adminLicensesQuerySchema), adminController.getAllLicenses);
 
 admin.get('/products', adminController.getAllProducts);
 admin.post('/products', zValidator('json', createProductSchema), adminController.createProduct);
@@ -41,17 +49,17 @@ admin.patch('/products/:id', zValidator('param', idParamSchema), zValidator('jso
 admin.delete('/products/:id', zValidator('param', idParamSchema), adminController.deleteProduct);
 admin.delete('/products/:id/permanent', zValidator('param', idParamSchema), adminController.hardDeleteProduct);
 
-admin.get('/users', adminController.getAllUsers);
+admin.get('/users', zValidator('query', adminUsersQuerySchema), adminController.getAllUsers);
 admin.patch('/users/:id/balance', zValidator('param', idParamSchema), zValidator('json', updateBalanceSchema), adminController.updateUserBalance);
 admin.patch('/users/:id/points', zValidator('param', idParamSchema), zValidator('json', updateBalanceSchema), adminController.updateUserPoints);
 admin.patch('/users/:id/role', zValidator('param', idParamSchema), zValidator('json', updateUserRoleSchema), adminController.updateUserRole);
 admin.post('/users/:id/ban', zValidator('param', idParamSchema), adminController.banUser);
 admin.post('/users/:id/unban', zValidator('param', idParamSchema), adminController.unbanUser);
 
-admin.get('/commissions', adminController.getAllCommissions);
+admin.get('/commissions', zValidator('query', adminCommissionsQuerySchema), adminController.getAllCommissions);
 admin.patch('/commissions/:id/status', zValidator('param', idParamSchema), zValidator('json', updateCommissionStatusSchema), adminController.updateCommissionStatus);
 
-admin.get('/orders', adminController.getAllOrders);
+admin.get('/orders', zValidator('query', adminOrdersQuerySchema), adminController.getAllOrders);
 admin.get('/orders/:id', zValidator('param', idParamSchema), adminController.getOrderById);
 admin.post('/orders/:id/resend-receipt', zValidator('param', idParamSchema), adminController.resendOrderReceipt);
 admin.patch('/orders/:id/status', zValidator('param', idParamSchema), zValidator('json', updateOrderStatusSchema), adminController.updateOrderStatus);
@@ -62,7 +70,7 @@ admin.post('/licenses/:id/reset-ip', zValidator('param', idParamSchema), adminCo
 
 // IP Blacklist management
 admin.get('/licenses/blacklist', adminController.getBlacklist);
-admin.post('/licenses/blacklist', adminController.addToBlacklist);
+admin.post('/licenses/blacklist', zValidator('json', addToBlacklistSchema), adminController.addToBlacklist);
 admin.delete('/licenses/blacklist/:ip', adminController.removeFromBlacklist);
 
 admin.patch('/reviews/:id/verify', zValidator('param', idParamSchema), adminController.toggleReviewVerification);

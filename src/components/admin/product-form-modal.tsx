@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Plus, Trash2, Save, Loader2, FileText, Layout, Image as ImageIcon, Settings, Zap, Globe, Package as PackageIcon, Info, Star, Edit } from "lucide-react";
-import { Button, Input, Card, Badge } from "@/components/ui";
+import { Button, Input, Card, Badge, FileUpload } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -124,9 +124,22 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
   // Clean up object URLs to avoid memory leaks
   useEffect(() => {
+    const urlsToRevoke: string[] = [];
+    if (thumbnailFile?.preview?.startsWith('blob:')) {
+      urlsToRevoke.push(thumbnailFile.preview);
+    }
+    galleryFiles.forEach(f => {
+      if (f.preview?.startsWith('blob:')) {
+        urlsToRevoke.push(f.preview);
+      }
+    });
+
     return () => {
-      if (thumbnailFile) URL.revokeObjectURL(thumbnailFile.preview);
-      galleryFiles.forEach(f => URL.revokeObjectURL(f.preview));
+      urlsToRevoke.forEach(url => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (e) {}
+      });
     };
   }, [thumbnailFile, galleryFiles]);
 
@@ -243,7 +256,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
       newErrors.originalPrice = t("products.errors.original_price_invalid");
     }
 
-    if (formData.stock === undefined || formData.stock === null || formData.stock < 0) {
+    if (formData.stock !== -1 && (formData.stock === undefined || formData.stock === null || formData.stock < 0)) {
       newErrors.stock = t("products.errors.stock_invalid");
     }
 
@@ -550,17 +563,35 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                              {t("products.modals.form.basic.stock")}
-                            </label>
+                            <div className="flex items-center justify-between ml-1">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                {t("products.modals.form.basic.stock")}
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer group">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-red-500 transition-colors">Unlimited</span>
+                                <input
+                                  type="checkbox"
+                                  checked={formData.stock === -1}
+                                  onChange={(e) => {
+                                    setFormData({ ...formData, stock: e.target.checked ? -1 : 0 });
+                                  }}
+                                  className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 text-red-600 focus:ring-red-500/50"
+                                />
+                              </label>
+                            </div>
                             <Input
                               type="number"
-                              value={formData.stock}
+                              value={formData.stock === -1 ? "" : formData.stock}
                               onChange={(e) => {
                                 const val = Number(e.target.value);
                                 setFormData({ ...formData, stock: isNaN(val) ? 0 : val });
                               }}
-                              className="bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6 font-bold"
+                              disabled={formData.stock === -1}
+                              placeholder={formData.stock === -1 ? "Unlimited" : "0"}
+                              className={cn(
+                                "bg-white/5 border-white/10 focus:border-red-500/50 rounded-xl py-6 font-bold transition-all",
+                                formData.stock === -1 && "opacity-50 grayscale cursor-not-allowed"
+                              )}
                               min={0}
                             />
                           </div>
@@ -576,31 +607,41 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
                               {t("products.modals.form.media.cover")}
                             </label>
-                            <label className={cn(
-                              "relative group flex flex-col items-center justify-center aspect-square rounded-3xl border-2 border-dashed transition-all cursor-pointer overflow-hidden",
-                              errors.thumbnail ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-red-500/50 hover:bg-red-500/5"
-                            )}>
-                              <input type="file" className="hidden" onChange={handleThumbnailSelect} accept="image/*" />
-
-                              {thumbnailFile ? (
-                                <img src={thumbnailFile.preview} alt="" className="w-full h-full object-cover" />
-                              ) : formData.thumbnail ? (
-                                <img src={formData.thumbnail} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="flex flex-col items-center gap-2">
-                                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-red-500 group-hover:bg-red-500/10 transition-all">
-                                    <Upload className="w-6 h-6" />
-                                  </div>
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("products.modals.form.media.upload_cover")}</span>
+                            
+                            {thumbnailFile || formData.thumbnail ? (
+                              <div className="relative group aspect-square rounded-3xl overflow-hidden border border-white/10">
+                                <img 
+                                  src={thumbnailFile ? thumbnailFile.preview : formData.thumbnail} 
+                                  alt="" 
+                                  className="w-full h-full object-cover" 
+                                />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                  <label className="p-2 rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer transition-all">
+                                    <Upload className="w-5 h-5 text-white" />
+                                    <input type="file" className="hidden" onChange={handleThumbnailSelect} accept="image/*" />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setThumbnailFile(null);
+                                      setFormData({ ...formData, thumbnail: undefined });
+                                    }}
+                                    className="p-2 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-500 transition-all"
+                                  >
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
                                 </div>
-                              )}
-
-                              {(thumbnailFile || formData.thumbnail) && (
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Upload className="w-8 h-8 text-white" />
-                                </div>
-                              )}
-                            </label>
+                              </div>
+                            ) : (
+                              <FileUpload
+                                label={t("products.modals.form.media.upload_cover")}
+                                accept={{ "image/*": [".jpeg", ".jpg", ".png", ".webp"] }}
+                                onFileSelect={(file) => setThumbnailFile({ file, preview: URL.createObjectURL(file) })}
+                                className="aspect-square"
+                                autoUpload={false}
+                              />
+                            )}
+                            
                             {errors.thumbnail && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight text-center">{errors.thumbnail}</p>}
                           </div>
 
@@ -640,11 +681,13 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                               ))}
 
                               {/* Upload Trigger */}
-                              <label className="aspect-video rounded-2xl border-2 border-dashed border-white/10 hover:border-red-500/50 hover:bg-red-500/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group">
-                                <input type="file" className="hidden" onChange={handleImageSelect} multiple accept="image/*" />
-                                <Plus className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
-                                <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 group-hover:text-red-500">{t("products.modals.form.media.add_image")}</span>
-                              </label>
+                              <FileUpload
+                                label={t("products.modals.form.media.add_image")}
+                                accept={{ "image/*": [".jpeg", ".jpg", ".png", ".webp"] }}
+                                onFileSelect={(file) => setGalleryFiles(prev => [...prev, { file, preview: URL.createObjectURL(file) }])}
+                                className="aspect-video"
+                                autoUpload={false}
+                              />
                             </div>
                           </div>
                         </div>
@@ -822,19 +865,19 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 <div className="space-y-4">
                                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{t("products.modals.form.delivery.asset_method")}</label>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <label className={cn(
-                                      "flex flex-col items-center justify-center p-8 rounded-4xl border-2 border-dashed transition-all cursor-pointer group gap-4",
-                                      productFile ? "border-blue-500/50 bg-blue-500/5" : "border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5"
-                                    )}>
-                                      <input type="file" className="hidden" onChange={handleFileSelect} />
-                                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-blue-500 transition-all">
-                                        <Upload className="w-6 h-6" />
-                                      </div>
-                                      <div className="text-center">
-                                        <p className="text-xs font-black text-white uppercase tracking-widest">{t("products.modals.form.delivery.direct_upload")}</p>
-                                        <p className="text-[8px] text-gray-500 uppercase font-black tracking-tight mt-1">{t("products.modals.form.delivery.upload_hint")}</p>
-                                      </div>
-                                    </label>
+                                    <FileUpload
+                                      label={t("products.modals.form.delivery.direct_upload")}
+                                      accept={{
+                                        "application/zip": [".zip"],
+                                        "application/x-zip-compressed": [".zip"],
+                                      }}
+                                      onFileSelect={(file) => {
+                                        setProductFile(file);
+                                        setFormData({ ...formData, isDownloadable: true });
+                                      }}
+                                      className="p-4"
+                                      autoUpload={false}
+                                    />
 
                                     <div className="space-y-4 flex flex-col justify-center">
                                       <div className="space-y-2">

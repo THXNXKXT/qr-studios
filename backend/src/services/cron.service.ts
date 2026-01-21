@@ -3,6 +3,8 @@ import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq, lt, and } from 'drizzle-orm';
 
+import { authService } from './auth.service';
+
 export const cronService = {
   init() {
     // Run every day at midnight
@@ -11,12 +13,13 @@ export const cronService = {
       await Promise.all([
         cronService.cleanupExpiredTokens(),
         cronService.cleanupOldAuditLogs(),
+        authService.cleanupExpiredBlacklistedTokens(),
       ]);
     });
 
     // Run every hour for blacklisted tokens (more frequent as they are small and critical)
     cron.schedule('0 * * * *', async () => {
-      await cronService.cleanupBlacklistedTokens();
+      await authService.cleanupExpiredBlacklistedTokens();
     });
 
     // Run every minute to check and update expired flash sales
@@ -82,15 +85,7 @@ export const cronService = {
 
   async cleanupBlacklistedTokens() {
     try {
-      const now = new Date();
-      
-      const result = await db.delete(schema.blacklistedTokens)
-        .where(lt(schema.blacklistedTokens.expiresAt, now))
-        .returning();
-
-      if (result.length > 0) {
-        console.log(`[CRON] Cleaned up ${result.length} expired blacklisted tokens`);
-      }
+      await authService.cleanupExpiredBlacklistedTokens();
     } catch (error) {
       console.error('[CRON] Error cleaning up blacklisted tokens:', error);
     }

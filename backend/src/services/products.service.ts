@@ -70,7 +70,7 @@ export const productsService = {
 
     const where = filters.length > 0 ? and(...filters) : undefined;
 
-    const [productsData, totalResult] = await Promise.all([
+    const [productsData, totalResult, ratingsData] = await Promise.all([
       db.query.products.findMany({
         where,
         offset,
@@ -104,14 +104,27 @@ export const productsService = {
         }
       }),
       db.select({ value: count() }).from(schema.products).where(where ?? sql`TRUE`),
+      db.select({
+        productId: schema.reviews.productId,
+        avgRating: avg(schema.reviews.rating),
+        reviewCount: count(),
+      })
+      .from(schema.reviews)
+      .groupBy(schema.reviews.productId),
     ]);
 
     const total = totalResult[0]?.value ?? 0;
+    const ratingsMap = new Map(ratingsData.map(r => [r.productId, r]));
 
-    const productsWithPoints = productsData.map((product) => ({
-      ...product,
-      expectedPoints: this.calculateProductExpectedPoints(product as any),
-    }));
+    const productsWithPoints = productsData.map((product) => {
+      const ratingInfo = ratingsMap.get(product.id);
+      return {
+        ...product,
+        rating: Number(ratingInfo?.avgRating || 0),
+        reviewCount: ratingInfo?.reviewCount ?? 0,
+        expectedPoints: this.calculateProductExpectedPoints(product as any),
+      };
+    });
 
     return {
       products: productsWithPoints,
@@ -190,103 +203,149 @@ export const productsService = {
   },
 
   async getFeaturedProducts(userId?: string) {
-    const productsData = await db.query.products.findMany({
-      where: and(
-        eq(schema.products.isFeatured, true),
-        eq(schema.products.isActive, true)
-      ),
-      limit: 8,
-      orderBy: [desc(schema.products.createdAt)],
-      columns: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        originalPrice: true,
-        category: true,
-        images: true,
-        isNew: true,
-        isFeatured: true,
-        isFlashSale: true,
-        flashSalePrice: true,
-        flashSaleEnds: true,
-        rewardPoints: true,
-        version: true,
-        isActive: true,
-      }
-    });
+    const [productsData, totalResult, ratingsData] = await Promise.all([
+      db.query.products.findMany({
+        where: and(eq(schema.products.isFeatured, true), eq(schema.products.isActive, true)),
+        limit: 8,
+        orderBy: [desc(schema.products.createdAt)],
+        columns: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          category: true,
+          images: true,
+          isNew: true,
+          isFeatured: true,
+          isFlashSale: true,
+          flashSalePrice: true,
+          flashSaleEnds: true,
+          rewardPoints: true,
+          version: true,
+          isActive: true,
+        }
+      }),
+      db.select({ value: count() }).from(schema.products).where(and(eq(schema.products.isFeatured, true), eq(schema.products.isActive, true))),
+      db.select({
+        productId: schema.reviews.productId,
+        avgRating: avg(schema.reviews.rating),
+        reviewCount: count(),
+      })
+      .from(schema.reviews)
+      .groupBy(schema.reviews.productId),
+    ]);
 
-    return productsData.map((product) => ({
-      ...product,
-      expectedPoints: this.calculateProductExpectedPoints(product as any),
-    }));
+    const ratingsMap = new Map(ratingsData.map(r => [r.productId, r]));
+
+    return productsData.map((product) => {
+      const ratingInfo = ratingsMap.get(product.id);
+      return {
+        ...product,
+        rating: Number(ratingInfo?.avgRating || 0),
+        reviewCount: ratingInfo?.reviewCount ?? 0,
+        expectedPoints: this.calculateProductExpectedPoints(product as any),
+      };
+    });
   },
 
   async getFlashSaleProducts(userId?: string) {
     const now = new Date();
     
-    const productsData = await db.query.products.findMany({
-      where: and(
-        eq(schema.products.isFlashSale, true),
-        eq(schema.products.isActive, true),
-        sql`${schema.products.flashSaleEnds} >= ${now}`
-      ),
-      orderBy: [asc(schema.products.flashSaleEnds)],
-      columns: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        originalPrice: true,
-        category: true,
-        images: true,
-        isNew: true,
-        isFeatured: true,
-        isFlashSale: true,
-        flashSalePrice: true,
-        flashSaleEnds: true,
-        rewardPoints: true,
-        version: true,
-        isActive: true,
-      }
-    });
+    const [productsData, ratingsData] = await Promise.all([
+      db.query.products.findMany({
+        where: and(
+          eq(schema.products.isFlashSale, true),
+          eq(schema.products.isActive, true),
+          sql`${schema.products.flashSaleEnds} >= ${now}`
+        ),
+        orderBy: [asc(schema.products.flashSaleEnds)],
+        columns: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          category: true,
+          images: true,
+          isNew: true,
+          isFeatured: true,
+          isFlashSale: true,
+          flashSalePrice: true,
+          flashSaleEnds: true,
+          rewardPoints: true,
+          version: true,
+          isActive: true,
+        }
+      }),
+      db.select({
+        productId: schema.reviews.productId,
+        avgRating: avg(schema.reviews.rating),
+        reviewCount: count(),
+      })
+      .from(schema.reviews)
+      .groupBy(schema.reviews.productId),
+    ]);
 
-    return productsData.map((product) => ({
-      ...product,
-      expectedPoints: this.calculateProductExpectedPoints(product as any),
-    }));
+    const ratingsMap = new Map(ratingsData.map(r => [r.productId, r]));
+
+    return productsData.map((product) => {
+      const ratingInfo = ratingsMap.get(product.id);
+      return {
+        ...product,
+        rating: Number(ratingInfo?.avgRating || 0),
+        reviewCount: ratingInfo?.reviewCount ?? 0,
+        expectedPoints: this.calculateProductExpectedPoints(product as any),
+      };
+    });
   },
 
   async searchProducts(query: string, userId?: string) {
-    const productsData = await db.query.products.findMany({
-      where: and(
-        eq(schema.products.isActive, true),
-        or(
-          ilike(schema.products.name, `%${query}%`),
-          ilike(schema.products.description, `%${query}%`)
-        )
-      ),
-      limit: 20,
-      columns: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        category: true,
-        images: true,
-        isFlashSale: true,
-        flashSalePrice: true,
-        flashSaleEnds: true,
-        rewardPoints: true,
-        version: true,
-        isActive: true,
-      }
-    });
+    const [productsData, ratingsData] = await Promise.all([
+      db.query.products.findMany({
+        where: and(
+          eq(schema.products.isActive, true),
+          or(
+            ilike(schema.products.name, `%${query}%`),
+            ilike(schema.products.description, `%${query}%`)
+          )
+        ),
+        limit: 20,
+        columns: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          category: true,
+          images: true,
+          isFlashSale: true,
+          flashSalePrice: true,
+          flashSaleEnds: true,
+          rewardPoints: true,
+          version: true,
+          isActive: true,
+        }
+      }),
+      db.select({
+        productId: schema.reviews.productId,
+        avgRating: avg(schema.reviews.rating),
+        reviewCount: count(),
+      })
+      .from(schema.reviews)
+      .groupBy(schema.reviews.productId),
+    ]);
 
-    return productsData.map((product) => ({
-      ...product,
-      expectedPoints: this.calculateProductExpectedPoints(product as any),
-    }));
+    const ratingsMap = new Map(ratingsData.map(r => [r.productId, r]));
+
+    return productsData.map((product) => {
+      const ratingInfo = ratingsMap.get(product.id);
+      return {
+        ...product,
+        rating: Number(ratingInfo?.avgRating || 0),
+        reviewCount: ratingInfo?.reviewCount ?? 0,
+        expectedPoints: this.calculateProductExpectedPoints(product as any),
+      };
+    });
   },
 
   async getProductReviews(productId: string, params: { page?: number; limit?: number } = {}) {

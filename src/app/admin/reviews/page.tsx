@@ -19,6 +19,9 @@ import { ConfirmModal } from "@/components/admin";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const reviewsLogger = createLogger("admin:reviews");
 
 type Review = {
   id: string;
@@ -65,16 +68,19 @@ export default function AdminReviewsPage() {
           rating: filterRating === "all" ? undefined : parseInt(filterRating),
         }),
         adminApi.getStats()
-      ]) as [{ data: { success: boolean; data: Review[] } }, { data: { success: boolean; data: Record<string, any> } }];
+      ]);
 
-      if (reviewsRes.data && reviewsRes.data.success) {
-        setReviews(reviewsRes.data.data || []);
+      const reviewsData = reviewsRes as unknown as { data?: { success?: boolean; data?: Review[] } };
+      const statsData = statsRes as unknown as { data?: { success?: boolean; data?: { reviews?: { total: number; verified: number; avgRating: number } } } };
+
+      if (reviewsData.data?.success) {
+        setReviews(reviewsData.data.data || []);
       }
-      if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data as { reviews: { total: number; verified: number; avgRating: number } });
+      if (statsData.data?.success && statsData.data.data?.reviews) {
+        setStats(statsData.data.data as { reviews: { total: number; verified: number; avgRating: number } });
       }
     } catch (err) {
-      console.error("Failed to fetch reviews:", err);
+      reviewsLogger.error('Failed to fetch reviews', { error: err });
     } finally {
       setLoading(false);
     }
@@ -99,7 +105,7 @@ export default function AdminReviewsPage() {
         setIsDeleteOpen(false);
       }
     } catch (err) {
-      console.error("Failed to delete review:", err);
+      reviewsLogger.error('Failed to delete review', { error: err });
       alert(mounted ? t("reviews.errors.delete_failed") : "");
     }
   };
@@ -116,7 +122,7 @@ export default function AdminReviewsPage() {
         );
       }
     } catch (err) {
-      console.error("Failed to toggle review verification:", err);
+      reviewsLogger.error('Failed to toggle review verification', { error: err });
       alert(mounted ? t("reviews.errors.verify_failed") : "");
     }
   };

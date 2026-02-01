@@ -4,6 +4,7 @@ import * as schema from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ordersService } from './orders.service';
 import { topupService } from './topup.service';
+import { logger } from '../utils/logger';
 import type Stripe from 'stripe';
 
 export const webhooksService = {
@@ -17,7 +18,7 @@ export const webhooksService = {
     });
 
     if (existingEvent) {
-      console.log(`[STRIPE_WEBHOOK] Event ${event.id} already processed, skipping.`);
+      logger.info('Stripe event already processed', { eventId: event.id });
       return;
     }
 
@@ -36,7 +37,7 @@ export const webhooksService = {
           break;
 
         default:
-          console.log(`Unhandled event type: ${event.type}`);
+      logger.debug('Unhandled Stripe event type', { eventType: event.type });
       }
 
       // 2. Mark event as processed in Audit Logs
@@ -47,7 +48,7 @@ export const webhooksService = {
         newData: { type: event.type },
       });
     } catch (error) {
-      console.error(`[STRIPE_WEBHOOK] Error processing event ${event.id}:`, error);
+      logger.error(`Failed to process Stripe event ${event.id}:`, error);
       throw error; // Let the controller handle and respond to Stripe
     }
   },
@@ -56,7 +57,7 @@ export const webhooksService = {
     const metadata = session.metadata;
 
     if (!metadata) {
-      console.error('No metadata in session');
+      logger.warn('No metadata in session');
       return;
     }
 
@@ -72,14 +73,14 @@ export const webhooksService = {
           paymentMethod = pi.payment_method_types?.[0] || 'stripe';
         }
       } catch (err) {
-        console.error('Error expanding session for payment method:', err);
+        logger.error('Error expanding session for payment method:', err);
       }
 
       await topupService.completeTopup(metadata.transactionId, paymentMethod);
-      console.log('Topup completed:', metadata.transactionId, 'Method:', paymentMethod);
+      logger.info('Topup completed:', metadata.transactionId, 'Method:', paymentMethod);
     } else if (metadata.orderId) {
       await ordersService.completeOrder(metadata.orderId);
-      console.log('Order completed:', metadata.orderId);
+      logger.info('Order completed:', metadata.orderId);
     }
   },
 
@@ -87,7 +88,7 @@ export const webhooksService = {
     const metadata = session.metadata;
     if (metadata?.type === 'topup' && metadata.transactionId) {
       await topupService.cancelTopup(metadata.transactionId, 'CANCELLED');
-      console.log('Topup cancelled (session expired):', metadata.transactionId);
+      logger.info('Topup cancelled (session expired)', { transactionId: metadata.transactionId });
     }
   },
 
@@ -95,7 +96,7 @@ export const webhooksService = {
     const metadata = session.metadata;
     if (metadata?.type === 'topup' && metadata.transactionId) {
       await topupService.cancelTopup(metadata.transactionId, 'FAILED');
-      console.log('Topup failed:', metadata.transactionId);
+      logger.info('Topup failed', { transactionId: metadata.transactionId });
     }
   },
 };

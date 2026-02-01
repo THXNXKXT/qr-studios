@@ -6,6 +6,9 @@ import { X, Save, Loader2, Shield, Crown, User, Mail, Hash, Wallet, Star, Ban, C
 import { Button, Input, Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const userFormLogger = createLogger("admin:user-form");
 
 interface UserData {
   id?: string;
@@ -76,7 +79,7 @@ export function UserFormModal({ isOpen, onClose, user, onSave }: UserFormModalPr
       await onSave(formData);
       onClose();
     } catch (error: any) {
-      console.error("Error saving user:", error);
+      userFormLogger.error('Error saving user', { error });
       alert(error.message || t("users.errors.save_failed"));
     } finally {
       setIsLoading(false);

@@ -88,3 +88,8 @@ export function debugLog(message: string, ...args: unknown[]): void {
         console.log(message, ...args);
     }
 }
+
+// Factory function to create custom loggers
+export function createLogger(prefix: string): Logger {
+    return new Logger({ prefix: `[${prefix}]` });
+}

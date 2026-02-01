@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, ThumbsUp, MessageCircle, User, Check, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Card, Badge, ReviewStars, ReviewSummary } from "@/components/ui";
+import { createLogger } from "@/lib/logger";
+
+const reviewLogger = createLogger("product:review");
 
 interface Review {
   id: string;
@@ -53,7 +56,7 @@ export function ReviewSection({
       setRating(0);
       setComment("");
     } catch (error) {
-      console.error("Failed to submit review:", error);
+      reviewLogger.error('Failed to submit review', { error });
     } finally {
       setIsSubmitting(false);
     }

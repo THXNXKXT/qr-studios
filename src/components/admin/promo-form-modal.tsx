@@ -6,6 +6,9 @@ import { X, Save, Loader2, Percent, DollarSign, Ticket, Settings, Calendar, Mous
 import { Button, Input, Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const promoFormLogger = createLogger("admin:promo-form");
 
 interface PromoCode {
   id?: string;
@@ -106,7 +109,7 @@ export function PromoFormModal({ isOpen, onClose, promo, onSave }: PromoFormModa
       await onSave(submissionData as any);
       onClose();
     } catch (error: any) {
-      console.error("Error saving promo:", error);
+      promoFormLogger.error('Error saving promo', { error });
       alert(error.message || t("promo_codes.errors.save_failed"));
     } finally {
       setIsLoading(false);

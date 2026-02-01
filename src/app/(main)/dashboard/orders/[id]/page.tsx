@@ -27,8 +27,25 @@ import {
   Eye,
   CheckCircle,
   ImageOff,
+  FileText,
+  XCircle,
+  ChevronLeft,
+  ShieldCheck,
+  Mail,
+  Globe
 } from "lucide-react";
 import { Button, Card, Badge } from "@/components/ui";
+import { createLogger } from "@/lib/logger";
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+interface DownloadUrlResponse {
+  downloadUrl: string;
+}
+
+const orderDetailLogger = createLogger("dashboard:order-detail");
 import { OrderDetailSkeleton } from "@/components/dashboard/order-detail-skeleton";
 import { formatPrice, cn } from "@/lib/utils";
 import { ordersApi, licensesApi } from "@/lib/api";
@@ -104,14 +121,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         try {
           const { data, error: apiError } = await ordersApi.getById(id);
           if (apiError) {
-            setError(apiError);
+            setError(typeof apiError === 'string' ? apiError : apiError.message || t("dashboard.orders.errors.fetch_failed"));
           } else if (data) {
             // Backend returns {success: true, data: orderObject}
-            const orderData = (data as any).success ? (data as any).data : data;
-            setOrder(orderData);
+            const response = data as ApiResponse<OrderDetail>;
+            const orderData = response.success ? response.data : (data as unknown as OrderDetail);
+            setOrder(orderData ?? null);
           }
         } catch (err) {
-          console.error("Failed to fetch order details:", err);
+          orderDetailLogger.error('Failed to fetch order details', { error: err });
           setError(t("dashboard.orders.errors.fetch_failed"));
         } finally {
           setLoading(false);
@@ -143,7 +161,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         return;
       }
 
-      const downloadUrl = (data as any).success ? (data as any).data.downloadUrl : (data as any).downloadUrl;
+      const response = data as ApiResponse<DownloadUrlResponse>;
+      const downloadUrl = response.success ? response.data?.downloadUrl : (data as unknown as DownloadUrlResponse)?.downloadUrl;
       if (!downloadUrl) {
         alert(t("dashboard.licenses.errors.download_failed"));
         return;
@@ -153,7 +172,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       const fullUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4001"}${downloadUrl}`;
       window.open(fullUrl, '_blank');
     } catch (err) {
-      console.error("Download failed:", err);
+      orderDetailLogger.error('Download failed', { error: err });
       alert(t("common.error"));
     }
   };

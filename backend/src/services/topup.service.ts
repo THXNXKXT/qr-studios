@@ -5,6 +5,7 @@ import stripe from '../config/stripe';
 import { env } from '../config/env';
 import { BadRequestError } from '../utils/errors';
 import { emailService } from './email.service';
+import { logger } from '../utils/logger';
 
 const TOPUP_PACKAGES = [
   { amount: 100, bonus: 0 },
@@ -27,10 +28,10 @@ export const topupService = {
   },
 
   async createStripeTopupSession(userId: string, amount: number) {
-    console.log(`[TopupService] Creating session for user ${userId}, amount: ${amount}`);
+    logger.info('Creating topup session', { userId, amount });
     
     if (amount < 100) {
-      console.warn(`[TopupService] Invalid amount: ${amount}`);
+      logger.warn('Invalid topup amount', { amount });
       throw new BadRequestError('Minimum topup amount is ฿100');
     }
 
@@ -41,7 +42,7 @@ export const topupService = {
     else if (amount >= 1000) bonus = Math.floor(amount * 0.05); // 5% (was 4%)
     else if (amount >= 500) bonus = Math.floor(amount * 0.03); // 3% (was 2%)
 
-    console.log(`[TopupService] Calculated bonus: ${bonus}`);
+    logger.debug('Calculated bonus', { bonus, amount });
 
     try {
       const [transaction] = await db.insert(schema.transactions).values({
@@ -55,7 +56,7 @@ export const topupService = {
 
       if (!transaction) throw new Error('Failed to create transaction');
 
-      console.log(`[TopupService] Created transaction: ${transaction.id}`);
+      logger.info('Transaction created', { transactionId: transaction.id });
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card', 'promptpay'],
@@ -84,7 +85,7 @@ export const topupService = {
         },
       });
 
-      console.log(`[TopupService] Created Stripe session: ${session.id}`);
+      logger.info('Stripe session created', { sessionId: session.id });
 
       await db.update(schema.transactions)
         .set({ paymentRef: session.id })
@@ -96,13 +97,13 @@ export const topupService = {
         url: session.url,
       };
     } catch (error) {
-      console.error('[TopupService] Error creating session:', error);
+      logger.error('Error creating Stripe session', error as Error);
       throw error;
     }
   },
 
   async completeTopup(transactionId: string, paymentMethod?: string) {
-    console.log(`[TopupService] Completing transaction: ${transactionId}${paymentMethod ? ` with method: ${paymentMethod}` : ''}`);
+    logger.info('Completing topup transaction', { transactionId, paymentMethod });
     
     return await db.transaction(async (tx) => {
       // 1. Double check transaction existence and status
@@ -115,7 +116,7 @@ export const topupService = {
       }
 
       if (transaction.status !== 'PENDING') {
-        console.log(`[TopupService] Transaction already processed: ${transactionId}, status: ${transaction.status}`);
+        logger.info('Transaction already processed', { transactionId, status: transaction.status });
         return transaction;
       }
 
@@ -135,7 +136,7 @@ export const topupService = {
 
       // If no rows were updated, it means another request already completed it
       if (updateResult.length === 0) {
-        console.log(`[TopupService] Race condition: Transaction ${transactionId} was already completed by another request`);
+        logger.info('Race condition: Transaction already completed', { transactionId });
         return await tx.query.transactions.findFirst({ where: eq(schema.transactions.id, transactionId) });
       }
 
@@ -160,18 +161,18 @@ export const topupService = {
           amount: transaction.amount,
           bonus: transaction.bonus,
           newBalance: updatedUser.balance,
-        }).catch(err => console.error('[EMAIL] Failed to send top-up confirmation:', err));
+        }).catch(err => logger.error('Failed to send top-up confirmation email', err));
       }
 
       // Notify via Discord
-      discordService.notifyNewTopup(transaction, updatedUser).catch(err => console.error('[DISCORD] Failed to send top-up notification:', err));
+      discordService.notifyNewTopup(transaction, updatedUser).catch(err => logger.error('Failed to send top-up Discord notification', err));
 
       return await tx.query.transactions.findFirst({ where: eq(schema.transactions.id, transactionId) });
     });
   },
 
   async cancelTopup(transactionId: string, status: 'FAILED' | 'CANCELLED' = 'CANCELLED') {
-    console.log(`[TopupService] Cancelling transaction: ${transactionId} with status: ${status}`);
+    logger.info('Cancelling topup transaction', { transactionId, status });
     
     // Atomic status update to prevent race conditions with completion
     const result = await db.update(schema.transactions)
@@ -189,12 +190,12 @@ export const topupService = {
     });
 
     if (!updatedTransaction) {
-      console.error(`[TopupService] Transaction not found for cancellation: ${transactionId}`);
+      logger.error('Transaction not found for cancellation', { transactionId });
       return null;
     }
 
     if (result.length === 0 && updatedTransaction.status !== status) {
-      console.log(`[TopupService] Transaction cannot be cancelled, current status is: ${updatedTransaction.status}`);
+      logger.info('Transaction cannot be cancelled', { transactionId, currentStatus: updatedTransaction.status });
     }
 
     return updatedTransaction;

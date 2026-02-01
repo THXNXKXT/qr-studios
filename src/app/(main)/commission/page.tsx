@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Palette,
   CheckCircle,
-  Clock,
   MessageCircle,
   Send,
   Upload,
@@ -15,6 +14,23 @@ import {
 } from "lucide-react";
 import { Button, Card, Input, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { createLogger } from "@/lib/logger";
+
+interface ProcessStep {
+  step: number;
+  title: string;
+  description: string;
+}
+
+interface PricingPlan {
+  name: string;
+  price: number;
+  description: string;
+  features: string[];
+  popular?: boolean;
+}
+
+const commissionLogger = createLogger("commission");
 
 export default function CommissionPage() {
   const { t } = useTranslation("common");
@@ -30,10 +46,12 @@ export default function CommissionPage() {
   });
 
   useEffect(() => {
-    setMounted(true);
+    // Use setTimeout to avoid synchronous setState warning
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = (key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
@@ -41,12 +59,16 @@ export default function CommissionPage() {
 
   useEffect(() => {
     if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        name: user.username || prev.name,
-        email: user.email || prev.email,
-        discord: user.discordId ? `discord:${user.discordId}` : prev.discord,
-      }));
+      // Use setTimeout to avoid synchronous setState warning
+      const timer = setTimeout(() => {
+        setFormData((prev) => ({
+          ...prev,
+          name: user.username || prev.name,
+          email: user.email || prev.email,
+          discord: user.discordId ? `discord:${user.discordId}` : prev.discord,
+        }));
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
@@ -122,7 +144,7 @@ export default function CommissionPage() {
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData, attachments);
+    commissionLogger.debug('Form submitted', { formData, attachments });
     // จะเชื่อมต่อกับ API ในภายหลัง
   }, [formData, attachments]);
 
@@ -195,18 +217,18 @@ export default function CommissionPage() {
           </div>
           
           <div className="flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-0 max-w-6xl mx-auto">
-            {processSteps.map((item: any, index: number) => (
+            {processSteps.map((item: ProcessStep, _index: number) => (
               <motion.div
                 key={item.step}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: _index * 0.1 }}
                 className="flex-1 w-full"
               >
                 <div className="relative flex flex-col items-center text-center group">
                   {/* Connector Line */}
-                  {index < processSteps.length - 1 && (
+                  {_index < processSteps.length - 1 && (
                     <div className="hidden lg:block absolute top-8 left-[60%] right-[-40%] h-[2px] bg-linear-to-r from-red-500/50 to-transparent z-0" />
                   )}
                   
@@ -240,13 +262,13 @@ export default function CommissionPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {pricingPlans.map((plan: any, index: number) => (
+            {pricingPlans.map((plan: PricingPlan, _index: number) => (
               <motion.div
                 key={plan.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: _index * 0.1 }}
                 className="h-full"
               >
                 <Card

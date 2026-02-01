@@ -21,6 +21,14 @@ import { OrderSkeleton } from "@/components/dashboard/order-skeleton";
 import { formatPrice, cn } from "@/lib/utils";
 import { ordersApi } from "@/lib/api";
 import { AnimatePresence } from "framer-motion";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const ordersLogger = createLogger("dashboard:orders");
 
 interface Order {
   id: string;
@@ -76,11 +84,12 @@ export default function OrdersPage() {
       
       try {
         const { data } = await ordersApi.getAll();
+        const response = data as ApiResponse<Order[]>;
         if (data && typeof data === 'object' && 'data' in data) {
-          setOrders((data as any).data || []);
+          setOrders(response.data || []);
         }
       } catch (error) {
-        console.error("Failed to fetch orders:", error);
+        ordersLogger.error('Failed to fetch orders', { error });
       } finally {
         setLoading(false);
       }

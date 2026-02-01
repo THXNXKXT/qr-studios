@@ -6,6 +6,9 @@ import { Users, Package, Key, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatNumber } from "@/lib/utils";
 import { statsApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const statsLogger = createLogger("home:stats");
 
 export function StatsSection() {
   const { t } = useTranslation("common");
@@ -18,7 +21,7 @@ export function StatsSection() {
   });
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
     const fetchStats = async () => {
       try {
         const { data: response, error } = await statsApi.getPublicStats();
@@ -34,13 +37,14 @@ export function StatsSection() {
         }
         
         if (error) {
-          console.error("Stats API Error:", error);
+          statsLogger.error('Stats API Error', { error });
         }
       } catch (err) {
-        console.error("Stats Fetch Error:", err);
+        statsLogger.error('Stats Fetch Error', { error: err });
       }
     };
     fetchStats();
+    return () => clearTimeout(timer);
   }, []);
 
   const stats = [

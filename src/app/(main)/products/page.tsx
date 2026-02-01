@@ -26,6 +26,14 @@ import { useCartStore } from "@/store/cart";
 import { productsApi } from "@/lib/api";
 import type { Product } from "@/types";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const productsPageLogger = createLogger("products");
 
 function ProductsContent() {
   const { t } = useTranslation("home");
@@ -73,11 +81,12 @@ function ProductsContent() {
         sort: sortBy === "price-low" ? "price-asc" : sortBy === "price-high" ? "price-desc" : sortBy
       });
 
-      if (data && (data as any).success) {
-        setProducts((data as any).data || []);
+      const response = data as ApiResponse<Product[]>;
+      if (data && response.success) {
+        setProducts(response.data || []);
       }
     } catch (err) {
-      console.error("Failed to fetch products:", err);
+      productsPageLogger.error('Failed to fetch products', { error: err });
     } finally {
       setLoading(false);
     }

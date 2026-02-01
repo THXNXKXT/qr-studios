@@ -18,8 +18,11 @@ import {
 import { Button, Card, Modal, Input } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin/confirm-modal";
 import { luckyWheelApi, adminApi } from "@/lib/api";
-import { formatPrice, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const luckyWheelLogger = createLogger("admin:lucky-wheel");
 
 interface Reward {
   id: string;
@@ -62,7 +65,7 @@ export default function LuckyWheelAdminPage() {
         setIsWheelEnabled(res.data.data.LUCKY_WHEEL_ENABLED !== false);
       }
     } catch (error) {
-      console.error("Failed to fetch wheel status", error);
+      luckyWheelLogger.error('Failed to fetch wheel status', { error });
     }
   };
 
@@ -73,7 +76,7 @@ export default function LuckyWheelAdminPage() {
       await adminApi.updateSetting("LUCKY_WHEEL_ENABLED", newValue);
       setIsWheelEnabled(newValue);
     } catch (error) {
-      console.error("Failed to toggle wheel", error);
+      luckyWheelLogger.error('Failed to toggle wheel', { error });
     } finally {
       setToggling(false);
     }
@@ -88,7 +91,7 @@ export default function LuckyWheelAdminPage() {
         setRewards(res.data.data || []);
       }
     } catch (error) {
-      console.error("Failed to fetch rewards", error);
+      luckyWheelLogger.error('Failed to fetch rewards', { error });
     } finally {
       setLoading(false);
     }
@@ -145,7 +148,7 @@ export default function LuckyWheelAdminPage() {
       setIsModalOpen(false);
       fetchRewards();
     } catch (error: unknown) {
-      console.error("Failed to save reward", error);
+      luckyWheelLogger.error('Failed to save reward', { error });
       const err = error as { message?: string };
       alert(err.message || (mounted ? t("lucky_wheel.errors.save_failed") : ""));
     } finally {
@@ -159,7 +162,7 @@ export default function LuckyWheelAdminPage() {
       await luckyWheelApi.adminDeleteReward(confirmDelete.id);
       fetchRewards();
     } catch (error) {
-      console.error("Failed to delete reward", error);
+      luckyWheelLogger.error('Failed to delete reward', { error });
     }
   };
 

@@ -19,6 +19,9 @@ import { PromoFormModal, ConfirmModal } from "@/components/admin";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const promoCodesLogger = createLogger("admin:promo-codes");
 
 type PromoCode = {
   id: string;
@@ -60,7 +63,7 @@ export default function AdminPromoCodesPage() {
         setPromoCodes(res.data.data || []);
       }
     } catch (err) {
-      console.error("Failed to fetch promo codes:", err);
+      promoCodesLogger.error('Failed to fetch promo codes', { error: err });
     } finally {
       setLoading(false);
     }
@@ -118,7 +121,7 @@ export default function AdminPromoCodesPage() {
         await fetchPromoCodes();
       }
     } catch (err) {
-      console.error("Error toggling promo code status:", err);
+      promoCodesLogger.error('Error toggling promo code status', { error: err });
     }
   }, [fetchPromoCodes]);
 
@@ -127,14 +130,14 @@ export default function AdminPromoCodesPage() {
       let res: { data: { success: boolean; error?: string } };
       const formattedData = {
         ...promoData,
-        type: promoData.type?.toUpperCase(),
+        type: promoData.type?.toUpperCase() as "PERCENTAGE" | "FIXED" | undefined,
         expiresAt: promoData.expiresAt ? new Date(promoData.expiresAt).toISOString() : null
       };
 
       if (selectedPromo) {
-        res = await adminApi.updatePromoCode(selectedPromo.id, formattedData) as unknown as { data: { success: boolean; error?: string } };
+        res = await adminApi.updatePromoCode(selectedPromo.id, formattedData as Partial<PromoCode>) as unknown as { data: { success: boolean; error?: string } };
       } else {
-        res = await adminApi.createPromoCode(formattedData) as unknown as { data: { success: boolean; error?: string } };
+        res = await adminApi.createPromoCode(formattedData as Partial<PromoCode>) as unknown as { data: { success: boolean; error?: string } };
       }
 
       if (res.data && res.data.success) {
@@ -144,7 +147,7 @@ export default function AdminPromoCodesPage() {
         alert(res.data?.error || (mounted ? t("promo_codes.errors.save_failed") : ""));
       }
     } catch (err) {
-      console.error("Error saving promo code:", err);
+      promoCodesLogger.error('Error saving promo code', { error: err });
     }
   }, [selectedPromo, fetchPromoCodes, mounted, t]);
 
@@ -160,7 +163,7 @@ export default function AdminPromoCodesPage() {
         alert(res.data?.error || (mounted ? t("promo_codes.errors.delete_fail") : ""));
       }
     } catch (err) {
-      console.error("Error deleting promo code:", err);
+      promoCodesLogger.error('Error deleting promo code', { error: err });
     }
   }, [selectedPromo, fetchPromoCodes, mounted, t]);
 

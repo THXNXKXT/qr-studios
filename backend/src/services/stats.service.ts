@@ -1,6 +1,7 @@
 import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq, count, sql } from 'drizzle-orm';
+import { logger } from '../utils/logger';
 
 export const statsService = {
   async getPublicStats() {
@@ -12,19 +13,19 @@ export const statsService = {
         totalMembersResult
       ] = await Promise.all([
         db.query.systemStats.findFirst({ where: eq(schema.systemStats.id, 'global') }).catch(e => {
-          console.error('[StatsService] Error fetching visitorStat:', e);
+          logger.error('Error fetching visitorStat', { error: e });
           return null;
         }),
         db.select({ value: count() }).from(schema.products).catch(e => {
-          console.error('[StatsService] Error fetching totalProducts:', e);
+          logger.error('Error fetching totalProducts', { error: e });
           return [{ value: 0 }];
         }),
         db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'ACTIVE')).catch(e => {
-          console.error('[StatsService] Error fetching totalLicenses:', e);
+          logger.error('Error fetching totalLicenses', { error: e });
           return [{ value: 0 }];
         }),
         db.select({ value: count() }).from(schema.users).catch(e => {
-          console.error('[StatsService] Error fetching totalMembers:', e);
+          logger.error('Error fetching totalMembers', { error: e });
           return [{ value: 0 }];
         })
       ]);
@@ -36,7 +37,7 @@ export const statsService = {
         totalMembers: totalMembersResult[0]?.value ?? 0
       };
     } catch (error) {
-      console.error('[StatsService] Critical error in getPublicStats:', error);
+      logger.error('Critical error in getPublicStats', { error });
       return {
         totalVisitors: 0,
         totalProducts: 0,

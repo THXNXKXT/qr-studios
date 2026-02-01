@@ -4,13 +4,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4001";
 
 import { toast } from "sonner";
 import { getAuthToken as getAuthTokenHelper } from "./auth-helper";
-import { ApiResponse, PaginatedResponse, AdminUsersParams } from "@/types/api";
+import { ApiResponse, AdminUsersParams, LuckyWheelReward, LuckyWheelHistory, CartItem, CheckoutSessionResponse, OrderResponse, CommissionUpdateRequest, BlacklistEntry, PromoCode, AdminStats, RevenueChartData, LowStockProduct, AnalyticsData, SystemSetting, FlashSaleProduct, ProductResponse, AnnouncementResponse, PromoValidateResponse } from "@/types/api";
 
 export interface ApiError {
   message: string;
   code?: string;
   type?: string;
-  details?: any;
+  details?: unknown;
   status?: number;
 }
 
@@ -29,7 +29,7 @@ export async function apiFetch<T>(
   const timeoutId = setTimeout(() => {
     try {
       controller.abort("Request timed out");
-    } catch (e) {
+    } catch (_e) {
       controller.abort();
     }
   }, timeoutMs);
@@ -174,7 +174,7 @@ export const productsApi = {
 export const ordersApi = {
   getAll: () => apiFetch("/api/users/orders"),
   getById: (id: string) => apiFetch(`/api/orders/${id}`),
-  create: (items: any[], paymentMethod: string = 'STRIPE', promoCode?: string) =>
+  create: (items: { productId: string; quantity: number }[], paymentMethod: string = 'STRIPE', promoCode?: string) =>
     apiFetch("/api/orders", {
       method: "POST",
       body: JSON.stringify({ items, paymentMethod, promoCode }),
@@ -204,20 +204,20 @@ export const licensesApi = {
 
 // Checkout API
 export const checkoutApi = {
-  createStripeSession: (items: any[], promoCode?: string) =>
-    apiFetch("/api/checkout/stripe", {
+  createStripeSession: (items: CartItem[], promoCode?: string) =>
+    apiFetch<CheckoutSessionResponse>("/api/checkout/stripe", {
       method: "POST",
       body: JSON.stringify({ items, promoCode }),
     }),
   payWithBalance: (orderId: string) =>
-    apiFetch("/api/checkout/balance", {
+    apiFetch<{ success: boolean }>("/api/checkout/balance", {
       method: "POST",
       body: JSON.stringify({ orderId }),
     }),
   verifyPayment: (orderId: string) =>
-    apiFetch(`/api/checkout/verify/${orderId}`),
+    apiFetch<{ success: boolean; order?: OrderResponse }>(`/api/checkout/verify/${orderId}`),
   verifyStripePayment: (sessionId: string) =>
-    apiFetch(`/api/checkout/verify-stripe/${sessionId}`),
+    apiFetch<{ success: boolean; order?: OrderResponse }>(`/api/checkout/verify-stripe/${sessionId}`),
 };
 
 // Topup API
@@ -240,7 +240,7 @@ export const topupApi = {
 // Promo API
 export const promoApi = {
   validate: (code: string, cartTotal: number, token?: string) => {
-    return apiFetch<any>(`/api/promo/validate`, {
+    return apiFetch<PromoValidateResponse>(`/api/promo/validate`, {
       method: "POST",
       body: JSON.stringify({ code, cartTotal }),
       headers: token ? { "Authorization": `Bearer ${token}` } : {},
@@ -280,7 +280,7 @@ export const commissionApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: any) =>
+  update: (id: string, data: CommissionUpdateRequest) =>
     apiFetch(`/api/commissions/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -306,12 +306,12 @@ export const announcementsApi = {
 
 // Admin API
 export const adminApi = {
-  getStats: () => apiFetch<any>("/api/admin/stats"),
-  getRevenueChart: () => apiFetch<any[]>("/api/admin/stats/revenue-chart"),
-  getLowStock: () => apiFetch<any[]>("/api/admin/stats/low-stock"),
-  getAnalytics: () => apiFetch<any>("/api/admin/stats/analytics"),
-  getSettings: () => apiFetch<any>("/api/admin/settings"),
-  updateSetting: (key: string, value: any) =>
+  getStats: () => apiFetch<AdminStats>("/api/admin/stats"),
+  getRevenueChart: () => apiFetch<RevenueChartData[]>("/api/admin/stats/revenue-chart"),
+  getLowStock: () => apiFetch<LowStockProduct[]>("/api/admin/stats/low-stock"),
+  getAnalytics: () => apiFetch<AnalyticsData>("/api/admin/stats/analytics"),
+  getSettings: () => apiFetch<SystemSetting[]>("/api/admin/settings"),
+  updateSetting: (key: string, value: unknown) =>
     apiFetch(`/api/admin/settings/${key}`, {
       method: "PATCH",
       body: JSON.stringify({ value }),
@@ -334,8 +334,8 @@ export const adminApi = {
     if (params?.isFlashSale !== undefined) searchParams.set("isFlashSale", params.isFlashSale.toString());
     return apiFetch(`/api/admin/products?${searchParams.toString()}`);
   },
-  createProduct: (data: any) => apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify(data) }),
-  updateProduct: (id: string, data: any) => apiFetch(`/api/admin/products/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  createProduct: (data: Partial<ProductResponse>) => apiFetch<ProductResponse>("/api/admin/products", { method: "POST", body: JSON.stringify(data) }),
+  updateProduct: (id: string, data: Partial<ProductResponse>) => apiFetch<ProductResponse>(`/api/admin/products/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteProduct: (id: string) => apiFetch(`/api/admin/products/${id}`, { method: "DELETE" }),
   hardDeleteProduct: (id: string) => apiFetch(`/api/admin/products/${id}/permanent`, { method: "DELETE" }),
 
@@ -399,22 +399,22 @@ export const adminApi = {
   resetLicenseIp: (id: string) => apiFetch(`/api/admin/licenses/${id}/reset-ip`, { method: "POST" }),
 
   // IP Blacklist
-  getBlacklist: () => apiFetch<any[]>("/api/admin/licenses/blacklist"),
+  getBlacklist: () => apiFetch<BlacklistEntry[]>("/api/admin/licenses/blacklist"),
   addToBlacklist: (ipAddress: string, reason?: string) =>
     apiFetch("/api/admin/licenses/blacklist", { method: "POST", body: JSON.stringify({ ipAddress, reason }) }),
   removeFromBlacklist: (ip: string) => apiFetch(`/api/admin/licenses/blacklist/${ip}`, { method: "DELETE" }),
 
   // Promo Codes
-  getPromoCodes: () => apiFetch<any[]>("/api/admin/promo-codes"),
-  createPromoCode: (data: any) => apiFetch("/api/admin/promo-codes", { method: "POST", body: JSON.stringify(data) }),
-  updatePromoCode: (id: string, data: any) => apiFetch(`/api/admin/promo-codes/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  getPromoCodes: () => apiFetch<PromoCode[]>("/api/admin/promo-codes"),
+  createPromoCode: (data: Partial<PromoCode>) => apiFetch<PromoCode>("/api/admin/promo-codes", { method: "POST", body: JSON.stringify(data) }),
+  updatePromoCode: (id: string, data: Partial<PromoCode>) => apiFetch<PromoCode>(`/api/admin/promo-codes/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deletePromoCode: (id: string) => apiFetch(`/api/admin/promo-codes/${id}`, { method: "DELETE" }),
   togglePromoCode: (id: string) => apiFetch(`/api/admin/promo-codes/${id}/toggle`, { method: "PATCH" }),
 
   // Announcements
-  getAnnouncements: () => apiFetch<any[]>("/api/admin/announcements"),
-  createAnnouncement: (data: any) => apiFetch("/api/admin/announcements", { method: "POST", body: JSON.stringify(data) }),
-  updateAnnouncement: (id: string, data: any) => apiFetch(`/api/admin/announcements/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  getAnnouncements: () => apiFetch<AnnouncementResponse[]>("/api/admin/announcements"),
+  createAnnouncement: (data: Partial<AnnouncementResponse>) => apiFetch<AnnouncementResponse>("/api/admin/announcements", { method: "POST", body: JSON.stringify(data) }),
+  updateAnnouncement: (id: string, data: Partial<AnnouncementResponse>) => apiFetch<AnnouncementResponse>(`/api/admin/announcements/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteAnnouncement: (id: string) => apiFetch(`/api/admin/announcements/${id}`, { method: "DELETE" }),
   toggleAnnouncement: (id: string) => apiFetch(`/api/admin/announcements/${id}/toggle`, { method: "PATCH" }),
 
@@ -432,7 +432,7 @@ export const adminApi = {
   deleteReview: (id: string) => apiFetch(`/api/admin/reviews/${id}`, { method: "DELETE" }),
 
   // Flash Sale
-  getFlashSaleProducts: () => apiFetch<any[]>("/api/products/flash-sale"),
+  getFlashSaleProducts: () => apiFetch<FlashSaleProduct[]>("/api/products/flash-sale"),
   updateFlashSale: (id: string, data: { isFlashSale: boolean; flashSalePrice?: number; flashSaleEnds?: string | null }) =>
     apiFetch(`/api/admin/products/${id}`, {
       method: "PATCH",
@@ -455,18 +455,18 @@ export const adminApi = {
 // Lucky Wheel API
 export const luckyWheelApi = {
   getStatus: () => apiFetch<{ enabled: boolean }>("/api/lucky-wheel/status"),
-  getRewards: () => apiFetch<any[]>("/api/lucky-wheel/rewards"),
-  spin: () => apiFetch<any>("/api/lucky-wheel/spin", { method: "POST" }),
-  getHistory: () => apiFetch<any[]>("/api/lucky-wheel/history"),
+  getRewards: () => apiFetch<LuckyWheelReward[]>("/api/lucky-wheel/rewards"),
+  spin: () => apiFetch<{ reward: LuckyWheelReward; message: string }>("/api/lucky-wheel/spin", { method: "POST" }),
+  getHistory: () => apiFetch<LuckyWheelHistory[]>("/api/lucky-wheel/history"),
 
   // Admin
-  adminGetAllRewards: () => apiFetch<any[]>("/api/lucky-wheel/admin/rewards"),
-  adminCreateReward: (data: any) =>
+  adminGetAllRewards: () => apiFetch<LuckyWheelReward[]>("/api/lucky-wheel/admin/rewards"),
+  adminCreateReward: (data: Partial<LuckyWheelReward>) =>
     apiFetch("/api/lucky-wheel/admin/rewards", {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  adminUpdateReward: (id: string, data: any) =>
+  adminUpdateReward: (id: string, data: Partial<LuckyWheelReward>) =>
     apiFetch(`/api/lucky-wheel/admin/rewards/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),

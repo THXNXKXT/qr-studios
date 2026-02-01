@@ -27,6 +27,26 @@ import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
 import { cn, formatPrice, isProductOnFlashSale, getProductPrice, getTierInfo, calculateTierDiscount } from "@/lib/utils";
 import { useTranslation, Trans } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+interface PromoData {
+  code: string;
+  discount: number;
+  type: "PERCENTAGE" | "FIXED";
+}
+
+interface PromoCode {
+  code: string;
+  discount: number;
+  type: "PERCENTAGE" | "FIXED";
+}
+
+const cartLogger = createLogger("cart");
 
 export default function CartPage() {
   const { t } = useTranslation("common");
@@ -66,18 +86,18 @@ export default function CartPage() {
         const token = getAuthToken();
         const { promoApi } = await import("@/lib/api");
         const validTotal = Number(subtotal) || 0;
-        console.log("[Cart] Auto-validating promo:", { code: codeToValidate, cartTotal: validTotal });
+        cartLogger.debug('Auto-validating promo', { code: codeToValidate, cartTotal: validTotal });
         
         const { data, error } = await promoApi.validate(codeToValidate, validTotal, token || undefined);
         
-        if (data && (data as any).success) {
-          const newData = (data as any).data;
-          setAppliedCode(newData);
+        const response = data as ApiResponse<PromoData>;
+        if (data && response.success) {
+          setAppliedCode(response.data ?? null);
         } else {
           removeCode();
         }
       } catch (err) {
-        console.error("Auto-validation error:", err);
+        cartLogger.error('Auto-validation error', { error: err });
         removeCode();
       }
     };

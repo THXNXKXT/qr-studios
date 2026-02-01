@@ -5,6 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { announcementsApi } from "@/lib/api";
 import { Announcement } from "@/types";
 import { motion } from "framer-motion";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const announcementLogger = createLogger("announcements:detail");
 import { 
   ArrowLeft, 
   Calendar, 
@@ -28,14 +36,15 @@ export default function AnnouncementDetailPage() {
       if (!id) return;
       try {
         const { data } = await announcementsApi.getById(id as string);
-        if (data && (data as any).success) {
-          setAnnouncement((data as any).data);
+        const response = data as ApiResponse<Announcement>;
+        if (data && response.success) {
+          setAnnouncement(response.data ?? null);
         } else {
           // If not found or error, we might want to show an error state
-          console.error("Announcement not found");
+          announcementLogger.error('Announcement not found');
         }
       } catch (error) {
-        console.error("Failed to fetch announcement:", error);
+        announcementLogger.error('Failed to fetch announcement', { error });
       } finally {
         setLoading(false);
       }
@@ -49,7 +58,7 @@ export default function AnnouncementDetailPage() {
       navigator.share({
         title: announcement?.title,
         url: window.location.href,
-      }).catch(console.error);
+      }).catch((err) => announcementLogger.error('Share failed', { error: err }));
     }
   };
 

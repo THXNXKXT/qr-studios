@@ -16,17 +16,17 @@ import {
   ShoppingCart,
   Loader2,
   DollarSign,
-  Star,
-  Activity,
-  Calendar,
-  Wallet
+  Star
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { UserFormModal, ConfirmModal, OrderDetailModal } from "@/components/admin";
 import { formatPrice, cn, getTierInfo, TIERS, MemberTier } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
 import Link from "next/link";
+
+const usersLogger = createLogger("admin:users");
 
 type UserData = {
   id: string;
@@ -43,7 +43,34 @@ type UserData = {
   createdAt: string;
 };
 
-const roleConfig: Record<string, { icon: any; bg: string; text: string }> = {
+type OrderItem = {
+  id?: string;
+  productId: string;
+  product?: { name?: string; images?: string[] };
+  price: number;
+  quantity: number;
+};
+
+type OrderLicense = {
+  productId: string;
+  licenseKey: string;
+};
+
+type OrderData = {
+  id: string;
+  createdAt: string;
+  updatedAt?: string;
+  items: OrderItem[];
+  licenses?: OrderLicense[];
+  user: { id: string; username: string; email: string; discordId?: string };
+  total: number;
+  discount: number;
+  promoCode?: string | null;
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "CANCELLED" | "REFUNDED";
+  paymentMethod: string;
+};
+
+const roleConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; bg: string; text: string }> = {
   ADMIN: { icon: Shield, bg: "bg-red-600", text: "text-white shadow-lg shadow-red-600/20" },
   VIP: { icon: Crown, bg: "bg-red-500/20", text: "text-red-400 border border-red-500/20" },
   USER: { icon: User, bg: "bg-white/5", text: "text-gray-400 border border-white/5" },
@@ -71,7 +98,7 @@ export default function AdminUsersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBanOpen, setIsBanOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null); // Keeping any for now due to complexity of Order type vs UI usage
+  const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -86,17 +113,17 @@ export default function AdminUsersPage() {
           tier: filterTier !== "all" ? filterTier : undefined
         }),
         adminApi.getStats()
-      ]) as [{ data: { success: boolean; data: UserData[] } }, { data: { success: boolean; data: { users: { total: number; today: number; tiers: Record<string, number> }; orders: { completed: number }; revenue: { total: number } } } }];
+      ]);
 
-      if (usersRes.data && usersRes.data.success) {
-        setUsers(usersRes.data.data || []);
+      if (usersRes.data) {
+        setUsers(usersRes.data as UserData[]);
         setCurrentPage(1);
       }
-      if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data);
+      if (statsRes.data) {
+        setStats(statsRes.data);
       }
     } catch (err) {
-      console.error("Failed to fetch users:", err);
+      usersLogger.error('Failed to fetch users', { error: err });
     } finally {
       setLoading(false);
     }
@@ -118,15 +145,15 @@ export default function AdminUsersPage() {
     setIsBanOpen(true);
   }, []);
 
-  const handleViewOrder = useCallback(async (orderId: string) => {
+  const _handleViewOrder = useCallback(async (orderId: string) => {
     try {
-      const { data: res } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: any } };
+      const { data: res } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: OrderData } };
       if (res && res.success) {
         setSelectedOrder(res.data);
         setIsDetailOpen(true);
       }
     } catch (err) {
-      console.error("Failed to fetch order details:", err);
+      usersLogger.error('Failed to fetch order details', { error: err });
     }
   }, []);
 
@@ -135,14 +162,14 @@ export default function AdminUsersPage() {
       const res = await adminApi.updateOrderStatus(orderId, status) as { data: { success: boolean } };
       if (res.data && res.data.success) {
         if (selectedOrder?.id === orderId) {
-          const { data: detailRes } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: any } };
+          const { data: detailRes } = await adminApi.getOrderById(orderId) as { data: { success: boolean; data: OrderData } };
           if (detailRes && detailRes.success) {
             setSelectedOrder(detailRes.data);
           }
         }
       }
     } catch (err) {
-      console.error("Error updating order status:", err);
+      usersLogger.error('Error updating order status', { error: err });
     }
   }, [selectedOrder]);
 
@@ -150,7 +177,7 @@ export default function AdminUsersPage() {
     try {
       await adminApi.resendOrderReceipt(orderId);
     } catch (err) {
-      console.error("Error resending receipt:", err);
+      usersLogger.error('Error resending receipt', { error: err });
     }
   }, []);
 
@@ -190,7 +217,7 @@ export default function AdminUsersPage() {
       await fetchUsers();
       setIsFormOpen(false);
     } catch (err) {
-      console.error("Error updating user:", err);
+      usersLogger.error('Error updating user', { error: err });
       alert(t("users.errors.update_failed"));
     }
   }, [selectedUser, fetchUsers, t]);
@@ -206,10 +233,10 @@ export default function AdminUsersPage() {
       await fetchUsers();
       setIsBanOpen(false);
     } catch (err) {
-      console.error("Error toggling ban status:", err);
+      usersLogger.error('Error toggling ban status', { error: err });
       alert(t("users.errors.ban_failed"));
     }
-  }, [selectedUser, fetchUsers]);
+  }, [selectedUser, fetchUsers, t]);
 
   return (
     <div className="space-y-10 relative overflow-hidden">
@@ -491,7 +518,7 @@ export default function AdminUsersPage() {
       <UserFormModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        user={selectedUser as any}
+        user={selectedUser as UserData | null}
         onSave={handleSaveUser}
       />
 
@@ -515,16 +542,16 @@ export default function AdminUsersPage() {
         onClose={() => setIsDetailOpen(false)}
         order={selectedOrder ? {
           ...selectedOrder,
-          items: selectedOrder.items.map((item: any, i: number) => ({
+          items: selectedOrder.items.map((item, i: number) => ({
             id: item.id || `item-${i}`,
             productId: item.productId,
             productName: item.product?.name || t("common.unknown_product"),
             productImage: item.product?.images?.[0],
             price: item.price,
             quantity: item.quantity,
-            licenseKeys: (selectedOrder as any).licenses
-              ?.filter((l: any) => l.productId === item.productId)
-              .map((l: any) => l.licenseKey)
+            licenseKeys: selectedOrder.licenses
+              ?.filter((l) => l.productId === item.productId)
+              .map((l) => l.licenseKey)
           })),
           createdAt: new Date(selectedOrder.createdAt),
           updatedAt: new Date(selectedOrder.updatedAt || selectedOrder.createdAt),

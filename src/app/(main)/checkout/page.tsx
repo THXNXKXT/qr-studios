@@ -28,8 +28,49 @@ import { usePromoStore } from "@/store/promo";
 import { cn, formatPrice, isProductOnFlashSale, getProductPrice, getTierInfo, calculateTierDiscount } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
+import { checkoutLogger } from "@/lib/logger";
 import { checkoutApi, ordersApi } from "@/lib/api";
 import { useTranslation, Trans } from "react-i18next";
+import type { CartItem } from "@/types";
+
+interface OrderItemPayload {
+  productId: string;
+  quantity: number;
+}
+
+// API Response interfaces
+interface StripeSessionResponse {
+  success: boolean;
+  data?: {
+    url: string;
+  };
+  message?: string;
+  error?: string;
+}
+
+interface OrderResponse {
+  success: boolean;
+  data?: {
+    id: string;
+  };
+  message?: string;
+  error?: string;
+}
+
+interface PaymentResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+// Type guard to validate cart item has valid product
+function isValidCartItem(item: CartItem): boolean {
+  return !!item?.product?.id && typeof item.product.id === 'string';
+}
+
+function getProductIdFromCartItem(item: CartItem): string | undefined {
+  return item?.product?.id;
+}
 
 export default function CheckoutPage() {
   const { t } = useTranslation("common");
@@ -90,32 +131,31 @@ export default function CheckoutPage() {
     setShowConfirmDialog(false);
     setError(null);
     try {
-      // Create a clean payload and log it
-      const orderItems = items.map(item => {
-        // Find the ID correctly, prioritizing direct id then product.id
-        const productId = (item as any).id || (item as any).productId || item.product?.id || (item.product as any).id;
-        return {
-          productId: productId,
+      // Create a clean payload
+      const orderItems: OrderItemPayload[] = items
+        .filter(isValidCartItem)
+        .map((item) => ({
+          productId: getProductIdFromCartItem(item)!,
           quantity: item.quantity
-        };
-      });
+        }));
 
-      console.log("[Checkout] Processing order items payload:", JSON.stringify(orderItems, null, 2));
+      checkoutLogger.debug('Processing order items payload', { orderItems });
 
       // Verify no undefined or null IDs
-      const invalidItems = orderItems.filter(i => !i.productId || i.productId === 'undefined' || typeof i.productId !== 'string');
+      const invalidItems = orderItems.filter(i => !i.productId || i.productId === 'undefined');
       if (invalidItems.length > 0) {
-        console.error("[Checkout] Invalid items found:", invalidItems);
+        checkoutLogger.error('Invalid items found', { invalidItems });
         throw new Error(renderTranslation("checkout.errors.invalid_items"));
       }
 
       if (paymentMethod === 'STRIPE') {
         const { data, error: apiError } = await checkoutApi.createStripeSession(orderItems, promoCode || undefined);
         
-        if (data && (data as any).success && (data as any).data?.url) {
-          window.location.href = (data as any).data.url;
+        if (data && (data as StripeSessionResponse).success && (data as StripeSessionResponse).data?.url) {
+          window.location.href = (data as StripeSessionResponse).data!.url;
         } else {
-          const errorMessage = apiError || (data as any)?.message || (data as any)?.error || renderTranslation("checkout.errors.session_failed");
+          const stripeData = data as StripeSessionResponse;
+          const errorMessage = apiError || stripeData?.message || stripeData?.error || renderTranslation("checkout.errors.session_failed");
           throw new Error(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : String(errorMessage));
         }
       } else {
@@ -123,20 +163,20 @@ export default function CheckoutPage() {
           throw new Error(renderTranslation("checkout.errors.insufficient_balance"));
         }
 
-        console.log("[Checkout] Creating order for Balance payment:", { orderItems, promoCode });
+        checkoutLogger.debug('Creating order for Balance payment', { orderItems, promoCode });
 
         const { data: orderData, error: orderError } = await ordersApi.create(orderItems, 'BALANCE', promoCode || undefined);
         
-        console.log("[Checkout] Order response:", { orderData, orderError });
+        checkoutLogger.debug('Order response', { orderData, orderError });
 
-        if (orderData && (orderData as any).success) {
-          const orderId = (orderData as any).data.id;
-          console.log("[Checkout] Order created, paying with balance:", orderId);
+        if (orderData && (orderData as OrderResponse).success) {
+          const orderId = (orderData as OrderResponse).data!.id;
+          checkoutLogger.debug('Order created, paying with balance', { orderId });
           const { data: payData, error: payError } = await checkoutApi.payWithBalance(orderId);
           
-          console.log("[Checkout] Payment response:", { payData, payError });
+          checkoutLogger.debug('Payment response', { payData, payError });
 
-          if (payData && (payData as any).success) {
+          if (payData && (payData as PaymentResponse).success) {
             await new Promise(resolve => setTimeout(resolve, 500));
             await refresh();
             
@@ -144,11 +184,13 @@ export default function CheckoutPage() {
             clearCart();
             triggerConfetti();
           } else {
-            const payErrorMessage = payError || (payData as any)?.message || (payData as any)?.error || renderTranslation("checkout.errors.balance_failed");
+            const payErrorData = payData as PaymentResponse;
+            const payErrorMessage = payError || payErrorData?.message || payErrorData?.error || renderTranslation("checkout.errors.balance_failed");
             throw new Error(typeof payErrorMessage === 'object' ? JSON.stringify(payErrorMessage) : String(payErrorMessage));
           }
         } else {
-          const orderErrorMessage = orderError || (orderData as any)?.message || (orderData as any)?.error || renderTranslation("checkout.errors.order_failed");
+          const orderErrorData = orderData as OrderResponse;
+          const orderErrorMessage = orderError || orderErrorData?.message || orderErrorData?.error || renderTranslation("checkout.errors.order_failed");
           const errorStr = typeof orderErrorMessage === 'object' ? JSON.stringify(orderErrorMessage) : String(orderErrorMessage);
           
           if (errorStr.includes('Some products not found')) {
@@ -163,7 +205,7 @@ export default function CheckoutPage() {
         }
       }
     } catch (err) {
-      console.error("Payment error:", err);
+      checkoutLogger.error('Payment error', { error: err });
       setError(err instanceof Error ? err.message : renderTranslation("checkout.errors.general"));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
@@ -183,9 +225,7 @@ export default function CheckoutPage() {
   }
 
   if (!user && !authLoading && isSynced && !getAuthToken()) {
-    if (typeof window !== 'undefined') {
-      window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
-    }
+    router.push(`/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
     return null;
   }
 

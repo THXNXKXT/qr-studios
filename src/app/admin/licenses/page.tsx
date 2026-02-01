@@ -28,6 +28,31 @@ import { Card, Button, Input, Badge } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin/confirm-modal";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const licensesLogger = createLogger("admin:licenses");
+
+interface Stats {
+  licenses?: {
+    total: number;
+    active: number;
+    expired: number;
+    revoked: number;
+  };
+}
+
+interface UserOption {
+  id: string;
+  username: string;
+  email: string;
+  discordId?: string;
+}
+
+interface ProductOption {
+  id: string;
+  name: string;
+  category?: string;
+}
 
 type LicenseStatus = "ACTIVE" | "EXPIRED" | "REVOKED";
 
@@ -43,7 +68,7 @@ type License = {
 };
 
 interface StatusConfigItem {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   bg: string;
   text: string;
@@ -71,7 +96,7 @@ export default function AdminLicensesPage() {
 
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
 
   // Grant License Modal
   const [isGrantOpen, setIsGrantOpen] = useState(false);
@@ -82,8 +107,8 @@ export default function AdminLicensesPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isGranting, setIsGranting] = useState(false);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<UserOption[]>([]);
+  const [allProducts, setAllProducts] = useState<ProductOption[]>([]);
   const [confirmRevoke, setConfirmRevoke] = useState<{ isOpen: boolean; id: string | null }>({
     isOpen: false,
     id: null,
@@ -105,14 +130,17 @@ export default function AdminLicensesPage() {
         adminApi.getStats(),
       ]);
 
-      if (licensesRes.data && (licensesRes.data as any).success) {
-        setLicenses((licensesRes.data as any).data || []);
+      if (licensesRes.data && (licensesRes.data as { success?: boolean; data?: unknown }).success) {
+        setLicenses(((licensesRes.data as { success?: boolean; data?: License[] }).data) || []);
       }
-      if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data);
+      if (statsRes.data && 'success' in statsRes.data) {
+        const statsData = statsRes.data as unknown as { success?: boolean; data?: { licenses?: { total?: number; active?: number; expired?: number; revoked?: number } } };
+        if (statsData.success && statsData.data?.licenses) {
+          setStats(statsData.data as { licenses: { total: number; active: number; expired: number; revoked: number } });
+        }
       }
     } catch (err) {
-      console.error("Failed to fetch licenses:", err);
+      licensesLogger.error('Failed to fetch licenses', { error: err });
     } finally {
       setLoading(false);
     }
@@ -124,10 +152,10 @@ export default function AdminLicensesPage() {
         adminApi.getUsers({ limit: 100 }),
         adminApi.getProducts({ limit: 100 }),
       ]);
-      if (uRes.data && (uRes.data as any).success) setAllUsers((uRes.data as any).data);
-      if (pRes.data && (pRes.data as any).success) setAllProducts((pRes.data as any).data);
+      if (uRes.data && (uRes.data as { success?: boolean }).success) setAllUsers(((uRes.data as { success?: boolean; data?: UserOption[] }).data) || []);
+      if (pRes.data && (pRes.data as { success?: boolean }).success) setAllProducts(((pRes.data as { success?: boolean; data?: ProductOption[] }).data) || []);
     } catch (err) {
-      console.error("Failed to fetch users/products:", err);
+      licensesLogger.error('Failed to fetch users/products', { error: err });
     }
   };
 
@@ -167,16 +195,16 @@ export default function AdminLicensesPage() {
         expiresAt: grantData.expiresAt ? new Date(grantData.expiresAt).toISOString() : undefined,
       });
 
-      if (res.data && (res.data as any).success) {
+      if (res.data && (res.data as { success?: boolean; data?: unknown }).success) {
         await fetchLicenses();
         setIsGrantOpen(false);
         setGrantData({ userId: "", productId: "", expiresAt: "" });
       } else {
-        alert((res.data as any)?.error || t("licenses.errors.issue_failed"));
+        alert(((res.data as { error?: string })?.error) || t("licenses.errors.issue_failed"));
       }
-    } catch (err: any) {
-      console.error("Error granting license:", err);
-      alert(err.message || t("licenses.errors.issue_failed"));
+    } catch (err: unknown) {
+      licensesLogger.error('Error granting license', { error: err });
+      alert((err instanceof Error ? err.message : String(err)) || t("licenses.errors.issue_failed"));
     } finally {
       setIsGranting(false);
     }
@@ -191,14 +219,14 @@ export default function AdminLicensesPage() {
 
     try {
       const res = await adminApi.revokeLicense(confirmRevoke.id);
-      if (res.data && (res.data as any).success) {
+      if (res.data && (res.data as { success?: boolean }).success) {
         await fetchLicenses();
         setConfirmRevoke({ isOpen: false, id: null });
       } else {
-        alert((res.data as any)?.error || t("licenses.errors.revoke_failed"));
+        alert(((res.data as { error?: string })?.error) || t("licenses.errors.revoke_failed"));
       }
     } catch (err) {
-      console.error("Error revoking license:", err);
+      licensesLogger.error('Error revoking license', { error: err });
       alert(t("licenses.errors.revoke_error"));
     }
   }, [confirmRevoke.id, fetchLicenses, t]);
@@ -208,14 +236,14 @@ export default function AdminLicensesPage() {
     setIsResettingIp(true);
     try {
       const res = await adminApi.resetLicenseIp(confirmResetIp.id);
-      if (res.data && (res.data as any).success) {
+      if (res.data && (res.data as { success?: boolean }).success) {
         await fetchLicenses();
         setConfirmResetIp({ isOpen: false, id: null });
       } else {
-        alert((res.data as any)?.error || t("licenses.errors.reset_ip_failed"));
+        alert(((res.data as { error?: string })?.error) || t("licenses.errors.reset_ip_failed"));
       }
     } catch (err) {
-      console.error("Error resetting license IP:", err);
+      licensesLogger.error('Error resetting license IP', { error: err });
       alert(t("licenses.errors.reset_ip_error"));
     } finally {
       setIsResettingIp(false);

@@ -9,18 +9,24 @@ import {
   Clock,
   Loader2,
   Search,
-  ChevronRight,
   TrendingUp,
-  Award,
   ShoppingBag,
   History
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Badge, Button, Card, Input } from "@/components/ui";
+import { Badge, Card, Input } from "@/components/ui";
 import { cn, formatPrice } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
+import { createLogger } from "@/lib/logger";
 import { userApi } from "@/lib/api";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const pointsLogger = createLogger("dashboard:points");
 
 interface PointTransaction {
   id: string;
@@ -59,11 +65,16 @@ export default function PointHistoryPage() {
     setMounted(true);
   }, []);
 
-  const renderTranslation = (key: string, options?: any): string => {
+  const formattedDate = useCallback((date: string) => {
     if (!mounted) return "";
-    const result = t(key, options);
-    return typeof result === "string" ? result : String(result);
-  };
+    return new Date(date).toLocaleDateString(t('common.date_locale') === 'th' ? 'th-TH' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, [mounted, t]);
 
   const fetchHistory = useCallback(async () => {
     const token = getAuthToken();
@@ -75,15 +86,16 @@ export default function PointHistoryPage() {
 
     try {
       const { data } = await userApi.getTransactions();
-      if (data && (data as any).success) {
+      const response = data as ApiResponse<PointTransaction[]>;
+      if (response && response.success) {
         // Filter only point-related transactions or those with points > 0
-        const allTrans = (data as any).data || [];
+        const allTrans = response.data || [];
         setTransactions(allTrans.filter((transaction: PointTransaction) => 
           transaction.type === 'POINTS_EARNED' || transaction.type === 'POINTS_REDEEMED' || transaction.points > 0
         ));
       }
     } catch (err) {
-      console.error("Failed to fetch point history:", err);
+      pointsLogger.error('Failed to fetch point history', { error: err });
     } finally {
       setLoading(false);
     }
@@ -231,7 +243,7 @@ export default function PointHistoryPage() {
               animate="show"
               className="grid grid-cols-1 gap-4"
             >
-              {filteredTransactions.map((transaction, index) => {
+              {filteredTransactions.map((transaction, _index) => {
                 const isEarned = transaction.type === 'POINTS_EARNED' || (transaction.points > 0 && transaction.type !== 'POINTS_REDEEMED');
                 return (
                   <motion.div
@@ -277,13 +289,7 @@ export default function PointHistoryPage() {
                             <div className="flex items-center gap-4 text-xs text-gray-500">
                               <div className="flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5" />
-                                {new Date(transaction.createdAt).toLocaleDateString(t('common.date_locale') === 'th' ? 'th-TH' : 'en-US', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
+                                {formattedDate(transaction.createdAt)}
                               </div>
                               {transaction.paymentRef && (
                                 <span className="font-mono opacity-60">REF: {transaction.paymentRef?.substring(0, 12).toUpperCase() || 'N/A'}</span>

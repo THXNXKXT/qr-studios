@@ -22,9 +22,12 @@ import {
 import { Card, Button, Input, Badge } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin";
 import { formatPrice, cn, isProductOnFlashSale } from "@/lib/utils";
-import { adminApi, productsApi } from "@/lib/api";
+import { adminApi } from "@/lib/api";
 import type { Product } from "@/types";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const flashSaleLogger = createLogger("admin:flash-sale");
 
 export default function AdminFlashSalePage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -56,7 +59,7 @@ export default function AdminFlashSalePage() {
         setAllProducts(res.data.data || []);
       }
     } catch (err) {
-      console.error("Failed to fetch data:", err);
+      flashSaleLogger.error('Failed to fetch data', { error: err });
     } finally {
       setLoading(false);
     }
@@ -112,7 +115,7 @@ export default function AdminFlashSalePage() {
         await fetchData();
       }
     } catch (err) {
-      console.error("Failed to remove flash sale:", err);
+      flashSaleLogger.error('Failed to remove flash sale', { error: err });
     } finally {
       setIsSubmitting(false);
     }
@@ -135,9 +138,9 @@ export default function AdminFlashSalePage() {
         setIsEditModalOpen(false);
         await fetchData();
       }
-    } catch (err: any) {
-      console.error("Failed to update flash sale:", err);
-      alert(err.message || t("flash_sale.errors.save_failed"));
+    } catch (err: unknown) {
+      flashSaleLogger.error('Failed to update flash sale', { error: err });
+      alert((err instanceof Error ? err.message : String(err)) || t("flash_sale.errors.save_failed"));
     } finally {
       setIsSubmitting(false);
     }

@@ -8,6 +8,30 @@ import {
   clearBackendSession 
 } from "@/lib/auth-helper";
 import { checkoutApi, topupApi } from "@/lib/api";
+import { authLogger } from "@/lib/logger";
+
+// Interfaces for API responses
+interface TopupVerifyData {
+  amount: number;
+  bonus?: number;
+}
+
+interface TopupVerifyResponse {
+  success: boolean;
+  data: TopupVerifyData;
+}
+
+interface PaymentVerifyResponse {
+  success: boolean;
+}
+
+// NextAuth session type extension
+interface NextAuthSession {
+  user?: {
+    accessToken?: string;
+  };
+  accessToken?: string;
+}
 
 interface AuthState {
   user: BackendUser | null;
@@ -19,7 +43,7 @@ interface AuthState {
   verifiedSessions: string[];
   verifiedTopupSessions: string[];
   error: string | null;
-  sync: (session?: any, status?: string, force?: boolean) => Promise<void>;
+  sync: (session?: unknown, status?: string, force?: boolean) => Promise<void>;
   verifyPayment: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
   verifyTopup: (sessionId: string) => Promise<{ success: boolean; amount?: number; error?: string }>;
   setVerifyingPayment: (isVerifying: boolean) => void;
@@ -71,8 +95,9 @@ export const useAuthStore = create<AuthState>()(
         set({ isVerifyingTopup: true, error: null });
         try {
           const { data, error } = await topupApi.verifySession(sessionId);
-          if (data && (data as any).success) {
-            const amount = (data as any).data.amount + ((data as any).data.bonus || 0);
+          if (data && (data as TopupVerifyResponse).success) {
+            const topupData = (data as TopupVerifyResponse).data;
+            const amount = topupData.amount + (topupData.bonus || 0);
             set((state) => ({ 
               verifiedTopupSessions: [...state.verifiedTopupSessions, sessionId],
               isVerifyingTopup: false 
@@ -85,8 +110,9 @@ export const useAuthStore = create<AuthState>()(
 
             return { success: true, amount };
           } else {
-            set({ isVerifyingTopup: false, error: error || 'Top-up verification failed' });
-            return { success: false, error: error || 'Top-up verification failed' };
+            const errorMsg = error instanceof Error ? error.message : String(error || 'Top-up verification failed');
+            set({ isVerifyingTopup: false, error: errorMsg });
+            return { success: false, error: errorMsg };
           }
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : 'Unknown error during top-up verification';
@@ -108,7 +134,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isVerifyingPayment: true, error: null });
         try {
           const { data, error } = await checkoutApi.verifyStripePayment(sessionId);
-          if (data && (data as any).success) {
+          if (data && (data as PaymentVerifyResponse).success) {
             set((state) => ({ 
               verifiedSessions: [...state.verifiedSessions, sessionId],
               isVerifyingPayment: false 
@@ -122,11 +148,12 @@ export const useAuthStore = create<AuthState>()(
 
             return { success: true };
           } else {
-            set({ isVerifyingPayment: false, error: error || 'Verification failed' });
-            return { success: false, error: error || 'Verification failed' };
+            const errorMsg = String(error || 'Verification failed');
+            set({ isVerifyingPayment: false, error: errorMsg });
+            return { success: false, error: errorMsg };
           }
         } catch (err) {
-          const errMsg = err instanceof Error ? err.message : 'Unknown error during verification';
+          const errMsg = String(err instanceof Error ? err.message : 'Unknown error during verification');
           set({ isVerifyingPayment: false, error: errMsg });
           return { success: false, error: errMsg };
         }
@@ -147,7 +174,7 @@ export const useAuthStore = create<AuthState>()(
         if (activeSyncPromise && force) {
           try {
             await activeSyncPromise;
-          } catch (e) {
+          } catch (_e) {
             // Ignore errors from the previous sync, we're forcing a new one
           }
         }
@@ -166,10 +193,10 @@ export const useAuthStore = create<AuthState>()(
         activeSyncPromise = (async () => {
           try {
             // 4. Handle unauthenticated state from NextAuth
-            if (status === 'unauthenticated' || !session?.user) {
+            if (status === 'unauthenticated' || !(session as NextAuthSession)?.user) {
               if (!token) {
                 if (get().user) {
-                  console.log('[AuthStore] No token and no session, clearing auth');
+                  authLogger.debug('No token and no session, clearing auth');
                   clearBackendSession();
                   set({ user: null, loading: false, isSynced: true, isSyncing: false, error: null });
                 } else {
@@ -180,18 +207,18 @@ export const useAuthStore = create<AuthState>()(
                   if (!get().user) set({ loading: true });
                   set({ isSyncing: true });
                   
-                  console.log('[AuthStore] Recovering session from token...');
+                  authLogger.debug('Recovering session from token...');
                   const backendUser = await getBackendSession();
                   if (backendUser) {
                     // Update user even if it looks the same if forced
                     set({ user: backendUser, loading: false, isSynced: true, isSyncing: false, error: null });
                   } else {
-                    console.log('[AuthStore] Token invalid, clearing auth');
+                    authLogger.debug('Token invalid, clearing auth');
                     clearBackendSession();
                     set({ user: null, loading: false, isSynced: true, isSyncing: false, error: null });
                   }
                 } catch (e) {
-                  console.error('[AuthStore] Session recovery error:', e);
+                  authLogger.error('Session recovery error', e as Error);
                   set({ isSynced: true, loading: false, isSyncing: false });
                 }
               }
@@ -203,20 +230,20 @@ export const useAuthStore = create<AuthState>()(
               if (!get().user) set({ loading: true });
               set({ isSyncing: true });
               
-              console.log('[AuthStore] Syncing session with backend...');
+              authLogger.debug('Syncing session with backend...');
               let backendUser = await getBackendSession();
 
               // Race Condition Check: If user logged out or token changed during fetch, abort
               if (getAuthToken() === null && status !== 'authenticated') {
-                console.log('[AuthStore] Auth state changed during sync, aborting');
+                authLogger.debug('Auth state changed during sync, aborting');
                 return;
               }
 
               if (!backendUser && session) {
-                console.log('[AuthStore] Creating new backend session...');
-                const accessToken = (session as any).accessToken || (session?.user as any)?.accessToken;
+                authLogger.debug('Creating new backend session...');
+                const accessToken = (session as NextAuthSession).accessToken || ((session as NextAuthSession).user)?.accessToken;
                 if (!accessToken) {
-                  console.error('[AuthStore] No access token found in session');
+                  authLogger.error('No access token found in session');
                   return;
                 }
                 const backendSession = await createBackendSession({
@@ -226,13 +253,13 @@ export const useAuthStore = create<AuthState>()(
               }
 
               if (backendUser) {
-                console.log('[AuthStore] Sync complete, updating user');
+                authLogger.debug('Sync complete, updating user');
                 set({ user: backendUser, loading: false, isSynced: true, isSyncing: false, error: null });
               } else {
                 set({ isSynced: true, loading: false, isSyncing: false });
               }
             } catch (err) {
-              console.error('[AuthStore] Sync error:', err);
+              authLogger.error('Sync error', err as Error);
               const errorMessage = err instanceof Error ? err.message : 'Failed to sync session';
               set({ 
                 error: get().user ? null : errorMessage, 

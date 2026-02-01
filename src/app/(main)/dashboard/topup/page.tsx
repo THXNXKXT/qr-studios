@@ -21,6 +21,26 @@ import { useTranslation } from "react-i18next";
 import { TopupSkeleton } from "@/components/dashboard/topup-skeleton";
 import { cn, formatPrice } from "@/lib/utils";
 import { topupApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+  message?: string;
+  error?: string;
+}
+
+interface TopupPackage {
+  id: string;
+  amount: number;
+  bonus: number;
+}
+
+interface StripeSessionResponse {
+  url: string;
+}
+
+const topupLogger = createLogger("dashboard:topup");
 
 const topupPackages = [
   { amount: 100, bonus: 0 },
@@ -56,13 +76,14 @@ export default function TopupPage() {
 
     try {
       const { data, error } = await topupApi.getPackages();
-      if (data && (data as any).success) {
-        setTopupPackages((data as any).data);
+      const response = data as ApiResponse<TopupPackage[]>;
+      if (data && response.success) {
+        setTopupPackages(response.data ?? []);
       } else {
-        console.error("Failed to fetch packages:", error);
+        topupLogger.error('Failed to fetch packages', { error });
       }
     } catch (err) {
-      console.error("Failed to fetch packages:", err);
+      topupLogger.error('Failed to fetch packages', { error: err });
     } finally {
       setLoadingPackages(false);
     }
@@ -116,14 +137,15 @@ export default function TopupPage() {
     try {
       const { data, error: apiError } = await topupApi.createStripeSession(amount);
 
-      if (data && (data as any).success && (data as any).data?.url) {
-        window.location.href = (data as any).data.url;
+      const response = data as ApiResponse<StripeSessionResponse>;
+      if (data && response.success && response.data?.url) {
+        window.location.href = response.data.url;
       } else {
-        const msg = apiError || (data as any)?.message || (data as any)?.error || renderTranslation("dashboard.topup_page.errors.session_failed");
+        const msg = apiError || response?.message || response?.error || renderTranslation("dashboard.topup_page.errors.session_failed");
         throw new Error(typeof msg === 'object' ? JSON.stringify(msg) : String(msg));
       }
     } catch (err) {
-      console.error("Topup error details:", err);
+      topupLogger.error('Topup error details', { error: err });
       setError(err instanceof Error ? err.message : renderTranslation("dashboard.topup_page.errors.general"));
     } finally {
       setIsProcessing(false);

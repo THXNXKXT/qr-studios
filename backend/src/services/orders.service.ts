@@ -5,6 +5,7 @@ import { env } from '../config/env';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { emailService } from './email.service';
 import { getTierInfo } from '../utils/tiers';
+import { logger } from '../utils/logger';
 
 import { discordService } from './discord.service';
 
@@ -90,14 +91,14 @@ export const ordersService = {
       });
 
       if (usage) {
-        throw new BadRequestError('คุณได้ใช้คูปองนี้ไปแล้ว');
+        throw new BadRequestError('You have already used this promo code');
       }
     }
 
     const productIdStrings = [...new Set(items.map((item) => item.productId || (item as any).id).filter((id): id is string => !!id && id !== 'undefined'))];
     
-    console.log('[OrdersService] Items payload:', JSON.stringify(items, null, 2));
-    console.log('[OrdersService] Unique Product IDs to find:', productIdStrings);
+    logger.debug('Items payload', { items });
+    logger.debug('Unique Product IDs to find', { productIdStrings });
 
     if (productIdStrings.length === 0) {
       throw new BadRequestError('No valid products in order');
@@ -107,14 +108,14 @@ export const ordersService = {
       where: inArray(schema.products.id, productIdStrings),
     });
 
-    console.log('[OrdersService] Products found in DB:', productsResult.length);
-    console.log('[OrdersService] Products details:', JSON.stringify(productsResult.map(p => ({ id: p.id, name: p.name })), null, 2));
+    logger.debug('Products found in DB', { count: productsResult.length });
+    logger.debug('Products details', { products: productsResult.map(p => ({ id: p.id, name: p.name })) });
 
     // CRITICAL: Compare products found with UNIQUE IDs requested
     if (productsResult.length !== productIdStrings.length) {
       const foundIds = productsResult.map(p => p.id);
       const missingIds = productIdStrings.filter(id => !foundIds.includes(id));
-      console.error('[OrdersService] Missing Product IDs:', missingIds);
+      logger.error('Missing Product IDs', { missingIds });
       throw new BadRequestError(`Some products not found: ${missingIds.join(', ')}`);
     }
 
@@ -177,7 +178,7 @@ export const ordersService = {
         });
 
         if (usage) {
-          throw new BadRequestError('คุณได้ใช้คูปองนี้ไปแล้ว');
+          throw new BadRequestError('You have already used this promo code');
         }
 
         // Atomic usage limit check
@@ -536,20 +537,20 @@ export const ordersService = {
 
       // Calculate earned points based on per-product rewardPoints only
       let pointsEarned = 0;
-      console.log(`[OrdersService] Calculating points for order ${order.id}. Items count: ${order.items.length}`);
+      logger.debug(`Calculating points for order ${order.id}`, { itemCount: order.items.length });
       
       for (const item of order.items) {
         if (item.product.rewardPoints !== null && item.product.rewardPoints !== undefined && item.product.rewardPoints > 0) {
           const itemPoints = item.product.rewardPoints * item.quantity;
-          console.log(`[OrdersService] Item ${item.product.name}: Using fixed rewardPoints ${item.product.rewardPoints} x ${item.quantity} = ${itemPoints}`);
+          logger.debug(`Item ${item.product.name} points calculation`, { rewardPoints: item.product.rewardPoints, quantity: item.quantity, itemPoints });
           pointsEarned += itemPoints;
         }
       }
 
-      console.log(`[OrdersService] Total points to award: ${pointsEarned}`);
+      logger.debug('Total points to award', { pointsEarned });
       
       if (pointsEarned > 0) {
-        console.log(`[OrdersService] Awarding ${pointsEarned} points to user ${order.userId}`);
+        logger.info('Awarding points to user', { pointsEarned, userId: order.userId });
         await tx.update(schema.users)
           .set({ 
             points: sql`${schema.users.points} + ${pointsEarned}`,
@@ -572,12 +573,12 @@ export const ordersService = {
         // Add a notification for points earned
         await tx.insert(schema.notifications).values({
           userId: order.userId,
-          title: 'ได้รับแต้มสะสมใหม่!',
-          message: `คุณได้รับแต้มสะสมจำนวน ${pointsEarned.toLocaleString()} แต้ม จากคำสั่งซื้อ #${order.id.substring(0, 8)}`,
+          title: 'New Reward Points Earned!',
+          message: `You have earned ${pointsEarned.toLocaleString()} points from order #${order.id.substring(0, 8)}`,
           type: 'SYSTEM',
         });
       } else {
-        console.log(`[OrdersService] No points to award for order ${order.id}`);
+        logger.debug('No points to award', { orderId: order.id });
       }
 
       const { generateLicenseKey } = await import('../utils/license-generator');
@@ -658,7 +659,7 @@ export const ordersService = {
     // Notify via Discord
     const user = await db.query.users.findFirst({ where: eq(schema.users.id, result.order.userId) });
     if (user) {
-      discordService.notifyNewOrder(result.emailOrder, user).catch(err => console.error('[DISCORD] Failed to send order notification:', err));
+      discordService.notifyNewOrder(result.emailOrder, user).catch(err => logger.error('Failed to send Discord notification', err));
     }
 
     // Send emails outside of transaction
@@ -672,7 +673,7 @@ export const ordersService = {
           price: item.price,
           quantity: item.quantity
         })),
-      }).catch(err => console.error('[EMAIL] Failed to send order confirmation:', err));
+      }).catch(err => logger.error('Failed to send order confirmation email', err));
 
       // 2. Send individual license keys
       const createdLicenses = result.createdLicenses || [];
@@ -681,7 +682,7 @@ export const ordersService = {
           productName: license.productName,
           licenseKey: license.licenseKey,
           downloadUrl: license.downloadKey ? `${env.API_URL}/api/licenses/${license.id}/download` : undefined
-        }).catch(err => console.error('[EMAIL] Failed to send license key:', err));
+        }).catch(err => logger.error('Failed to send license key email', err));
       }
     }
 

@@ -18,6 +18,9 @@ import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { OrderDetailModal } from "@/components/admin";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const ordersLogger = createLogger("admin:orders");
 
 type OrderStatus = "COMPLETED" | "PENDING" | "PROCESSING" | "CANCELLED" | "REFUNDED";
 
@@ -74,7 +77,7 @@ export default function AdminOrdersPage() {
         setCurrentPage(1); // Reset to page 1 on search/filter change
       }
     } catch (err) {
-      console.error("Failed to fetch orders:", err);
+      ordersLogger.error('Failed to fetch orders', { error: err });
     } finally {
       setLoading(false);
     }
@@ -92,7 +95,7 @@ export default function AdminOrdersPage() {
         setIsDetailOpen(true);
       }
     } catch (err) {
-      console.error("Failed to fetch order details:", err);
+      ordersLogger.error('Failed to fetch order details', { error: err });
       // Fallback to basic data if full fetch fails
       setSelectedOrder(order);
       setIsDetailOpen(true);
@@ -115,7 +118,7 @@ export default function AdminOrdersPage() {
         alert(res.data?.error || "Failed to update order status");
       }
     } catch (err) {
-      console.error("Error updating order status:", err);
+      ordersLogger.error('Error updating order status', { error: err });
       alert("An error occurred while updating the order status");
     }
   }, [fetchOrders, selectedOrder]);
@@ -129,7 +132,7 @@ export default function AdminOrdersPage() {
         alert(res.data?.error || t("orders.messages.receipt_fail"));
       }
     } catch (err) {
-      console.error("Error resending receipt:", err);
+      ordersLogger.error('Error resending receipt', { error: err });
       alert("An error occurred while resending the receipt");
     }
   }, [t]);

@@ -21,6 +21,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
 import { topupApi } from "@/lib/api";
 import { TopupDetailModal } from "@/components/dashboard/topup-detail-modal";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const topupHistoryLogger = createLogger("dashboard:topup-history");
 
 interface TopupTransaction {
   id: string;
@@ -51,11 +59,12 @@ export default function TopupHistoryPage() {
 
     try {
       const { data } = await topupApi.getHistory();
-      if (data && (data as any).success) {
-        setTopups((data as any).data || []);
+      const response = data as ApiResponse<TopupTransaction[]>;
+      if (data && response.success) {
+        setTopups(response.data || []);
       }
     } catch (err) {
-      console.error("Failed to fetch top-up history:", err);
+      topupHistoryLogger.error('Failed to fetch top-up history', { error: err });
     } finally {
       setLoading(false);
     }

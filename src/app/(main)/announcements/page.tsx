@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { announcementsApi } from "@/lib/api";
 import { Announcement } from "@/types";
 import { motion } from "framer-motion";
+import { createLogger } from "@/lib/logger";
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const announcementsLogger = createLogger("announcements");
 import { Bell, Calendar, Megaphone, Loader2, ChevronRight } from "lucide-react";
 import { Badge, Button } from "@/components/ui";
 import { useTranslation } from "react-i18next";
@@ -18,11 +26,12 @@ export default function AnnouncementsPage() {
     const fetchAnnouncements = async () => {
       try {
         const { data } = await announcementsApi.getActive();
-        if (data && (data as any).success) {
-          setAnnouncements((data as any).data);
+        const response = data as ApiResponse<Announcement[]>;
+        if (data && response.success) {
+          setAnnouncements(response.data ?? []);
         }
       } catch (error) {
-        console.error("Failed to fetch announcements:", error);
+        announcementsLogger.error('Failed to fetch announcements', { error });
       } finally {
         setLoading(false);
       }

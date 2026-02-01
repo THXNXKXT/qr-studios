@@ -9,24 +9,23 @@ import {
   Clock,
   XCircle,
   PlayCircle,
-  User,
   DollarSign,
   Calendar,
   Loader2,
   FileText,
   MessageSquare,
-  AlertCircle,
   Save,
   X,
   History,
-  Hash,
-  ShieldCheck,
   Layout
 } from "lucide-react";
 import { Card, Button, Input, Badge } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const commissionsLogger = createLogger("admin:commissions");
 
 type CommissionStatus = "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
@@ -87,16 +86,22 @@ export default function AdminCommissionsPage() {
           status: filterStatus === "all" ? undefined : filterStatus,
         }),
         adminApi.getStats()
-      ]) as [{ data: { success: boolean; data: Commission[] } }, { data: { success: boolean; data: { commissions: { total: number; pending: number; inProgress: number; completed: number } } } }];
+      ]);
 
-      if (commissionsRes.data && commissionsRes.data.success) {
-        setCommissions(commissionsRes.data.data || []);
+      const commissionsData = commissionsRes as unknown as { data?: { success?: boolean; data?: Commission[] } };
+      const statsData = statsRes as unknown as { data?: { success?: boolean; data?: { commissions?: { total?: number; pending?: number; inProgress?: number; completed?: number } } } };
+
+      if (commissionsData.data?.success) {
+        setCommissions(commissionsData.data.data || []);
       }
-      if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data);
+      if (statsData.data?.success) {
+        const statsResponseData = statsData.data.data;
+        if (statsResponseData?.commissions) {
+          setStats(statsResponseData as { commissions: { total: number; pending: number; inProgress: number; completed: number } });
+        }
       }
     } catch (err) {
-      console.error("Failed to fetch commissions:", err);
+      commissionsLogger.error('Failed to fetch commissions', { error: err });
     } finally {
       setLoading(false);
     }
@@ -127,7 +132,7 @@ export default function AdminCommissionsPage() {
         setIsUpdateOpen(false);
       }
     } catch (err) {
-      console.error("Failed to update commission:", err);
+      commissionsLogger.error('Failed to update commission', { error: err });
       alert(mounted ? t("commissions.errors.update_failed") : "");
     } finally {
       setIsSaving(false);

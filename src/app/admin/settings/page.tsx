@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Save,
@@ -19,6 +19,9 @@ import { Card, Input, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const settingsLogger = createLogger("admin:settings");
 
 type Setting = {
   id: string;
@@ -64,19 +67,19 @@ export default function AdminSettingsPage() {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: res } = await adminApi.getSettings() as { data: { success: boolean; data: Setting[] } };
-      if (res && res.success) {
-        const settingsData = res.data || [];
+      const res = await adminApi.getSettings();
+      if (res.data) {
+        const settingsData = res.data;
         const normalizedData = Array.isArray(settingsData) ? settingsData : [];
-        setRawSettings(normalizedData);
+        setRawSettings(normalizedData as Setting[]);
         const settingsMap: Record<string, string | number | boolean | null> = {};
-        normalizedData.forEach((s: Setting) => {
-          settingsMap[s.key] = s.value;
+        normalizedData.forEach((s) => {
+          settingsMap[s.key] = s.value as string | number | boolean | null;
         });
         setSettings(settingsMap);
       }
     } catch (err) {
-      console.error("Failed to fetch settings:", err);
+      settingsLogger.error('Failed to fetch settings', { error: err });
     } finally {
       setLoading(false);
     }
@@ -89,12 +92,12 @@ export default function AdminSettingsPage() {
   const handleUpdateSetting = async (key: string, value: string | number | boolean | null) => {
     setSaving(key);
     try {
-      const { data: res } = await adminApi.updateSetting(key, value) as { data: { success: boolean } };
-      if (res && res.success) {
+      const res = await adminApi.updateSetting(key, value);
+      if (res.data) {
         setSettings((prev) => ({ ...prev, [key]: value }));
       }
     } catch (err) {
-      console.error(`Failed to update setting ${key}:`, err);
+      settingsLogger.error('Failed to update setting', { key, error: err });
       alert(`Failed to update ${key}`);
     } finally {
       setSaving(null);
@@ -130,7 +133,7 @@ export default function AdminSettingsPage() {
       } else {
         setPinState(prev => ({ ...prev, error: t("admin_pin.update_error") }));
       }
-    } catch (err) {
+    } catch (_err) {
       setPinState(prev => ({ ...prev, error: t("admin_pin.update_error") }));
     } finally {
       setPinState(prev => ({ ...prev, loading: false }));

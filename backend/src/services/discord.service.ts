@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 export interface DiscordMessage {
   title: string;
@@ -19,7 +20,7 @@ function ensureAbsoluteUrl(url: string | undefined): string | undefined {
   if (url.startsWith('http')) {
     // Even if it starts with http, if it's localhost, it won't show in Discord
     if (url.includes('localhost') || url.includes('127.0.0.1')) {
-      console.warn(`[DISCORD_SERVICE] Warning: Image URL contains localhost, Discord will not display this: ${url}`);
+      logger.warn('Discord image URL contains localhost', { url });
     }
     return url;
   }
@@ -28,7 +29,7 @@ function ensureAbsoluteUrl(url: string | undefined): string | undefined {
   const absoluteUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   
   if (absoluteUrl.includes('localhost') || absoluteUrl.includes('127.0.0.1')) {
-    console.warn(`[DISCORD_SERVICE] Warning: Generated URL contains localhost, Discord will not display this: ${absoluteUrl}`);
+    logger.warn('Generated Discord URL contains localhost', { url: absoluteUrl });
   }
   
   return absoluteUrl;
@@ -37,7 +38,7 @@ function ensureAbsoluteUrl(url: string | undefined): string | undefined {
 export const discordService = {
   async sendNotification(message: DiscordMessage) {
     if (!env.DISCORD_WEBHOOK_URL) {
-      console.warn('[DISCORD_SERVICE] DISCORD_WEBHOOK_URL not set, skipping notification');
+      logger.warn('Discord webhook not configured');
       return;
     }
 
@@ -56,7 +57,7 @@ export const discordService = {
       ],
     };
 
-    console.log('[DISCORD_SERVICE] Sending payload to Webhook:', JSON.stringify(payload, null, 2));
+    logger.debug('Sending Discord notification', { payload });
 
     try {
       const response = await fetch(env.DISCORD_WEBHOOK_URL, {
@@ -67,12 +68,12 @@ export const discordService = {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[DISCORD_SERVICE] Failed to send Discord notification: ${response.status} ${response.statusText}`, errorText);
+        logger.error('Failed to send Discord notification', { status: response.status, error: errorText });
       } else {
-        console.log('[DISCORD_SERVICE] Notification sent successfully');
+        logger.info('Discord notification sent');
       }
     } catch (error) {
-      console.error('[DISCORD_SERVICE] Error sending Discord notification:', error);
+      logger.error('Error sending Discord notification', error as Error);
     }
   },
 

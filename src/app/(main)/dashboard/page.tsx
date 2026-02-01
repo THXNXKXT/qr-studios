@@ -35,6 +35,9 @@ import { cn, formatPrice, getTierInfo, getUserTier, TIERS } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
 import { ordersApi, licensesApi, topupApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const dashboardLogger = createLogger("dashboard");
 
 interface Order {
   id: string;
@@ -64,6 +67,32 @@ interface TopupTransaction {
   paymentMethod: string | null;
   status: string;
   createdAt: string;
+}
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+interface Order {
+  id: string;
+  total: number;
+  status: string;
+  createdAt: string;
+  items: Array<{
+    product: {
+      name: string;
+    };
+  }>;
+}
+
+interface License {
+  id: string;
+  licenseKey: string;
+  status: string;
+  product: {
+    name: string;
+  };
 }
 
 export default function DashboardPage() {
@@ -98,9 +127,9 @@ export default function DashboardPage() {
       ]);
 
       return {
-        orders: (ordersRes.data as any)?.data || [],
-        licenses: (licensesRes.data as any)?.data || [],
-        topups: (topupRes.data as any)?.data || []
+        orders: (ordersRes.data as ApiResponse<Order[]>)?.data || [],
+        licenses: (licensesRes.data as ApiResponse<License[]>)?.data || [],
+        topups: (topupRes.data as ApiResponse<TopupTransaction[]>)?.data || []
       };
     },
     enabled: !!user?.id && isSynced,
@@ -132,7 +161,7 @@ export default function DashboardPage() {
     const forceRefresh = async () => {
       const token = getAuthToken();
       if (token) {
-        console.log('[Dashboard] Forcing profile refresh...');
+        dashboardLogger.debug('Forcing profile refresh');
         await refresh();
         // After profile sync, re-fetch dashboard specific data
         refetch();
@@ -231,8 +260,8 @@ export default function DashboardPage() {
 
             {/* Recent Top-ups */}
             <RecentTopups 
-              topups={topups as any} 
-              onSelectTopup={setSelectedTopup as any} 
+              topups={topups}
+              onSelectTopup={setSelectedTopup}
             />
 
             {/* Recent Orders */}

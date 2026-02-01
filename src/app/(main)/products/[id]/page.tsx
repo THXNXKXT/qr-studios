@@ -2,6 +2,14 @@ import { type Metadata, ResolvingMetadata } from 'next';
 import { productsApi } from '@/lib/api';
 import { ProductDetail } from './ProductDetail';
 import type { Product } from '@/types';
+import { createLogger } from '@/lib/logger';
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+const productDetailLogger = createLogger('product:detail');
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -14,7 +22,8 @@ export async function generateMetadata(
   const id = (await params).id;
   try {
     const { data } = await productsApi.getById(id);
-    const product = (data as any)?.data;
+    const response = data as ApiResponse<Product>;
+    const product = response?.data;
 
     if (!product) {
       return {
@@ -53,9 +62,10 @@ export default async function Page({ params }: Props) {
 
   try {
     const { data } = await productsApi.getById(id);
-    initialProduct = (data as any)?.data;
+    const response = data as ApiResponse<Product>;
+    initialProduct = response?.data;
   } catch (error) {
-    console.error('Failed to fetch initial product for SSR:', error);
+    productDetailLogger.error('Failed to fetch initial product for SSR', { error });
   }
 
   return <ProductDetail initialProduct={initialProduct} />;

@@ -2,6 +2,10 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4001";
 
+import { createLogger } from "@/lib/logger";
+
+const authHelperLogger = createLogger("auth:helper");
+
 export interface BackendUser {
   id: string;
   discordId: string;
@@ -105,14 +109,14 @@ export async function createBackendSession(user: {
       return data.data;
     }
     
-    console.error('[AuthHelper] Unexpected session response structure:', data);
+    authHelperLogger.error('[AuthHelper] Unexpected session response structure:', data);
     throw new Error(data.message || 'Invalid response from backend');
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('abort'))) {
-      console.warn('[AuthHelper] createBackendSession timed out or aborted');
+      authHelperLogger.warn('createBackendSession timed out or aborted');
     } else {
-      console.error('[AuthHelper] createBackendSession error:', error);
+      authHelperLogger.error('createBackendSession error', { error });
     }
     throw error;
   }
@@ -175,9 +179,9 @@ export async function getBackendSession(): Promise<BackendUser | null> {
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('abort'))) {
-      console.warn('[AuthHelper] getBackendSession timed out or aborted');
+      authHelperLogger.warn('getBackendSession timed out or aborted');
     } else {
-      console.error('[AuthHelper] Failed to fetch session:', error);
+      authHelperLogger.error('Failed to fetch session', { error });
     }
     return null;
   }

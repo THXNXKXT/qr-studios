@@ -34,7 +34,9 @@ import { LanguageSwitcher } from "@/components/admin/LanguageSwitcher";
 
 import { AdminPinModal } from "@/components/admin/AdminPinModal";
 import { getBackendSession } from "@/lib/auth-helper";
+import { createLogger } from "@/lib/logger";
 
+const layoutLogger = createLogger("admin:layout");
 export default function AdminLayout({
   children,
 }: {
@@ -71,7 +73,7 @@ export default function AdminLayout({
         
         setIsCheckingRole(false);
       } catch (error) {
-        console.error("Failed to verify admin access:", error);
+        layoutLogger.error('Failed to verify admin access', { error });
         router.push("/");
       }
     };

@@ -22,8 +22,11 @@ import {
 import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { ProductFormModal, ConfirmModal } from "@/components/admin";
 import { formatPrice, cn, isProductOnFlashSale } from "@/lib/utils";
-import { adminApi, productsApi } from "@/lib/api";
+import { adminApi } from "@/lib/api";
 import type { Product } from "@/types";
+import { createLogger } from "@/lib/logger";
+
+const productsLogger = createLogger("admin:products");
 
 function safeLower(value: unknown): string {
   if (typeof value === "string") return value.toLowerCase();
@@ -43,7 +46,7 @@ function normalizeProducts(raw: unknown): Product[] {
   return arr
     .filter(Boolean)
     .map((p: unknown) => {
-      const item = p as Record<string, any>;
+      const item = p as Record<string, unknown>;
       const images = Array.isArray(item?.images) ? item.images.filter(isSafeImageSrc) : [];
       const thumbnail = isSafeImageSrc(item?.thumbnail) ? item.thumbnail : undefined;
       return {
@@ -83,13 +86,12 @@ export default function AdminProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: res } = await adminApi.getProducts() as { data: { success: boolean; data: Product[] } };
-      if (res && res.success) {
-        const rawProducts = res.data;
-        setProducts(normalizeProducts(rawProducts));
+      const res = await adminApi.getProducts();
+      if (res.data) {
+        setProducts(normalizeProducts(res.data));
       }
     } catch (err) {
-      console.error("Failed to fetch products:", err);
+      productsLogger.error('Failed to fetch products', { error: err });
     } finally {
       setLoading(false);
     }
@@ -125,11 +127,6 @@ export default function AdminProductsPage() {
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteProduct = useCallback((product: Product) => {
-    setSelectedProduct(product);
-    setIsDeleteOpen(true);
-  }, []);
-
   const handleSaveSuccess = useCallback(async () => {
     await fetchProducts();
     setIsFormOpen(false);
@@ -138,16 +135,15 @@ export default function AdminProductsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedProduct) return;
     try {
-      // Standard delete is now Archive (Soft Delete)
-      const res = await adminApi.deleteProduct(selectedProduct.id) as { data: { success: boolean; error?: string } };
-      if (res.data && res.data.success) {
+      const res = await adminApi.deleteProduct(selectedProduct.id);
+      if (res.data) {
         await fetchProducts();
         setIsDeleteOpen(false);
       } else {
-        alert(res.data?.error || t("products.errors.archive_fail"));
+        alert(res.error?.message || t("products.errors.archive_fail"));
       }
     } catch (err) {
-      console.error("Error archiving product:", err);
+      productsLogger.error('Error archiving product', { error: err });
       alert(t("products.errors.archive_error"));
     }
   }, [selectedProduct, fetchProducts, t]);
@@ -155,29 +151,29 @@ export default function AdminProductsPage() {
   const handleConfirmHardDelete = useCallback(async () => {
     if (!selectedProduct) return;
     try {
-      const res = await adminApi.hardDeleteProduct(selectedProduct.id) as { data: { success: boolean; error?: string } };
-      if (res.data && res.data.success) {
+      const res = await adminApi.hardDeleteProduct(selectedProduct.id);
+      if (res.data) {
         await fetchProducts();
         setIsHardDeleteOpen(false);
       } else {
-        alert(res.data?.error || t("products.errors.delete_fail"));
+        alert(res.error?.message || t("products.errors.delete_fail"));
       }
     } catch (err) {
-      console.error("Error permanently deleting product:", err);
+      productsLogger.error('Error permanently deleting product', { error: err });
       alert(t("products.errors.delete_error"));
     }
   }, [selectedProduct, fetchProducts, t]);
 
   const handleRestoreProduct = useCallback(async (product: Product) => {
     try {
-      const res = await adminApi.updateProduct(product.id, { isActive: true }) as { data: { success: boolean; error?: string } };
-      if (res.data && res.data.success) {
+      const res = await adminApi.updateProduct(product.id, { isActive: true });
+      if (res.data) {
         await fetchProducts();
       } else {
-        alert(res.data?.error || t("products.errors.restore_fail"));
+        alert(res.error?.message || t("products.errors.restore_fail"));
       }
     } catch (err) {
-      console.error("Error restoring product:", err);
+      productsLogger.error('Error restoring product', { error: err });
       alert(t("products.errors.restore_error"));
     }
   }, [fetchProducts, t]);
@@ -463,7 +459,7 @@ export default function AdminProductsPage() {
       <ProductFormModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        product={selectedProduct as any}
+        product={selectedProduct}
         onSave={handleSaveSuccess}
       />
 

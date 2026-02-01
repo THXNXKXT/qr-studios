@@ -23,6 +23,9 @@ import { SettingsSkeleton } from "@/components/dashboard/settings-skeleton";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
+import { createLogger } from "@/lib/logger";
+
+const settingsLogger = createLogger("dashboard:settings");
 import { userApi } from "@/lib/api";
 
 export default function SettingsPage() {
@@ -106,7 +109,7 @@ export default function SettingsPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error("Failed to save settings:", err);
+      settingsLogger.error('Failed to save settings', { error: err });
       setError(renderTranslation("dashboard.settings_page.error_saving"));
     } finally {
       setIsSaving(false);

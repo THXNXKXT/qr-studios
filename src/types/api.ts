@@ -35,9 +35,9 @@ export interface ProductResponse {
   id: string;
   name: string;
   slug: string;
-  description: string;
+  description: string | null;
   price: number;
-  originalPrice?: number;
+  originalPrice?: number | null;
   category: "SCRIPT" | "UI" | "BUNDLE";
   images: string[];
   features: string[];
@@ -47,11 +47,15 @@ export interface ProductResponse {
   stock: number;
   isNew: boolean;
   isFeatured: boolean;
+  isActive: boolean;
   isFlashSale: boolean;
-  flashSalePrice?: number;
-  flashSaleEnds?: string;
-  rewardPoints?: number;
-  version: string;
+  flashSalePrice?: number | null;
+  flashSaleEnds?: string | Date | null;
+  rewardPoints?: number | null;
+  version?: string | null;
+  downloadUrl?: string;
+  downloadFileKey?: string;
+  isDownloadable: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -153,6 +157,64 @@ export interface PromoValidateResponse {
   message: string;
 }
 
+export interface PromoCode {
+  id: string;
+  code: string;
+  description?: string;
+  discount: number;
+  type: "percentage" | "fixed" | "PERCENTAGE" | "FIXED";
+  minOrderAmount?: number;
+  maxUses?: number;
+  uses: number;
+  expiresAt?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// Cart & Order Types
+export interface CartItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface CreateOrderRequest {
+  items: CartItem[];
+  paymentMethod: "STRIPE" | "BALANCE" | "PROMPTPAY";
+  promoCode?: string;
+}
+
+export interface CheckoutSessionResponse {
+  sessionId?: string;
+  clientSecret?: string;
+  orderId: string;
+  qrCode?: string;
+}
+
+// Commission Update Types
+export interface CommissionUpdateRequest {
+  title?: string;
+  description?: string;
+  budget?: number;
+  status?: "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
+  adminNotes?: string;
+  attachments?: string[];
+}
+
+// Blacklist Types
+export interface BlacklistEntry {
+  id: string;
+  ipAddress: string;
+  reason?: string;
+  createdAt: string;
+}
+
+// Flash Sale Product Type
+export interface FlashSaleProduct extends ProductResponse {
+  isFlashSale: true;
+  flashSalePrice: number;
+  flashSaleEnds: string;
+}
+
 // Review API Types
 export interface ReviewResponse {
   id: string;
@@ -228,8 +290,8 @@ export interface AnnouncementResponse {
     url: string;
   }[];
   isActive: boolean;
-  startsAt?: string;
-  endsAt?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
   createdAt: string;
 }
 
@@ -276,16 +338,17 @@ export interface DashboardStats {
 
 // Admin Stats Types
 export interface AdminStats {
-  totalUsers: number;
-  totalProducts: number;
-  totalOrders: number;
-  totalRevenue: number;
-  pendingOrders: number;
-  pendingCommissions: number;
-  todayRevenue: number;
-  todayOrders: number;
-  monthlyRevenue: number;
-  monthlyOrders: number;
+  users: {
+    total: number;
+    today: number;
+    tiers: Record<string, number>;
+  };
+  orders: {
+    completed: number;
+  };
+  revenue: {
+    total: number;
+  };
 }
 
 export interface RevenueChartData {
@@ -344,12 +407,12 @@ export interface AuditLog {
 // Lucky Wheel Types
 export interface LuckyWheelReward {
   id: string;
+  name: string;
   type: 'POINTS' | 'BALANCE';
-  amount: number;
+  value: number;
   probability: number;
-  label: string;
-  color?: string;
-  isActive: boolean;
+  color: string;
+  image?: string;
 }
 
 export interface LuckyWheelSpinResult {
@@ -361,7 +424,12 @@ export interface LuckyWheelHistory {
   id: string;
   userId: string;
   rewardId: string;
-  reward: LuckyWheelReward;
+  reward: {
+    name: string;
+    type: 'POINTS' | 'BALANCE';
+    value: number;
+  };
+  cost: number;
   createdAt: string;
 }
 

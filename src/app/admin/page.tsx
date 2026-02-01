@@ -20,6 +20,9 @@ import { Card, Badge, Button } from "@/components/ui";
 import { OrderDetailModal } from "@/components/admin";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const dashboardLogger = createLogger("admin:dashboard");
 
 export default function AdminDashboard() {
   const { t } = useTranslation("admin");
@@ -59,7 +62,7 @@ export default function AdminDashboard() {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
+      dashboardLogger.error('Failed to fetch dashboard data', { error });
     } finally {
       setLoading(false);
     }
@@ -77,7 +80,7 @@ export default function AdminDashboard() {
         setIsDetailOpen(true);
       }
     } catch (err) {
-      console.error("Failed to fetch order details:", err);
+      dashboardLogger.error('Failed to fetch order details', { error: err });
       setSelectedOrder(order);
       setIsDetailOpen(true);
     }
@@ -96,7 +99,7 @@ export default function AdminDashboard() {
         }
       }
     } catch (err) {
-      console.error("Error updating order status:", err);
+      dashboardLogger.error('Error updating order status', { error: err });
     }
   };
 
@@ -104,7 +107,7 @@ export default function AdminDashboard() {
     try {
       await adminApi.resendOrderReceipt(orderId);
     } catch (err) {
-      console.error("Error resending receipt:", err);
+      dashboardLogger.error('Error resending receipt', { error: err });
     }
   };
 

@@ -1,5 +1,6 @@
 import { db } from '../db';
 import * as schema from '../db/schema';
+import { logger } from '../utils/logger';
 
 export interface AuditLogData {
   userId?: string;
@@ -26,7 +27,7 @@ export const auditService = {
         userAgent: data.userAgent || null,
       });
     } catch (error) {
-      console.error('[AUDIT_LOG] Failed to create audit log:', error);
+      logger.error('Failed to create audit log', { error });
     }
   },
 };

@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { toast } from "sonner";
 import { adminApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const fileUploadLogger = createLogger("ui:file-upload");
 
 interface FileUploadProps {
   onFileSelect?: (file: File) => void;
@@ -57,7 +60,7 @@ export function FileUpload({
       if (file.type.startsWith("image/")) {
         const objectUrl = URL.createObjectURL(file);
         setLocalPreview(objectUrl);
-        console.log('[FileUpload] Created preview URL:', objectUrl);
+        fileUploadLogger.debug('Created preview URL', { url: objectUrl });
       } else {
         setLocalPreview(null);
       }
@@ -65,7 +68,7 @@ export function FileUpload({
       // Notify parent immediately of selection
       onFileSelect?.(file);
 
-      console.log('[FileUpload] autoUpload setting:', autoUpload);
+      fileUploadLogger.debug('autoUpload setting', { autoUpload });
 
       if (autoUpload === true) {
         setIsUploading(true);
@@ -83,7 +86,7 @@ export function FileUpload({
             onUploadSuccess?.(url, key);
           }
         } catch (err: any) {
-          console.error("Upload error:", err);
+          fileUploadLogger.error('Upload error', { error: err });
           toast.error(err.message || "Failed to upload file");
         } finally {
           setIsUploading(false);

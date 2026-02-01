@@ -7,6 +7,7 @@
 
 import { env } from '../config/env';
 import Redis from 'ioredis';
+import { logger } from '../utils/logger';
 
 interface CacheEntry {
     value: string;
@@ -40,23 +41,23 @@ class CacheService {
                 });
 
                 this.redis.on('connect', () => {
-                    console.log('[Cache] ✅ Redis connected successfully');
+                    logger.info('Redis connected successfully');
                     this.isRedisEnabled = true;
                 });
 
                 this.redis.on('error', (err) => {
-                    console.error('[Cache] ❌ Redis error:', err.message);
+                    logger.error('Redis error', { message: err.message });
                     // Fall back to in-memory on connection error
                     this.isRedisEnabled = false;
                 });
 
                 this.redis.on('close', () => {
-                    console.warn('[Cache] ⚠️ Redis connection closed, falling back to in-memory');
+                    logger.warn('Redis connection closed, falling back to in-memory');
                     this.isRedisEnabled = false;
                 });
 
                 this.redis.on('reconnecting', () => {
-                    console.log('[Cache] 🔄 Redis reconnecting...');
+                    logger.info('Redis reconnecting...');
                 });
 
                 // Try to connect
@@ -64,12 +65,12 @@ class CacheService {
                 this.isRedisEnabled = true;
 
             } catch (error) {
-                console.error('[Cache] ❌ Failed to initialize Redis:', error);
-                console.log('[Cache] Using in-memory cache as fallback');
+                logger.error('Failed to initialize Redis', error as Error);
+                logger.info('Using in-memory cache as fallback');
                 this.isRedisEnabled = false;
             }
         } else {
-            console.log('[Cache] No REDIS_URL configured. Using in-memory cache.');
+            logger.info('No REDIS_URL configured. Using in-memory cache.');
         }
     }
 
@@ -81,7 +82,7 @@ class CacheService {
             try {
                 return await this.redis.get(key);
             } catch (error) {
-                console.error('[Cache] Redis get error, falling back to memory:', error);
+                logger.error('Redis get error, falling back to memory', error as Error);
                 // Fall back to memory cache
             }
         }
@@ -106,7 +107,7 @@ class CacheService {
                 await this.redis.setex(key, ttlSeconds, value);
                 return;
             } catch (error) {
-                console.error('[Cache] Redis set error, falling back to memory:', error);
+                logger.error('Redis set error, falling back to memory', error as Error);
             }
         }
 
@@ -125,7 +126,7 @@ class CacheService {
                 await this.redis.del(key);
                 return;
             } catch (error) {
-                console.error('[Cache] Redis del error:', error);
+                logger.error('Redis del error', error as Error);
             }
         }
 
@@ -144,7 +145,7 @@ class CacheService {
                 }
                 return result;
             } catch (error) {
-                console.error('[Cache] Redis incr error, falling back to memory:', error);
+                logger.error('Redis incr error, falling back to memory', error as Error);
             }
         }
 
@@ -172,7 +173,7 @@ class CacheService {
             try {
                 return await this.redis.ttl(key);
             } catch (error) {
-                console.error('[Cache] Redis ttl error:', error);
+                logger.error('Redis ttl error', error as Error);
             }
         }
 
@@ -191,7 +192,7 @@ class CacheService {
             try {
                 return (await this.redis.exists(key)) === 1;
             } catch (error) {
-                console.error('[Cache] Redis exists error:', error);
+                logger.error('Redis exists error', error as Error);
             }
         }
 
@@ -213,7 +214,7 @@ class CacheService {
                 await pipeline.exec();
                 return;
             } catch (error) {
-                console.error('[Cache] Redis mset error, falling back to memory:', error);
+                logger.error('Redis mset error, falling back to memory', error as Error);
             }
         }
 
@@ -260,7 +261,7 @@ class CacheService {
      */
     async shutdown(): Promise<void> {
         if (this.redis) {
-            console.log('[Cache] Closing Redis connection...');
+            logger.info('Closing Redis connection...');
             await this.redis.quit();
         }
         this.memoryCache.clear();
@@ -286,10 +287,10 @@ class CacheService {
                     }
                 } while (cursor !== '0');
 
-                console.log(`[Cache] Invalidated ${deleted} keys matching "${pattern}"`);
+                logger.info(`Invalidated ${deleted} keys matching pattern`, { pattern, deleted });
                 return deleted;
             } catch (error) {
-                console.error('[Cache] Redis invalidatePattern error:', error);
+                logger.error('Redis invalidatePattern error', error as Error);
             }
         }
 
@@ -301,7 +302,7 @@ class CacheService {
                 deleted++;
             }
         }
-        console.log(`[Cache] [Memory] Invalidated ${deleted} keys matching "${pattern}"`);
+        logger.info(`[Memory] Invalidated ${deleted} keys matching pattern`, { pattern, deleted });
         return deleted;
     }
 
@@ -361,7 +362,7 @@ class CacheService {
             }
         }
         if (cleaned > 0 && env.NODE_ENV === 'development') {
-            console.log(`[Cache] Cleaned ${cleaned} expired entries`);
+            logger.debug(`Cleaned ${cleaned} expired entries`);
         }
     }
 }

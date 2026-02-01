@@ -1,15 +1,19 @@
 ﻿"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, Plus, Trash2, Save, Loader2, FileText, Layout, Image as ImageIcon, Settings, Zap, Globe, Package as PackageIcon, Info, Star, Edit } from "lucide-react";
+import { X, Upload, Plus, Trash2, Save, Loader2, FileText, Layout, Image as ImageIcon, Settings, Zap, Globe, Package as PackageIcon, Info, Star } from "lucide-react";
+import NextImage from "next/image";
 import { Button, Input, Card, Badge, FileUpload } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
+
+const productFormLogger = createLogger("admin:product-form");
 
 function toDatetimeLocalValue(value: unknown): string | undefined {
   if (!value) return undefined;
-  const d = new Date(value as any);
+  const d = new Date(value as string | number | Date);
   if (Number.isNaN(d.getTime())) return undefined;
   const tzOffsetMs = d.getTimezoneOffset() * 60_000;
   return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16);
@@ -18,7 +22,7 @@ function toDatetimeLocalValue(value: unknown): string | undefined {
 interface Product {
   id?: string;
   name: string;
-  slug: string;
+  slug?: string;
   description: string;
   price: number;
   originalPrice?: number;
@@ -28,18 +32,28 @@ interface Product {
   features: string[];
   tags: string[];
   stock: number;
-  isNew: boolean;
-  isFeatured: boolean;
-  isFlashSale: boolean;
+  isNew?: boolean;
+  isFeatured?: boolean;
+  isFlashSale?: boolean;
   flashSalePrice?: number;
-  flashSaleEnds?: string;
+  flashSaleEnds?: string | Date;
   rewardPoints?: number;
   downloadUrl?: string;
   downloadFileKey?: string;
-  isDownloadable: boolean;
+  isDownloadable?: boolean;
   downloadKey?: string;
-  version: string;
-  isActive: boolean;
+  version?: string;
+  isActive?: boolean;
+}
+
+// API Response interfaces
+interface UploadResponse {
+  success: boolean;
+  data: {
+    url: string;
+    key: string;
+    name: string;
+  };
 }
 
 interface SelectedFile {
@@ -97,19 +111,32 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
   useEffect(() => {
     if (product) {
+      const productData = product as Product & {
+        features?: string[];
+        tags?: string[];
+        images?: string[];
+        flashSaleEnds?: string;
+        rewardPoints?: number;
+        downloadUrl?: string;
+        downloadFileKey?: string;
+        isDownloadable?: boolean;
+        downloadKey?: string;
+        isActive?: boolean;
+        version?: string;
+      };
       setFormData({
         ...product,
-        features: Array.isArray((product as any).features) && (product as any).features.length ? (product as any).features : [""],
-        tags: Array.isArray((product as any).tags) ? (product as any).tags : [],
-        images: Array.isArray((product as any).images) ? (product as any).images : [],
-        flashSaleEnds: toDatetimeLocalValue((product as any).flashSaleEnds),
-        rewardPoints: typeof (product as any).rewardPoints === "number" ? (product as any).rewardPoints : 0,
-        downloadUrl: (product as any).downloadUrl || undefined,
-        downloadFileKey: (product as any).downloadFileKey || undefined,
-        isDownloadable: Boolean((product as any).isDownloadable),
-        downloadKey: (product as any).downloadKey || undefined,
-        isActive: (product as any).isActive !== undefined ? Boolean((product as any).isActive) : true,
-        version: (product as any).version || "1.0.0",
+        features: Array.isArray(productData.features) && productData.features.length ? productData.features : [""],
+        tags: Array.isArray(productData.tags) ? productData.tags : [],
+        images: Array.isArray(productData.images) ? productData.images : [],
+        flashSaleEnds: toDatetimeLocalValue(productData.flashSaleEnds),
+        rewardPoints: typeof productData.rewardPoints === "number" ? productData.rewardPoints : 0,
+        downloadUrl: productData.downloadUrl || undefined,
+        downloadFileKey: productData.downloadFileKey || undefined,
+        isDownloadable: Boolean(productData.isDownloadable),
+        downloadKey: productData.downloadKey || undefined,
+        isActive: productData.isActive !== undefined ? Boolean(productData.isActive) : true,
+        version: productData.version || "1.0.0",
       });
     } else {
       setFormData(defaultProduct);
@@ -138,7 +165,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
       urlsToRevoke.forEach(url => {
         try {
           URL.revokeObjectURL(url);
-        } catch (e) {}
+        } catch (_e) {}
       });
     };
   }, [thumbnailFile, galleryFiles]);
@@ -157,15 +184,16 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
       const folderPath = `products/${formData.slug}`;
 
       let currentThumbnail = formData.thumbnail;
-      let currentImages = [...formData.images];
+      const currentImages: string[] = [...formData.images];
       let currentDownloadUrl = formData.downloadUrl;
       let currentDownloadFileKey = formData.downloadFileKey;
 
       // 1. Upload Thumbnail if changed
       if (thumbnailFile) {
         const res = await adminApi.uploadFile(thumbnailFile.file, `${folderPath}/thumbnail`);
-        if (res.data && (res.data as any).success) {
-          currentThumbnail = (res.data as any).data.url;
+        const uploadRes = res.data as unknown as UploadResponse;
+        if (res.data && uploadRes.success) {
+          currentThumbnail = uploadRes.data.url;
         } else {
           throw new Error(t("products.errors.upload_cover_failed"));
         }
@@ -176,8 +204,9 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         const uploadPromises = galleryFiles.map(f => adminApi.uploadFile(f.file, `${folderPath}/gallery`));
         const results = await Promise.all(uploadPromises);
         results.forEach(res => {
-          if (res.data && (res.data as any).success) {
-            currentImages.push((res.data as any).data.url);
+          const uploadRes = res.data as unknown as UploadResponse;
+          if (res.data && uploadRes.success) {
+            currentImages.push(uploadRes.data.url);
           } else {
             throw new Error(t("products.errors.upload_gallery_failed"));
           }
@@ -187,9 +216,10 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
       // 3. Upload Product File
       if (productFile) {
         const res = await adminApi.uploadFile(productFile, `${folderPath}/files`);
-        if (res.data && (res.data as any).success) {
-          currentDownloadUrl = (res.data as any).data.url;
-          currentDownloadFileKey = (res.data as any).data.key;
+        const uploadRes = res.data as unknown as UploadResponse;
+        if (res.data && uploadRes.success) {
+          currentDownloadUrl = uploadRes.data.url;
+          currentDownloadFileKey = uploadRes.data.key;
         } else {
           throw new Error(t("products.errors.upload_file_failed"));
         }
@@ -201,7 +231,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         images: currentImages,
         downloadUrl: currentDownloadUrl,
         downloadFileKey: currentDownloadFileKey,
-        category: formData.category.toUpperCase(),
+        category: formData.category.toUpperCase() as "SCRIPT" | "UI" | "BUNDLE",
         description: formData.description || null,
         originalPrice: formData.originalPrice || null,
         downloadKey: formData.downloadKey || null,
@@ -219,24 +249,17 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         res = await adminApi.createProduct(formattedData);
       }
 
-      if (res.data && (res.data as any).success) {
-        await onSave((res.data as any).data); // Signal parent to refresh
+      if (res.data) {
+        await onSave(res.data as Product); // Signal parent to refresh
         onClose();
       } else {
-        const errorData = (res.data as any);
-        if (errorData?.errors && Array.isArray(errorData.errors)) {
-          const backendErrors: Record<string, string> = {};
-          errorData.errors.forEach((err: any) => {
-            backendErrors[err.field] = err.message;
-          });
-          setErrors(backendErrors);
-        } else {
-          alert(errorData?.message || t("products.errors.save_failed"));
-        }
+        const errorMsg = res.error?.message || t("products.errors.save_failed");
+        alert(errorMsg);
       }
-    } catch (error: any) {
-      console.error("Error saving product:", error);
-      alert(error.message || t("products.errors.save_failed"));
+    } catch (_error) {
+      const err = _error instanceof Error ? _error : new Error(String(_error));
+      productFormLogger.error('Error saving product', { error: err });
+      alert(err.message || t("products.errors.save_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -337,7 +360,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     setFormData({ ...formData, tags: formData.tags.filter((t) => t !== tag) });
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
@@ -385,7 +408,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     e.target.value = "";
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setProductFile(file);
@@ -452,7 +475,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as "basic" | "media" | "settings" | "delivery")}
                   className={cn(
                     "flex items-center gap-2 px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all relative whitespace-nowrap",
                     activeTab === tab.id
@@ -541,7 +564,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             <div className="relative">
                               <select
                                 value={formData.category || "SCRIPT"}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value as "SCRIPT" | "UI" | "BUNDLE" })}
                                 className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-red-500/50 appearance-none transition-all font-bold text-sm uppercase tracking-widest"
                               >
                                 <option value="SCRIPT" className="bg-[#111] text-white">{t("products.categories.script")}</option>
@@ -610,10 +633,12 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             
                             {thumbnailFile || formData.thumbnail ? (
                               <div className="relative group aspect-square rounded-3xl overflow-hidden border border-white/10">
-                                <img 
-                                  src={thumbnailFile ? thumbnailFile.preview : formData.thumbnail} 
-                                  alt="" 
-                                  className="w-full h-full object-cover" 
+                                <NextImage
+                                  src={thumbnailFile ? thumbnailFile.preview : formData.thumbnail || ""}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 50vw, 200px"
                                 />
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                   <label className="p-2 rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer transition-all">
@@ -654,7 +679,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                               {/* Existing Images */}
                               {formData.images.map((img, idx) => (
                                 <div key={"old-" + idx} className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group">
-                                  <img src={img} alt="" className="w-full h-full object-cover" />
+                                  <NextImage src={img} alt="" fill className="object-cover" sizes="(max-width: 768px) 33vw, 150px" />
                                   <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, images: formData.images.filter((_, i) => i !== idx) })}
@@ -668,7 +693,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                               {/* New Gallery Files */}
                               {galleryFiles.map((file, idx) => (
                                 <div key={"new-" + idx} className="relative aspect-video rounded-2xl overflow-hidden border border-red-500/20 group">
-                                  <img src={file.preview} alt="" className="w-full h-full object-cover" />
+                                  <NextImage src={file.preview} alt="" fill className="object-cover" sizes="(max-width: 768px) 33vw, 150px" />
                                   <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600 text-[8px] font-black text-white uppercase tracking-widest">{t("products.modals.form.media.pending")}</div>
                                   <button
                                     type="button"
@@ -816,7 +841,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                     <label className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">{t("products.modals.form.settings.flash_ends")}</label>
                                     <Input
                                       type="datetime-local"
-                                      value={formData.flashSaleEnds || ""}
+                                      value={String(formData.flashSaleEnds || "")}
                                       onChange={(e) => setFormData({ ...formData, flashSaleEnds: e.target.value })}
                                       className="bg-black/40 border-red-500/30 focus:border-red-500 rounded-xl py-6 scheme-dark font-bold text-red-500"
                                       error={errors.flashSaleEnds}

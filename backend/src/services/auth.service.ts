@@ -4,6 +4,7 @@ import * as schema from '../db/schema';
 import { eq, and, lt } from 'drizzle-orm';
 import { env } from '../config/env';
 import { UnauthorizedError } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 export interface TokenPayload {
   id: string;
@@ -17,7 +18,7 @@ export interface TokenPayload {
 
 export const authService = {
   async syncUser(accessToken: string) {
-    console.log('[AUTH_SERVICE] Syncing user with Discord access token...');
+    logger.info('Syncing user with Discord access token...');
     try {
       // 1. Verify token with Discord API
       const discordResponse = await fetch('https://discord.com/api/users/@me', {
@@ -27,7 +28,7 @@ export const authService = {
       });
 
       if (!discordResponse.ok) {
-        console.error('[AUTH_SERVICE] Discord API verification failed:', discordResponse.statusText);
+        logger.error('Discord API verification failed', { status: discordResponse.statusText });
         throw new UnauthorizedError('Failed to verify Discord access token');
       }
 
@@ -38,7 +39,7 @@ export const authService = {
         avatar?: string;
       };
 
-      console.log('[AUTH_SERVICE] Discord data verified for:', discordData.username);
+      logger.info('Discord data verified for user', { username: discordData.username });
 
       // Use upsert-like logic with Drizzle to handle race conditions during concurrent syncs for the same user
       const avatarUrl = discordData.avatar ? `https://cdn.discordapp.com/avatars/${discordData.id}/${discordData.avatar}.png` : null;
@@ -64,7 +65,7 @@ export const authService = {
       const user = usersResult[0];
       if (!user) throw new Error('Failed to sync user');
       
-      console.log('[AUTH_SERVICE] Generating token pair for user:', user.id);
+      logger.info('Generating token pair for user', { userId: user.id });
       const tokens = await authService.generateTokenPair({
         id: user.id,
         discordId: user.discordId,
@@ -75,10 +76,10 @@ export const authService = {
         avatar: user.avatar || undefined,
       });
 
-      console.log('[AUTH_SERVICE] Sync successful');
+      logger.info('Sync successful', { userId: user.id });
       return { user, ...tokens };
     } catch (error: any) {
-      console.error('[AUTH_SERVICE] Sync failed:', error);
+      logger.error('Sync failed', error);
       throw error;
     }
   },
@@ -101,7 +102,7 @@ export const authService = {
     if (!storedToken) {
       // REUSE DETECTION: Token is validly signed but not in DB
       // This means it was either revoked or already used (rotated)
-      console.warn(`[SECURITY] Refresh token reuse detected for user ${payload.id}. Revoking all tokens.`);
+      logger.warn('Refresh token reuse detected', { userId: payload.id });
       
       await authService.revokeRefreshTokens(payload.id);
       
@@ -173,7 +174,17 @@ export const authService = {
     const refreshToken = authService.generateRefreshToken(user);
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Matches JWT_REFRESH_EXPIRES_IN (7d)
+    // Parse JWT_REFRESH_EXPIRES_IN (e.g., '7d', '1h', '30m') to milliseconds
+    const expiresInMatch = env.JWT_REFRESH_EXPIRES_IN.match(/^(\d+)([dhm])$/);
+    if (expiresInMatch) {
+      const value = parseInt(expiresInMatch[1]!);
+      const unit = expiresInMatch[2]!;
+      const multiplier = unit === 'd' ? 24 * 60 * 60 * 1000 : unit === 'h' ? 60 * 60 * 1000 : 60 * 1000;
+      expiresAt.setTime(expiresAt.getTime() + value * multiplier);
+    } else {
+      // Default to 7 days if parsing fails
+      expiresAt.setDate(expiresAt.getDate() + 7);
+    }
 
     await db.insert(schema.refreshTokens).values({
       token: refreshToken,
@@ -185,14 +196,11 @@ export const authService = {
   },
 
   generateAccessToken(user: TokenPayload): string {
+    // Minimal payload - only essential data for auth
     const payload = {
       id: user.id,
       discordId: user.discordId,
-      username: user.username,
-      email: user.email,
       role: user.role,
-      points: user.points,
-      avatar: user.avatar,
     };
     
     const options: SignOptions = {
@@ -203,14 +211,10 @@ export const authService = {
   },
 
   generateRefreshToken(user: TokenPayload): string {
+    // Minimal payload for refresh token
     const payload = {
       id: user.id,
       discordId: user.discordId,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      points: user.points,
-      avatar: user.avatar,
     };
     
     const options: SignOptions = {

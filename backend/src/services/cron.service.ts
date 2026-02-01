@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq, lt, and } from 'drizzle-orm';
+import { logger } from '../utils/logger';
 
 import { authService } from './auth.service';
 
@@ -9,7 +10,7 @@ export const cronService = {
   init() {
     // Run every day at midnight
     cron.schedule('0 0 * * *', async () => {
-      console.log('[CRON] Starting database cleanup...');
+      logger.info('Starting database cleanup');
       await Promise.all([
         cronService.cleanupExpiredTokens(),
         cronService.cleanupOldAuditLogs(),
@@ -27,7 +28,7 @@ export const cronService = {
       await cronService.updateExpiredFlashSales();
     });
 
-    console.log('[CRON] Jobs initialized successfully');
+    logger.info('Cron jobs initialized successfully');
   },
 
   async updateExpiredFlashSales() {
@@ -45,10 +46,10 @@ export const cronService = {
         .returning();
 
       if (result.length > 0) {
-        console.log(`[CRON] Updated ${result.length} expired flash sales to inactive`);
+        logger.info(`Updated ${result.length} expired flash sales to inactive`);
       }
     } catch (error) {
-      console.error('[CRON] Error updating expired flash sales:', error);
+      logger.error('Error updating expired flash sales', error as Error);
     }
   },
 
@@ -60,9 +61,9 @@ export const cronService = {
         .where(lt(schema.refreshTokens.expiresAt, now))
         .returning();
 
-      console.log(`[CRON] Cleaned up ${result.length} expired refresh tokens`);
+      logger.info(`Cleaned up ${result.length} expired refresh tokens`);
     } catch (error) {
-      console.error('[CRON] Error cleaning up refresh tokens:', error);
+      logger.error('Error cleaning up refresh tokens', error as Error);
     }
   },
 
@@ -76,10 +77,10 @@ export const cronService = {
         .returning();
 
       if (result.length > 0) {
-        console.log(`[CRON] Cleaned up ${result.length} audit logs older than 90 days`);
+        logger.info(`Cleaned up ${result.length} audit logs older than 90 days`);
       }
     } catch (error) {
-      console.error('[CRON] Error cleaning up old audit logs:', error);
+      logger.error('Error cleaning up old audit logs', error as Error);
     }
   },
 
@@ -87,7 +88,7 @@ export const cronService = {
     try {
       await authService.cleanupExpiredBlacklistedTokens();
     } catch (error) {
-      console.error('[CRON] Error cleaning up blacklisted tokens:', error);
+      logger.error('Error cleaning up blacklisted tokens', error as Error);
     }
   },
 };

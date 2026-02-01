@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
@@ -13,7 +14,7 @@ export const emailService = {
     }
   ) {
     if (!resend) {
-      console.warn('[EMAIL] Resend not configured, skipping email');
+      logger.warn('Resend not configured, skipping email');
       return;
     }
 
@@ -25,9 +26,9 @@ export const emailService = {
         html: emailService.getOrderConfirmationTemplate(orderData),
       });
 
-      console.log(`[EMAIL] Order confirmation sent`);
+      logger.info('Order confirmation sent');
     } catch (error) {
-      console.error('[EMAIL] Failed to send order confirmation');
+      logger.error('Failed to send order confirmation');
     }
   },
 
@@ -40,7 +41,7 @@ export const emailService = {
     }
   ) {
     if (!resend) {
-      console.warn('[EMAIL] Resend not configured, skipping email');
+      logger.warn('Resend not configured, skipping email');
       return;
     }
 
@@ -52,9 +53,9 @@ export const emailService = {
         html: emailService.getLicenseKeyTemplate(licenseData),
       });
 
-      console.log(`[EMAIL] License key sent`);
+      logger.info('License key sent');
     } catch (error) {
-      console.error('[EMAIL] Failed to send license key');
+      logger.error('Failed to send license key');
     }
   },
 
@@ -67,7 +68,7 @@ export const emailService = {
     }
   ) {
     if (!resend) {
-      console.warn('[EMAIL] Resend not configured, skipping email');
+      logger.warn('Resend not configured, skipping email');
       return;
     }
 
@@ -79,9 +80,9 @@ export const emailService = {
         html: emailService.getTopupConfirmationTemplate(topupData),
       });
 
-      console.log(`[EMAIL] Top-up confirmation sent`);
+      logger.info('Top-up confirmation sent');
     } catch (error) {
-      console.error('[EMAIL] Failed to send top-up confirmation');
+      logger.error('Failed to send top-up confirmation');
     }
   },
 
@@ -94,7 +95,7 @@ export const emailService = {
     }
   ) {
     if (!resend) {
-      console.warn('[EMAIL] Resend not configured, skipping email');
+      logger.warn('Resend not configured, skipping email');
       return;
     }
 
@@ -106,9 +107,9 @@ export const emailService = {
         html: emailService.getCommissionUpdateTemplate(commissionData),
       });
 
-      console.log(`[EMAIL] Commission update sent`);
+      logger.info('Commission update sent');
     } catch (error) {
-      console.error('[EMAIL] Failed to send commission update');
+      logger.error('Failed to send commission update');
     }
   },
 

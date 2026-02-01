@@ -28,6 +28,14 @@ import { Badge, Button, Card, Input, Pagination } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin/confirm-modal";
 import { LicenseSkeleton } from "@/components/dashboard/license-skeleton";
 import { licensesApi } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
+
+const licensesPageLogger = createLogger("dashboard:licenses");
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
 
 interface License {
   id: string;
@@ -40,6 +48,10 @@ interface License {
     name: string;
     downloadKey: string | null;
   };
+}
+
+interface DownloadUrlResponse {
+  downloadUrl: string;
 }
 
 export default function LicensesPage() {
@@ -80,8 +92,9 @@ export default function LicensesPage() {
 
         try {
           const { data, error } = await licensesApi.getAll();
+          const response = data as ApiResponse<License[]>;
           if (data && typeof data === 'object' && 'data' in data) {
-            const licensesData = (data as any).data || [];
+            const licensesData = response.data || [];
             setLicenses(licensesData);
 
             // Initialize IP values
@@ -92,7 +105,7 @@ export default function LicensesPage() {
             setIpValues(ips);
           }
         } catch (err) {
-          console.error("Failed to fetch licenses:", err);
+          licensesPageLogger.error('Failed to fetch licenses', { error: err });
         } finally {
           setLoading(false);
         }
@@ -166,8 +179,13 @@ export default function LicensesPage() {
     setActionLoading(`download-${licenseId}`);
     try {
       const { data, error } = await licensesApi.getDownloadUrl(licenseId);
-      if (data && (data as any).success) {
-        const downloadUrl = (data as any).data.downloadUrl;
+      const response = data as ApiResponse<DownloadUrlResponse>;
+      if (data && response.success) {
+        const downloadUrl = response.data?.downloadUrl;
+        if (!downloadUrl) {
+          alert(t('dashboard.licenses.errors.download_failed'));
+          return;
+        }
         // Construct full URL if it's relative
         const fullUrl = downloadUrl.startsWith('http')
           ? downloadUrl

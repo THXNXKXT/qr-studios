@@ -9,6 +9,9 @@ import { Button, Badge } from "@/components/ui";
 import { ProductCard } from "@/components/product";
 import { productsApi } from "@/lib/api";
 import type { Product } from "@/types";
+import { createLogger } from "@/lib/logger";
+
+const featuredProductsLogger = createLogger("home:featured-products");
 
 export function FeaturedProducts() {
   const { t } = useTranslation("common");
@@ -27,7 +30,7 @@ export function FeaturedProducts() {
         setProducts((data as any).data || []);
       }
     } catch (err) {
-      console.error("Failed to fetch featured products:", err);
+      featuredProductsLogger.error('Failed to fetch featured products', { error: err });
     } finally {
       setLoading(false);
     }

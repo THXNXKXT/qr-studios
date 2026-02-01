@@ -5,6 +5,7 @@ import { NotFoundError, BadRequestError, UnauthorizedError } from '../utils/erro
 import { generateLicenseKey } from '../utils/license-generator';
 import crypto from 'crypto';
 import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 export const licensesService = {
   async getUserLicenses(userId: string) {
@@ -312,11 +313,11 @@ export const licensesService = {
     success: boolean,
     resourceName?: string
   ) {
-    console.log(`[LICENSE] Verification - License: ${licenseId}, IP: ${ipAddress}, Success: ${success}, Resource: ${resourceName || 'N/A'}`);
+    logger.debug('License verification', { licenseId, ipAddress, success, resourceName });
   },
 
   async logLicenseAction(licenseId: string, action: string, details: string) {
-    console.log(`[LICENSE] ${action} - License: ${licenseId}, Details: ${details}`);
+    logger.debug('License action', { licenseId, action, details });
   },
 
   async getActiveLicenseStats() {

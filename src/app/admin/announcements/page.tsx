@@ -21,8 +21,11 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence } from "framer-motion";
 import { adminApi } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { createLogger } from "@/lib/logger";
 
-type Media = {
+const announcementsLogger = createLogger("admin:announcements");
+
+type _Media = {
   type: "image" | "video";
   url: string;
 };
@@ -31,7 +34,7 @@ type Announcement = {
   id: string;
   title: string;
   content: string;
-  media: string[]; // Backend returns string[]
+  media: { type: "image" | "video"; url: string }[];
   isActive: boolean;
   startsAt: string | null;
   endsAt: string | null;
@@ -64,14 +67,14 @@ export default function AdminAnnouncementsPage() {
         adminApi.getStats()
       ]);
 
-      if (annRes.data && (annRes.data as unknown as { success: boolean; data: Announcement[] }).success) {
-        setAnnouncements((annRes.data as unknown as { success: boolean; data: Announcement[] }).data || []);
+      if (annRes.data) {
+        setAnnouncements((Array.isArray(annRes.data) ? annRes.data : []) as Announcement[]);
       }
-      if (statsRes.data && statsRes.data.success) {
-        setStats(statsRes.data.data as Record<string, { active: number; inactive: number; total: number }>);
+      if (statsRes.data && 'success' in statsRes.data) {
+        setStats((statsRes.data as unknown as { data: Record<string, { active: number; inactive: number; total: number }> }).data || null);
       }
     } catch (err) {
-      console.error("Failed to fetch announcements:", err);
+      announcementsLogger.error('Failed to fetch announcements', { error: err });
     } finally {
       setLoading(false);
     }
@@ -124,17 +127,17 @@ export default function AdminAnnouncementsPage() {
         await fetchAnnouncements();
       }
     } catch (err) {
-      console.error("Error toggling announcement status:", err);
+      announcementsLogger.error('Error toggling announcement status', { error: err });
     }
   }, [fetchAnnouncements]);
 
   const handleSaveAnnouncement = useCallback(async (announcementData: Partial<Announcement>) => {
     try {
-      let res: { data: { success: boolean; error?: string } };
+      let res: { data?: { success: boolean; error?: string } };
       if (selectedAnnouncement) {
-        res = await adminApi.updateAnnouncement(selectedAnnouncement.id, announcementData) as { data: { success: boolean; error?: string } };
+        res = await adminApi.updateAnnouncement(selectedAnnouncement.id, announcementData) as unknown as { data?: { success: boolean; error?: string } };
       } else {
-        res = await adminApi.createAnnouncement(announcementData) as { data: { success: boolean; error?: string } };
+        res = await adminApi.createAnnouncement(announcementData) as unknown as { data?: { success: boolean; error?: string } };
       }
 
       if (res.data && res.data.success) {
@@ -144,7 +147,7 @@ export default function AdminAnnouncementsPage() {
         alert(res.data?.error || t("announcements.errors.save_failed"));
       }
     } catch (err) {
-      console.error("Error saving announcement:", err);
+      announcementsLogger.error('Error saving announcement', { error: err });
       alert(t("announcements.errors.save_failed"));
     }
   }, [selectedAnnouncement, fetchAnnouncements, t]);
@@ -161,7 +164,7 @@ export default function AdminAnnouncementsPage() {
         alert(res.data?.error || t("announcements.errors.delete_fail"));
       }
     } catch (err) {
-      console.error("Error deleting announcement:", err);
+      announcementsLogger.error('Error deleting announcement', { error: err });
       alert(t("announcements.errors.delete_fail"));
     }
   }, [selectedAnnouncement, fetchAnnouncements, t]);
@@ -338,7 +341,7 @@ export default function AdminAnnouncementsPage() {
                     {/* Media Preview */}
                     {announcement.media.length > 0 && (
                       <div className="flex flex-wrap gap-3 pt-4">
-                        {announcement.media.map((url, i) => (
+                        {announcement.media.map((media, i) => (
                           <div
                             key={i}
                             className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 flex items-center gap-2 group/media hover:bg-white/10 transition-all cursor-pointer shadow-inner"

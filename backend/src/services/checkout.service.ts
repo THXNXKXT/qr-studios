@@ -5,6 +5,7 @@ import stripe from '../config/stripe';
 import { env } from '../config/env';
 import { ordersService } from './orders.service';
 import { BadRequestError, NotFoundError } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 export const checkoutService = {
   async createStripeCheckoutSession(
@@ -13,9 +14,8 @@ export const checkoutService = {
     promoCode?: string
   ) {
     try {
-      console.log('[CheckoutService] Creating Stripe session for user:', userId);
-      console.log('[CheckoutService] Items:', JSON.stringify(items));
-      console.log('[CheckoutService] PromoCode:', promoCode);
+      logger.info('Creating Stripe session', { userId });
+      logger.debug('Checkout items', { items, promoCode });
       
       const order = await ordersService.createOrder(
         userId,
@@ -28,7 +28,7 @@ export const checkoutService = {
         throw new Error('Failed to create order');
       }
       
-      console.log('[CheckoutService] Order created successfully:', order.id);
+      logger.info('Order created successfully', { orderId: order.id });
       
       // Stripe line items
       const lineItems = [
@@ -45,7 +45,7 @@ export const checkoutService = {
         },
       ];
 
-      console.log('[CheckoutService] Stripe line items:', JSON.stringify(lineItems));
+      logger.debug('Stripe line items', { lineItems });
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card', 'promptpay'],
@@ -59,7 +59,7 @@ export const checkoutService = {
         },
       });
 
-      console.log('[CheckoutService] Stripe session created:', session.id);
+      logger.info('Stripe session created', { sessionId: session.id });
 
       await db.update(schema.orders)
         .set({ paymentIntent: session.id, updatedAt: new Date() })
@@ -71,7 +71,7 @@ export const checkoutService = {
         url: session.url,
       };
     } catch (error) {
-      console.error('[CheckoutService] Error in createStripeCheckoutSession:', error);
+      logger.error('Error in createStripeCheckoutSession', error as Error);
       if (error instanceof Error) {
         throw new BadRequestError(`Stripe checkout error: ${error.message}`);
       }

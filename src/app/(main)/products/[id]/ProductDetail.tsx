@@ -46,6 +46,38 @@ interface Review {
   createdAt: Date;
 }
 
+interface ReviewResponse {
+  id: string;
+  userId: string;
+  user?: {
+    username: string;
+    avatar?: string;
+  };
+  rating: number;
+  comment: string;
+  isVerified: boolean;
+  helpful?: number;
+  createdAt: string;
+}
+
+interface OrderItem {
+  productId: string;
+}
+
+interface Order {
+  status: string;
+  items: OrderItem[];
+}
+
+interface ApiResponse<T> {
+  data?: T;
+  success?: boolean;
+}
+
+interface DownloadResponse {
+  url: string;
+}
+
 export function ProductDetail({ initialProduct }: { initialProduct?: Product }) {
   const { t, i18n } = useTranslation("common");
   const { user, loading: authLoading } = useAuth();
@@ -69,7 +101,8 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     queryFn: async () => {
       const { data, error } = await productsApi.getById(productId);
       if (error) throw new Error(error.message);
-      const prod = (data as any).data;
+      const response = data as ApiResponse<Product>;
+      const prod = response?.data;
       
       // Track recently viewed
       if (prod) {
@@ -98,7 +131,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     queryKey: ['reviews', productId],
     queryFn: async () => {
       const { data } = await productsApi.getReviews(productId);
-      return (data as any)?.data || [];
+      return (data as ApiResponse<ReviewResponse[]>)?.data || [];
     },
     enabled: !!productId && mounted,
   });
@@ -110,10 +143,10 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     queryKey: ['purchase-status', user?.id, productId],
     queryFn: async () => {
       const { data } = await userApi.getOrders();
-      const orders = (data as any)?.data || [];
-      return orders.some((order: any) =>
+      const orders = (data as ApiResponse<Order[]>)?.data || [];
+      return orders.some(order =>
         order.status === "COMPLETED" &&
-        order.items.some((item: any) => item.productId === productId)
+        order.items.some(item => item.productId === productId)
       );
     },
     enabled: !!user?.id && !!productId && mounted,
@@ -125,7 +158,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     queryKey: ['can-review', user?.id, productId],
     queryFn: async () => {
       if (!user || !hasPurchased) return false;
-      const alreadyReviewed = reviews.some((r: any) => r.userId === user.id);
+      const alreadyReviewed = reviews.some((r) => r.userId === user.id);
       return !alreadyReviewed;
     },
     enabled: !!user?.id && !!productId && !!reviews && mounted,
@@ -154,7 +187,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     mutationFn: async () => {
       const { data, error } = await productsApi.download(productId);
       if (error) throw new Error(error.message);
-      return (data as any).data.url;
+      return (data as ApiResponse<DownloadResponse>)?.data?.url ?? '';
     },
     onSuccess: (url: string) => {
       window.open(url, '_blank');
@@ -166,7 +199,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
 
   const reviewStats = useMemo(() => {
     const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    reviews.forEach((r: any) => {
+    reviews.forEach((r: ReviewResponse) => {
       const rating = Math.round(r.rating) as keyof typeof dist;
       if (dist[rating] !== undefined) dist[rating]++;
     });
@@ -178,7 +211,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     };
   }, [reviews, product?.rating, product?.reviewCount]);
 
-  const renderTranslation = useCallback((key: string, options?: any): string => {
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
@@ -533,15 +566,15 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
 
         <ReviewSection
           productId={product.id}
-          reviews={reviews.map((r: any) => ({
+          reviews={reviews.map((r: ReviewResponse) => ({
             id: r.id,
             userId: r.userId,
-            username: (r as any).user?.username || "Unknown",
-            avatar: (r as any).user?.avatar,
+            username: r.user?.username || "Unknown",
+            avatar: r.user?.avatar,
             rating: r.rating,
             comment: r.comment,
             isVerified: r.isVerified,
-            helpful: (r as any).helpful || 0,
+            helpful: r.helpful || 0,
             createdAt: new Date(r.createdAt)
           }))}
           averageRating={reviewStats.average}

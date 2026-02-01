@@ -3,16 +3,29 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tag, X, Check, Loader2 } from "lucide-react";
-import { usePromoStore } from "@/store/promo";
+import { usePromoStore, type PromoCode } from "@/store/promo";
 import { promoApi } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth-helper";
+import { createLogger } from "@/lib/logger";
 import { Button } from "./button";
 import { Input } from "./input";
 import { cn, formatPrice } from "@/lib/utils";
 
+const promoLogger = createLogger("ui:promo-code");
+
 interface PromoCodeInputProps {
   cartTotal: number;
   className?: string;
+}
+
+interface PromoApiResponse {
+  success?: boolean;
+  data?: {
+    code: string;
+    discount: number;
+    type: "PERCENTAGE" | "FIXED";
+  };
+  message?: string;
 }
 
 export function PromoCodeInput({ cartTotal, className }: PromoCodeInputProps) {
@@ -33,29 +46,30 @@ export function PromoCodeInput({ cartTotal, className }: PromoCodeInputProps) {
       // Ensure cartTotal is a valid number
       const validTotal = Number(cartTotal);
       
-      console.log("[PromoCodeInput] Request Payload:", { 
+      promoLogger.debug('Request Payload', { 
         code: codeToValidate, 
         cartTotal: validTotal,
         cartTotalType: typeof validTotal 
       });
       
       const { data, error } = await promoApi.validate(codeToValidate, validTotal, token || undefined);
+      const response = data as PromoApiResponse;
       
-      if (data && (data as any).success) {
-        setAppliedCode((data as any).data);
+      if (data && response.success) {
+        setAppliedCode((response.data as unknown) as PromoCode | null);
         setMessage({
           type: "success",
-          text: (data as any).message || "ใช้รหัสโปรโมชั่นสำเร็จ!",
+          text: response.message || "ใช้รหัสโปรโมชั่นสำเร็จ!",
         });
         setCode("");
       } else {
         setMessage({
           type: "error",
-          text: error || "รหัสโปรโมชั่นไม่ถูกต้อง",
+          text: typeof error === 'string' ? error : "รหัสโปรโมชั่นไม่ถูกต้อง",
         });
       }
     } catch (err) {
-      console.error("Promo validation error:", err);
+      promoLogger.error('Promo validation error', { error: err });
       setMessage({
         type: "error",
         text: "เกิดข้อผิดพลาดในการตรวจสอบรหัส",

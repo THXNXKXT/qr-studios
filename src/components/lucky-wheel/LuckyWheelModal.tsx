@@ -1,33 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, X, Coins, History, Trophy, Loader2, Settings } from "lucide-react";
-import { Button, Card, Modal } from "@/components/ui";
+import { Star, History, Trophy, Loader2, Settings } from "lucide-react";
+import { Card, Modal } from "@/components/ui";
 import { luckyWheelApi } from "@/lib/api";
+import type { LuckyWheelReward, LuckyWheelHistory } from "@/types/api";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/lib/utils";
 import confetti from "canvas-confetti";
+import { createLogger } from "@/lib/logger";
 
-interface Reward {
-  id: string;
-  name: string;
-  type: "POINTS" | "BALANCE";
-  value: number;
-  probability: number;
-  color: string;
-  image?: string;
-}
+const luckyWheelLogger = createLogger("lucky-wheel");
 
 export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user, refresh } = useAuth();
-  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [rewards, setRewards] = useState<LuckyWheelReward[]>([]);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<LuckyWheelHistory[]>([]);
   const [activeTab, setActiveTab] = useState<"wheel" | "history">("wheel");
   const [rotation, setRotation] = useState(0);
-  const [winner, setWinner] = useState<any>(null);
+  const [winner, setWinner] = useState<LuckyWheelReward | null>(null);
 
   const SPIN_COST = 100;
 
@@ -50,14 +44,14 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         luckyWheelApi.getHistory()
       ]);
 
-      if (rewardsRes.data && (rewardsRes.data as any).success) {
-        setRewards((rewardsRes.data as any).data || []);
+      if (rewardsRes.data && (rewardsRes.data as { success?: boolean }).success) {
+        setRewards(((rewardsRes.data as { success?: boolean; data?: LuckyWheelReward[] }).data) || []);
       }
-      if (historyRes.data && (historyRes.data as any).success) {
-        setHistory((historyRes.data as any).data || []);
+      if (historyRes.data && (historyRes.data as { success?: boolean }).success) {
+        setHistory(((historyRes.data as { success?: boolean; data?: LuckyWheelHistory[] }).data) || []);
       }
     } catch (error) {
-      console.error("Failed to load wheel data", error);
+      luckyWheelLogger.error('Failed to load wheel data', { error });
     } finally {
       if (!isRefresh) setLoading(false);
     }
@@ -78,9 +72,10 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         return;
       }
 
-      const reward = (data as any).data?.reward;
+      const spinData = data as unknown as { reward?: LuckyWheelReward; message?: string } | null;
+      const reward = spinData?.reward;
       if (!reward) {
-        console.error("Reward data missing in spin response", data);
+        luckyWheelLogger.error('Reward data missing in spin response', { data });
         setSpinning(false);
         return;
       }
@@ -95,8 +90,8 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       const targetMidAngle = (rewardIndex * segmentAngle) + (segmentAngle / 2);
       const rotateToTarget = (360 - targetMidAngle) % 360;
 
-      // Number of full rotations
-      const extraSpins = 360 * 10;
+      // Number of full rotations (unused variable for future use)
+      const _extraSpins = 360 * 10;
 
       setRotation(prev => {
         // Calculate the next rotation value that lands on the target
@@ -121,7 +116,7 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       }, 5000);
 
     } catch (error) {
-      console.error("Spin error", error);
+      luckyWheelLogger.error('Spin error', { error });
       setSpinning(false);
     }
   };

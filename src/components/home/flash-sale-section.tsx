@@ -12,22 +12,25 @@ import { formatPrice, getProductPrice, isProductOnFlashSale } from "@/lib/utils"
 import { productsApi } from "@/lib/api";
 import type { Product } from "@/types";
 
+const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==";
+
 export const FlashSaleSection = memo(function FlashSaleSection() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const addItem = useCartStore((state) => state.addItem);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    setIsMounted(true);
   }, []);
 
   const fetchFlashSale = useCallback(async () => {
     try {
       const { data } = await productsApi.getFlashSale();
-      if (data && (data as any).success) {
-        setProducts((data as any).data || []);
+      if (data && (data as { success: boolean }).success) {
+        setProducts((data as { data: Product[] }).data || []);
       }
     } catch (err) {
       console.error("Failed to fetch flash sale products:", err);
@@ -49,13 +52,13 @@ export const FlashSaleSection = memo(function FlashSaleSection() {
 
   const flashSaleProducts = useMemo(() => products.slice(0, 4), [products]);
 
-  const renderTranslation = (key: string, options?: any): string => {
-    if (!mounted) return "";
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
+    if (!isMounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  };
+  }, [isMounted, t]);
 
-  if (!mounted) return null;
+  if (!isMounted) return null;
 
   return (
     <section className="py-16 relative overflow-hidden">
@@ -122,7 +125,7 @@ export const FlashSaleSection = memo(function FlashSaleSection() {
                         id: product.id,
                         name: product.name,
                         price: product.price,
-                        image: product.images[0] || "",
+                        image: product.thumbnail || "",
                         category: product.category,
                         description: product.description || "",
                         stock: product.stock,
@@ -134,12 +137,17 @@ export const FlashSaleSection = memo(function FlashSaleSection() {
                   {/* Image */}
                   <Link href={`/products/${product.id}`}>
                     <div className="relative aspect-video bg-linear-to-br from-red-900/50 to-black overflow-hidden">
-                      {(product.thumbnail || product.images[0]) ? (
+                      {product.thumbnail && !imageErrors[product.id] ? (
                         <Image
-                          src={product.thumbnail || product.images[0]}
+                          src={product.thumbnail}
                           alt={product.name}
                           fill
+                          sizes="(max-width: 768px) 50vw, 25vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-110"
+                          priority={index < 4}
+                          placeholder="blur"
+                          blurDataURL={blurDataURL}
+                          onError={() => setImageErrors(prev => ({ ...prev, [product.id]: true }))}
                         />
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">
@@ -152,14 +160,10 @@ export const FlashSaleSection = memo(function FlashSaleSection() {
                       {/* Individual Timer */}
                       {product.flashSaleEnds && (
                         <div className="absolute bottom-3 left-3 right-3 z-10">
-                          <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{renderTranslation("flash_sale.ends_in")}</span>
-                            <FlashSaleTimer 
-                              endTime={product.flashSaleEnds} 
-                              variant="compact" 
-                              className="scale-90 origin-right"
-                            />
-                          </div>
+                          <FlashSaleTimer 
+                            endTime={product.flashSaleEnds} 
+                            variant="pill" 
+                          />
                         </div>
                       )}
                     </div>

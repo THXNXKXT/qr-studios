@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,8 +8,6 @@ import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { 
-  ArrowLeft, 
-  ShoppingCart, 
   Star, 
   Check, 
   Shield, 
@@ -17,7 +15,8 @@ import {
   RefreshCw, 
   MessageCircle, 
   ImageOff, 
-  Clock 
+  Clock,
+  ShoppingCart
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Badge, WishlistButton, StockCounter, FlashSaleTimer } from "@/components/ui";
@@ -30,21 +29,13 @@ import {
 import { useCartStore } from "@/store/cart";
 import { useRecentlyViewedStore } from "@/store/recently-viewed";
 import { useAuth } from "@/hooks/useAuth";
-import { adminApi, productsApi, userApi } from "@/lib/api";
+import { useIsMounted } from "@/hooks/useIsMounted";
+import { productsApi, userApi } from "@/lib/api";
 import type { Product } from "@/types";
 import { cn, formatPrice, getProductPrice, isProductOnFlashSale } from "@/lib/utils";
 
-interface Review {
-  id: string;
-  userId: string;
-  username: string;
-  avatar?: string;
-  rating: number;
-  comment: string;
-  isVerified: boolean;
-  helpful: number;
-  createdAt: Date;
-}
+const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==";
+
 
 interface ReviewResponse {
   id: string;
@@ -79,21 +70,19 @@ interface DownloadResponse {
 }
 
 export function ProductDetail({ initialProduct }: { initialProduct?: Product }) {
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
   const { user, loading: authLoading } = useAuth();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [mainImageError, setMainImageError] = useState(false);
+  const [thumbErrors, setThumbErrors] = useState<Record<number, boolean>>({});
   const addItem = useCartStore((state) => state.addItem);
   const addToRecentlyViewed = useRecentlyViewedStore((state) => state.addItem);
-  const [mounted, setMounted] = useState(false);
+  const isMounted = useIsMounted();
 
   const productId = params?.id as string;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Fetch Product Data
   const { data: product, isLoading: productLoading } = useQuery({
@@ -104,27 +93,38 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
       const response = data as ApiResponse<Product>;
       const prod = response?.data;
       
-      // Track recently viewed
-      if (prod) {
-        addToRecentlyViewed({
-          id: prod.id,
-          name: prod.name,
-          price: prod.price,
-          image: Array.isArray(prod.images) ? prod.images[0] : "",
-          category: prod.category,
-          stock: prod.stock,
-          isFlashSale: prod.isFlashSale,
-          flashSalePrice: prod.flashSalePrice,
-          flashSaleEnds: prod.flashSaleEnds,
-          rewardPoints: prod.rewardPoints,
-          expectedPoints: prod.expectedPoints,
-        });
-      }
       return prod as Product;
     },
-    enabled: !!productId && mounted,
+    enabled: !!productId,
     initialData: initialProduct,
   });
+
+  // Track recently viewed in a separate effect to avoid cascading renders
+  const hasTracked = useRef(false);
+  useEffect(() => {
+    if (product && !hasTracked.current) {
+      addToRecentlyViewed({
+        id: product.id,
+        name: product.name,
+        description: product.description || "",
+        price: product.price,
+        originalPrice: product.originalPrice,
+        image: product.thumbnail || "",
+        category: product.category,
+        stock: product.stock,
+        rating: product.rating || 0,
+        reviewCount: product.reviewCount || 0,
+        isNew: product.isNew,
+        isFeatured: product.isFeatured,
+        isFlashSale: product.isFlashSale,
+        flashSalePrice: product.flashSalePrice,
+        flashSaleEnds: product.flashSaleEnds,
+        rewardPoints: product.rewardPoints,
+        expectedPoints: product.expectedPoints,
+      });
+      hasTracked.current = true;
+    }
+  }, [product, addToRecentlyViewed]);
 
   // Fetch Reviews
   const { data: reviewsData } = useQuery({
@@ -133,10 +133,10 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
       const { data } = await productsApi.getReviews(productId);
       return (data as ApiResponse<ReviewResponse[]>)?.data || [];
     },
-    enabled: !!productId && mounted,
+    enabled: !!productId,
   });
 
-  const reviews = reviewsData || [];
+  const reviews = useMemo(() => reviewsData || [], [reviewsData]);
 
   // Check Purchase Status
   const { data: hasPurchased } = useQuery({
@@ -149,7 +149,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
         order.items.some(item => item.productId === productId)
       );
     },
-    enabled: !!user?.id && !!productId && mounted,
+    enabled: !!user?.id && !!productId,
     initialData: false,
   });
 
@@ -161,7 +161,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
       const alreadyReviewed = reviews.some((r) => r.userId === user.id);
       return !alreadyReviewed;
     },
-    enabled: !!user?.id && !!productId && !!reviews && mounted,
+    enabled: !!user?.id && !!productId && !!reviews,
     initialData: false,
   });
 
@@ -211,11 +211,11 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
     };
   }, [reviews, product?.rating, product?.reviewCount]);
 
-  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
-    if (!mounted) return "";
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string | null => {
+    if (!isMounted) return null;
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  }, [mounted, t]);
+  }, [isMounted, t]);
 
   const relatedProducts: Product[] = useMemo(() => {
     return [];
@@ -256,7 +256,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
 
   const loading = productLoading;
 
-  if (loading || authLoading || !mounted) {
+  if (loading || authLoading || !isMounted) {
     return (
       <div className="min-h-screen pt-20">
         <ProductDetailSkeleton />
@@ -307,12 +307,17 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
           >
             {/* Main Image */}
             <div className="relative aspect-video rounded-3xl overflow-hidden bg-linear-to-br from-red-900/40 via-black to-black border border-white/5 shadow-2xl group">
-              {allImages[selectedImage] ? (
+              {allImages[selectedImage] && !mainImageError ? (
                 <Image
                   src={allImages[selectedImage]}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  priority
+                  placeholder="blur"
+                  blurDataURL={blurDataURL}
+                  onError={() => setMainImageError(true)}
                 />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">
@@ -357,7 +362,17 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
                         : "border-white/5 hover:border-white/20 opacity-60 hover:opacity-100"
                     )}
                   >
-                    <Image src={img} alt="" fill className="object-cover" />
+                    <Image 
+                      src={img} 
+                      alt="" 
+                      fill 
+                      sizes="96px"
+                      className="object-cover" 
+                      placeholder="blur"
+                      blurDataURL={blurDataURL}
+                      onError={() => setThumbErrors(prev => ({ ...prev, [index]: true }))}
+                      style={{ opacity: thumbErrors[index] ? 0.5 : 1 }}
+                    />
                   </button>
                 ))}
               </div>
@@ -528,7 +543,7 @@ export function ProductDetail({ initialProduct }: { initialProduct?: Product }) 
                     id: product.id,
                     name: product.name,
                     price: product.price,
-                    image: product.thumbnail || product.images[0] || "",
+                    image: product.thumbnail || "",
                     category: product.category,
                     description: product.description || "",
                     stock: product.stock,

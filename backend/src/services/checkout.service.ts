@@ -5,17 +5,21 @@ import stripe from '../config/stripe';
 import { env } from '../config/env';
 import { ordersService } from './orders.service';
 import { BadRequestError, NotFoundError } from '../utils/errors';
-import { logger } from '../utils/logger';
+import { trackedQuery, logger as baseLogger } from '../utils';
 
-export const checkoutService = {
+const logger = baseLogger.child('[CheckoutService]');
+
+class CheckoutService {
+  private logger = logger;
+
   async createStripeCheckoutSession(
     userId: string,
     items: Array<{ productId: string; quantity: number }>,
     promoCode?: string
   ) {
     try {
-      logger.info('Creating Stripe session', { userId });
-      logger.debug('Checkout items', { items, promoCode });
+      this.logger.info('Creating Stripe session', { userId });
+      this.logger.debug('Checkout items', { items, promoCode });
       
       const order = await ordersService.createOrder(
         userId,
@@ -28,7 +32,7 @@ export const checkoutService = {
         throw new Error('Failed to create order');
       }
       
-      logger.info('Order created successfully', { orderId: order.id });
+      this.logger.info('Order created successfully', { orderId: order.id });
       
       // Stripe line items
       const lineItems = [
@@ -45,7 +49,7 @@ export const checkoutService = {
         },
       ];
 
-      logger.debug('Stripe line items', { lineItems });
+      this.logger.debug('Stripe line items', { lineItems });
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card', 'promptpay'],
@@ -59,11 +63,13 @@ export const checkoutService = {
         },
       });
 
-      logger.info('Stripe session created', { sessionId: session.id });
+      this.logger.info('Stripe session created', { sessionId: session.id });
 
-      await db.update(schema.orders)
-        .set({ paymentIntent: session.id, updatedAt: new Date() })
-        .where(eq(schema.orders.id, order.id));
+      await trackedQuery(async () => {
+        return await db.update(schema.orders)
+          .set({ paymentIntent: session.id, updatedAt: new Date() })
+          .where(eq(schema.orders.id, order.id));
+      }, 'checkout.createStripeSession.updateOrder');
 
       return {
         orderId: order.id,
@@ -71,13 +77,13 @@ export const checkoutService = {
         url: session.url,
       };
     } catch (error) {
-      logger.error('Error in createStripeCheckoutSession', error as Error);
+      this.logger.error('Error in createStripeCheckoutSession', error as Error);
       if (error instanceof Error) {
         throw new BadRequestError(`Stripe checkout error: ${error.message}`);
       }
       throw error;
     }
-  },
+  }
 
   async payWithBalance(userId: string, orderId: string) {
     return await db.transaction(async (tx) => {
@@ -172,12 +178,14 @@ export const checkoutService = {
 
       return { success: true, orderId, order: completedOrder };
     });
-  },
+  }
 
   async verifyPayment(orderId: string) {
-    const order = await db.query.orders.findFirst({
-      where: eq(schema.orders.id, orderId),
-    });
+    const order = await trackedQuery(async () => {
+      return await db.query.orders.findFirst({
+        where: eq(schema.orders.id, orderId),
+      });
+    }, 'checkout.verifyPayment.findOrder');
 
     if (!order) {
       throw new NotFoundError('Order not found');
@@ -199,16 +207,18 @@ export const checkoutService = {
     }
 
     return { success: false, status: session.payment_status };
-  },
+  }
 
   async verifyStripePayment(sessionId: string) {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     
     if (session.payment_status === 'paid' && session.metadata?.orderId) {
       const orderId = session.metadata.orderId;
-      const order = await db.query.orders.findFirst({
-        where: eq(schema.orders.id, orderId),
-      });
+      const order = await trackedQuery(async () => {
+        return await db.query.orders.findFirst({
+          where: eq(schema.orders.id, orderId),
+        });
+      }, 'checkout.verifyStripePayment.findOrder');
 
       if (order && order.status === 'PENDING') {
         await ordersService.completeOrder(orderId);
@@ -218,13 +228,15 @@ export const checkoutService = {
     }
 
     return { success: false, status: session.payment_status };
-  },
+  }
 
   async validateCart(items: Array<{ productId: string; quantity: number }>) {
     const productIds = items.map(item => item.productId);
-    const productsResult = await db.query.products.findMany({
-      where: sql`${schema.products.id} IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)})`,
-    });
+    const productsResult = await trackedQuery(async () => {
+      return await db.query.products.findMany({
+        where: sql`${schema.products.id} IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)})`,
+      });
+    }, 'checkout.validateCart');
 
     const results = items.map(item => {
       const product = productsResult.find(p => p.id === item.productId);
@@ -262,5 +274,7 @@ export const checkoutService = {
       total,
       isValid: results.every(item => item.valid),
     };
-  },
-};
+  }
+}
+
+export const checkoutService = new CheckoutService();

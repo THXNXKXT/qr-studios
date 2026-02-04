@@ -2,42 +2,38 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   User,
-  Package,
   Key,
   Wallet,
   ShoppingBag,
   Award,
   Settings,
-  Bell,
-  CreditCard,
-  Download,
-  Clock,
   History,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
   Star,
+  Loader2,
 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, Card, Skeleton } from "@/components/ui";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui";
 import { useTranslation } from "react-i18next";
 import { DashboardSidebar, SidebarSkeleton } from "@/components/dashboard/sidebar";
 import { DashboardStats, StatsSkeleton } from "@/components/dashboard/stats-grid";
 import { RecentTopups, RecentListSkeleton } from "@/components/dashboard/recent-topups";
 import { RecentOrders } from "@/components/dashboard/recent-orders";
 import { MyLicenses } from "@/components/dashboard/my-licenses";
-import { TopupDetailModal } from "@/components/dashboard/topup-detail-modal";
 import { TierProgress } from "@/components/dashboard/tier-progress";
-import { cn, formatPrice, getTierInfo, getUserTier, TIERS } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
 import { ordersApi, licensesApi, topupApi } from "@/lib/api";
-import { createLogger } from "@/lib/logger";
 
-const dashboardLogger = createLogger("dashboard");
+// Dynamic import for heavy modal component
+const TopupDetailModal = dynamic(
+  () => import("@/components/dashboard/topup-detail-modal").then((mod) => mod.TopupDetailModal),
+  { ssr: false }
+);
 
 interface Order {
   id: string;
@@ -74,31 +70,10 @@ interface ApiResponse<T> {
   success?: boolean;
 }
 
-interface Order {
-  id: string;
-  total: number;
-  status: string;
-  createdAt: string;
-  items: Array<{
-    product: {
-      name: string;
-    };
-  }>;
-}
-
-interface License {
-  id: string;
-  licenseKey: string;
-  status: string;
-  product: {
-    name: string;
-  };
-}
-
 export default function DashboardPage() {
   const { t } = useTranslation("common");
+  const router = useRouter();
   const { user, loading: authLoading, isSynced, isSyncing, refresh } = useAuth();
-  const queryClient = useQueryClient();
 
   const menuItems = useMemo(() => [
     { icon: User, label: t("dashboard.menu.profile"), href: "/dashboard" },
@@ -111,7 +86,6 @@ export default function DashboardPage() {
   ], [t]);
   const [selectedTopup, setSelectedTopup] = useState<TopupTransaction | null>(null);
 
-  // Using React Query for better synchronization and auto-refresh
   const { 
     data: dashboardData, 
     isLoading: dataLoading, 
@@ -151,24 +125,24 @@ export default function DashboardPage() {
       now.setHours(0, 0, 0, 0);
       const diffTime = Math.abs(now.getTime() - start.getTime());
       return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    } catch (e) {
+    } catch (_e) {
       return 0;
     }
   }, []);
 
   useEffect(() => {
-    // Force refresh user data on dashboard mount to ensure latest totalSpent/points
-    const forceRefresh = async () => {
-      const token = getAuthToken();
-      if (token) {
-        dashboardLogger.debug('Forcing profile refresh');
-        await refresh();
-        // After profile sync, re-fetch dashboard specific data
-        refetch();
-      }
-    };
-    forceRefresh();
-  }, [refresh, refetch]);
+    // Sync profile once if needed
+    if (!isSynced && !isSyncing && getAuthToken()) {
+      refresh();
+    }
+  }, [isSynced, isSyncing, refresh]);
+
+  useEffect(() => {
+    // Robust check: if no user and no cookie token, then redirect
+    if (!user && !authLoading && !isSyncing && !getAuthToken()) {
+      router.push(`/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+    }
+  }, [user, authLoading, isSyncing, router]);
 
   const stats = useMemo(() => [
     { icon: ShoppingBag, label: t("dashboard.stats.orders"), value: orders.length },
@@ -193,7 +167,7 @@ export default function DashboardPage() {
     },
   ], [t, orders.length, licenses.length, user?.totalSpent, user?.points]);
 
-  if (authLoading || (loading && (user || getAuthToken()))) {
+  if (authLoading || isSyncing || (loading && (user || getAuthToken()))) {
     return (
       <div className="min-h-screen pt-32">
         <div className="container mx-auto px-4 py-8">
@@ -211,11 +185,8 @@ export default function DashboardPage() {
     );
   }
 
-  // Robust check: if no user and no cookie token, then redirect
-  if (!user && !authLoading && !getAuthToken()) {
-    if (typeof window !== 'undefined') {
-      window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
-    }
+  // No user check already handled by useEffect
+  if (!user && !authLoading && !isSyncing && !getAuthToken()) {
     return null;
   }
 

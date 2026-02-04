@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import NextImage from "next/image";
 import {
@@ -89,6 +89,7 @@ export default function AdminUsersPage() {
   const [filterRole, setFilterRole] = useState("all");
   const [filterTier, setFilterTier] = useState<MemberTier | "all">("all");
   const [users, setUsers] = useState<UserData[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [stats, setStats] = useState<{
     users: { total: number; today: number; tiers: Record<string, number> };
     orders: { completed: number };
@@ -110,30 +111,47 @@ export default function AdminUsersPage() {
         adminApi.getUsers({
           search: searchQuery || undefined,
           role: filterRole !== "all" ? filterRole : undefined,
-          tier: filterTier !== "all" ? filterTier : undefined
+          tier: filterTier !== "all" ? filterTier : undefined,
+          page: currentPage,
+          limit: itemsPerPage
         }),
         adminApi.getStats()
       ]);
 
-      if (usersRes.data) {
-        setUsers(usersRes.data as UserData[]);
-        setCurrentPage(1);
+      // Handle new paginated response format: { success, data: [...], pagination: {...} }
+      const usersResponse = usersRes.data as { success?: boolean; data?: UserData[]; pagination?: { total: number } } | UserData[];
+      
+      if (Array.isArray(usersResponse)) {
+        // Old format fallback
+        setUsers(usersResponse);
+        setTotalUsers(usersResponse.length);
+      } else if (usersResponse?.success && Array.isArray(usersResponse.data)) {
+        // New paginated format
+        setUsers(usersResponse.data);
+        setTotalUsers(usersResponse.pagination?.total || usersResponse.data.length);
       }
-      if (statsRes.data) {
-        setStats(statsRes.data);
+      // Handle stats response - apiFetch returns { data: { success, data: {...} } }
+      const statsResponse = statsRes.data as { success?: boolean; data?: typeof stats } | typeof stats;
+      
+      if (statsResponse) {
+        if ('success' in statsResponse && statsResponse.data) {
+          // New format with wrapper
+          setStats(statsResponse.data);
+        } else {
+          // Direct data (old format)
+          setStats(statsResponse as typeof stats);
+        }
       }
     } catch (err) {
       usersLogger.error('Failed to fetch users', { error: err });
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filterRole, filterTier]);
+  }, [searchQuery, filterRole, filterTier, currentPage]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-
-  const filteredUsers = users;
 
   const handleEditUser = useCallback((user: UserData) => {
     setSelectedUser(user);
@@ -181,12 +199,9 @@ export default function AdminUsersPage() {
     }
   }, []);
 
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredUsers, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  // Server-side pagination - no need for client-side slicing
+  const paginatedUsers = users;
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
 
   const handleSaveUser = useCallback(async (userData: Partial<UserData>) => {
     if (!selectedUser) return;
@@ -504,7 +519,7 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {!loading && filteredUsers.length === 0 && (
+        {!loading && users.length === 0 && (
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Users className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />

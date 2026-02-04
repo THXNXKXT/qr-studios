@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { wishlistApi } from "@/lib/api";
+import type { Product } from "@/types";
 
 export interface WishlistItem {
   id: string;
@@ -19,10 +20,17 @@ interface WishlistStore {
   items: WishlistItem[];
   loading: boolean;
   fetchWishlist: () => Promise<void>;
-  addItem: (product: any) => Promise<void>;
+  addItem: (item: WishlistItem) => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
   isInWishlist: (productId: string) => boolean;
   clearWishlist: () => Promise<void>;
+}
+
+interface WishlistResponse {
+  success: boolean;
+  data: Array<{
+    product: Product;
+  }>;
 }
 
 export const useWishlistStore = create<WishlistStore>()(
@@ -34,14 +42,15 @@ export const useWishlistStore = create<WishlistStore>()(
       fetchWishlist: async () => {
         set({ loading: true });
         try {
-          const { data, error } = await wishlistApi.getAll();
+          const { data } = await wishlistApi.getAll();
+          const response = data as WishlistResponse;
           
-          if (data && (data as any).success) {
-            const backendItems = (data as any).data.map((item: any) => ({
+          if (response?.success && Array.isArray(response.data)) {
+            const backendItems = response.data.map((item) => ({
               id: item.product.id,
               name: item.product.name,
               price: item.product.price,
-              image: Array.isArray(item.product.images) ? item.product.images[0] : item.product.images,
+              image: item.product.thumbnail || item.product.images?.[0] || "",
               category: item.product.category,
               description: item.product.description,
               stock: item.product.stock,
@@ -58,28 +67,28 @@ export const useWishlistStore = create<WishlistStore>()(
         }
       },
 
-      addItem: async (product) => {
+      addItem: async (item) => {
         const items = get().items;
-        const exists = items.find((i) => i.id === product.id);
+        const exists = items.find((i) => i.id === item.id);
         
         if (!exists) {
           // Optimistic update
           const newItem = {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: Array.isArray(product.images) ? product.images[0] : product.images,
-            category: product.category,
-            description: product.description,
-            stock: product.stock,
-            isFlashSale: product.isFlashSale,
-            flashSalePrice: product.flashSalePrice,
-            flashSaleEnds: product.flashSaleEnds,
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image || "",
+            category: item.category,
+            description: item.description,
+            stock: item.stock,
+            isFlashSale: item.isFlashSale,
+            flashSalePrice: item.flashSalePrice,
+            flashSaleEnds: item.flashSaleEnds,
           };
           set({ items: [...items, newItem] });
 
           try {
-            await wishlistApi.add(product.id);
+            await wishlistApi.add(item.id);
           } catch (error) {
             console.error("Failed to add to wishlist:", error);
             // Revert on error

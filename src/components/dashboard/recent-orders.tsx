@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Package, ImageOff } from "lucide-react";
-import { Badge, Button, Card, Skeleton } from "@/components/ui";
+import Image from "next/image";
+import { 
+  Package, 
+  ImageOff 
+} from "lucide-react";
+import { Badge, Button, Card } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -14,7 +18,7 @@ interface Order {
   items: Array<{
     product: {
       name: string;
-      images?: string[];
+      thumbnail?: string | null;
     };
   }>;
 }
@@ -43,6 +47,7 @@ const item = {
 export function RecentOrders({ orders }: RecentOrdersProps) {
   const { t } = useTranslation("common");
 
+  // No debug log needed here
   return (
     <Card className="p-6 border-white/5 bg-white/2 backdrop-blur-sm shadow-2xl">
       <div className="flex items-center justify-between mb-6">
@@ -84,22 +89,50 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                 <div
                   className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-500 group shadow-lg"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 flex flex-col items-center justify-center group-hover:scale-110 group-hover:bg-red-500/10 transition-all duration-500 border border-white/5 overflow-hidden shrink-0">
-                      {order.items?.[0]?.product?.images?.[0] ? (
-                        <img src={order.items[0].product.images[0]} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <ImageOff className="w-5 h-5 text-gray-700 opacity-40" />
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    {/* Product Images Stack */}
+                    <div className="flex -space-x-3 shrink-0">
+                      {order.items?.slice(0, 3).map((item, idx) => {
+                        const imageUrl = item.product?.thumbnail;
+                        
+                        return (
+                          <div 
+                            key={idx}
+                            className="w-10 h-10 rounded-xl bg-white/5 border-2 border-[#0a0a0a] flex items-center justify-center overflow-hidden shrink-0 relative"
+                            style={{ zIndex: 3 - idx }}
+                          >
+                            {imageUrl ? (
+                              <Image 
+                                src={imageUrl} 
+                                alt={item.product.name}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover" 
+                              />
+                            ) : (
+                              <ImageOff className="w-4 h-4 text-gray-700 opacity-40" />
+                            )}
+                          </div>
+                        );
+                      })}
+                      {order.items && order.items.length > 3 && (
+                        <div className="w-10 h-10 rounded-xl bg-white/10 border-2 border-[#0a0a0a] flex items-center justify-center shrink-0 relative">
+                          <span className="text-xs font-bold text-gray-400">+{order.items.length - 3}</span>
+                        </div>
                       )}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-white group-hover:text-red-400 transition-colors truncate max-w-[150px] sm:max-w-none">
-                        {order.items?.[0]?.product?.name || 'Order'}
+                    {/* Product Names */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white group-hover:text-red-400 transition-colors truncate">
+                        {order.items && order.items.length > 1 
+                          ? `${order.items[0]?.product?.name || 'Product'} + ${order.items.length - 1} more`
+                          : (order.items?.[0]?.product?.name || 'Order')
+                        }
                       </p>
                       <p className="text-[10px] text-gray-500 font-mono mt-1 opacity-60">#{order.id.substring(0, 8).toUpperCase()}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0 ml-4">
                     <p className="text-base font-bold text-red-500">{formatPrice(order.total)}</p>
                     <Badge
                       variant={order.status === "COMPLETED" ? "success" : "warning"}

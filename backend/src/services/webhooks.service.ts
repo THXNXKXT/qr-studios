@@ -4,10 +4,14 @@ import * as schema from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { ordersService } from './orders.service';
 import { topupService } from './topup.service';
-import { logger } from '../utils/logger';
+import { logger as baseLogger } from '../utils';
 import type Stripe from 'stripe';
 
-export const webhooksService = {
+const logger = baseLogger.child('[WebhooksService]');
+
+class WebhooksService {
+  private logger = logger;
+
   async handleStripeWebhook(event: Stripe.Event) {
     // 1. Idempotency Check: Prevent duplicate processing of the same event
     const existingEvent = await db.query.auditLogs.findFirst({
@@ -48,12 +52,12 @@ export const webhooksService = {
         newData: { type: event.type },
       });
     } catch (error) {
-      logger.error(`Failed to process Stripe event ${event.id}:`, error);
-      throw error; // Let the controller handle and respond to Stripe
+      this.logger.error(`Failed to process Stripe event ${event.id}:`, error);
+      throw error;
     }
-  },
+  }
 
-  async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const metadata = session.metadata;
 
     if (!metadata) {
@@ -82,21 +86,23 @@ export const webhooksService = {
       await ordersService.completeOrder(metadata.orderId);
       logger.info('Order completed:', metadata.orderId);
     }
-  },
+  }
 
-  async handleCheckoutExpired(session: Stripe.Checkout.Session) {
+  private async handleCheckoutExpired(session: Stripe.Checkout.Session) {
     const metadata = session.metadata;
     if (metadata?.type === 'topup' && metadata.transactionId) {
       await topupService.cancelTopup(metadata.transactionId, 'CANCELLED');
       logger.info('Topup cancelled (session expired)', { transactionId: metadata.transactionId });
     }
-  },
+  }
 
-  async handlePaymentFailed(session: Stripe.Checkout.Session) {
+  private async handlePaymentFailed(session: Stripe.Checkout.Session) {
     const metadata = session.metadata;
     if (metadata?.type === 'topup' && metadata.transactionId) {
       await topupService.cancelTopup(metadata.transactionId, 'FAILED');
-      logger.info('Topup failed', { transactionId: metadata.transactionId });
+      this.logger.info('Topup failed', { transactionId: metadata.transactionId });
     }
-  },
-};
+  }
+}
+
+export const webhooksService = new WebhooksService();

@@ -5,7 +5,13 @@ import stripe from '../config/stripe';
 import { env } from '../config/env';
 import { BadRequestError } from '../utils/errors';
 import { emailService } from './email.service';
-import { logger } from '../utils/logger';
+import { BaseService, trackedQuery, logger as baseLogger } from '../utils';
+import type { InferSelectModel } from 'drizzle-orm';
+import { discordService } from './discord.service';
+
+export type Transaction = InferSelectModel<typeof schema.transactions>;
+
+const logger = baseLogger.child('[TopupService]');
 
 const TOPUP_PACKAGES = [
   { amount: 100, bonus: 0 },
@@ -15,9 +21,11 @@ const TOPUP_PACKAGES = [
   { amount: 5000, bonus: 500 },
 ];
 
-import { discordService } from './discord.service';
+class TopupService extends BaseService<typeof schema.transactions, Transaction> {
+  protected table = schema.transactions;
+  protected tableName = 'transactions';
+  protected logger = logger;
 
-export const topupService = {
   getTopupPackages() {
     return TOPUP_PACKAGES.map((pkg) => ({
       amount: pkg.amount,
@@ -25,7 +33,7 @@ export const topupService = {
       total: pkg.amount + pkg.bonus,
       bonusPercent: pkg.bonus > 0 ? Math.round((pkg.bonus / pkg.amount) * 100) : 0,
     }));
-  },
+  }
 
   async createStripeTopupSession(userId: string, amount: number) {
     logger.info('Creating topup session', { userId, amount });
@@ -45,14 +53,14 @@ export const topupService = {
     logger.debug('Calculated bonus', { bonus, amount });
 
     try {
-      const [transaction] = await db.insert(schema.transactions).values({
+      const [transaction] = await trackedQuery(() => db.insert(schema.transactions).values({
         userId,
         type: 'TOPUP',
         amount: amount,
         bonus: bonus,
         status: 'PENDING',
         paymentMethod: 'stripe',
-      }).returning();
+      }).returning(), 'topup.createTransaction');
 
       if (!transaction) throw new Error('Failed to create transaction');
 
@@ -100,7 +108,7 @@ export const topupService = {
       logger.error('Error creating Stripe session', error as Error);
       throw error;
     }
-  },
+  }
 
   async completeTopup(transactionId: string, paymentMethod?: string) {
     logger.info('Completing topup transaction', { transactionId, paymentMethod });
@@ -167,9 +175,9 @@ export const topupService = {
       // Notify via Discord
       discordService.notifyNewTopup(transaction, updatedUser).catch(err => logger.error('Failed to send top-up Discord notification', err));
 
-      return await tx.query.transactions.findFirst({ where: eq(schema.transactions.id, transactionId) });
+      return await trackedQuery(() => tx.query.transactions.findFirst({ where: eq(schema.transactions.id, transactionId) }), 'topup.findCompleted');
     });
-  },
+  }
 
   async cancelTopup(transactionId: string, status: 'FAILED' | 'CANCELLED' = 'CANCELLED') {
     logger.info('Cancelling topup transaction', { transactionId, status });
@@ -199,7 +207,7 @@ export const topupService = {
     }
 
     return updatedTransaction;
-  },
+  }
 
   async verifyStripeSession(sessionId: string) {
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
@@ -222,28 +230,22 @@ export const topupService = {
     }
 
     return null;
-  },
+  }
 
   async getTopupHistory(userId: string) {
-    const transactionsData = await db.query.transactions.findMany({
+    return await trackedQuery(() => db.query.transactions.findMany({
       where: and(
         eq(schema.transactions.userId, userId),
         eq(schema.transactions.type, 'TOPUP')
       ),
       columns: {
-        id: true,
-        type: true,
-        amount: true,
-        bonus: true,
-        status: true,
-        paymentMethod: true,
-        paymentRef: true,
-        createdAt: true,
+        id: true, type: true, amount: true, bonus: true,
+        status: true, paymentMethod: true, paymentRef: true, createdAt: true,
       },
       orderBy: [desc(schema.transactions.createdAt)],
       limit: 50,
-    });
+    }), 'topup.getHistory');
+  }
+}
 
-    return transactionsData;
-  },
-};
+export const topupService = new TopupService();

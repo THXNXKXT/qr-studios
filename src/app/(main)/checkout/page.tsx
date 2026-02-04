@@ -10,7 +10,6 @@ import {
   Lock, 
   ArrowLeft, 
   Check, 
-  CheckCircle2,
   Shield, 
   Wallet, 
   Loader2,
@@ -18,7 +17,6 @@ import {
   ShoppingBag,
   ImageOff,
   X,
-  Clock,
   Star
 } from "lucide-react";
 import { Button, Card, Confetti, useConfetti, Badge, FlashSaleTimer } from "@/components/ui";
@@ -77,7 +75,7 @@ export default function CheckoutPage() {
   const { user, loading: authLoading, isSynced, refresh } = useAuth();
   const router = useRouter();
   const { items, getTotal, clearCart } = useCartStore();
-  const { code: promoCode, calculateDiscount, appliedCode } = usePromoStore();
+  const { code: promoCode, calculateDiscount, appliedCode: _appliedCode } = usePromoStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [step, setStep] = useState<"review" | "payment" | "success">("review");
@@ -90,11 +88,11 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  };
+  }, [mounted, t]);
 
   const handleSaleExpire = useCallback((productName: string) => {
     setExpiredItems(prev => {
@@ -106,7 +104,7 @@ export default function CheckoutPage() {
   const subtotal = useMemo(() => getTotal(), [getTotal]);
   const tier = getTierInfo(user?.totalSpent || 0);
   const tierDiscount = calculateTierDiscount(subtotal, user?.totalSpent || 0);
-  const discount = useMemo(() => calculateDiscount(subtotal), [calculateDiscount, subtotal, appliedCode]);
+  const discount = useMemo(() => calculateDiscount(subtotal), [calculateDiscount, subtotal]);
   const total = useMemo(() => subtotal - discount - tierDiscount, [subtotal, discount, tierDiscount]);
 
   const expectedPoints = useMemo(() => {
@@ -151,10 +149,10 @@ export default function CheckoutPage() {
       if (paymentMethod === 'STRIPE') {
         const { data, error: apiError } = await checkoutApi.createStripeSession(orderItems, promoCode || undefined);
         
-        if (data && (data as StripeSessionResponse).success && (data as StripeSessionResponse).data?.url) {
-          window.location.href = (data as StripeSessionResponse).data!.url;
+        const stripeData = data as unknown as StripeSessionResponse;
+        if (stripeData?.success && stripeData?.data?.url) {
+          window.location.href = stripeData.data.url;
         } else {
-          const stripeData = data as StripeSessionResponse;
           const errorMessage = apiError || stripeData?.message || stripeData?.error || renderTranslation("checkout.errors.session_failed");
           throw new Error(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : String(errorMessage));
         }
@@ -211,7 +209,7 @@ export default function CheckoutPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [items, showConfirmDialog, user, total, promoCode, refresh, clearCart, triggerConfetti]);
+  }, [items, showConfirmDialog, user, total, promoCode, refresh, clearCart, triggerConfetti, renderTranslation]);
 
   const isAuthInitializing = !isSynced && !user && !!getAuthToken();
   const isLoading = (authLoading || isAuthInitializing || !mounted) && !user;
@@ -383,14 +381,33 @@ export default function CheckoutPage() {
                   {items.map((item) => (
                     <div key={item.product.id} className="flex items-center gap-4">
                       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white/5 shrink-0">
-                        {item.product.images?.[0] ? (
-                          <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" />
+                        {(item.product.thumbnail || item.product.images?.[0]) ? (
+                          <Image
+                            src={item.product.thumbnail || item.product.images?.[0] || ""}
+                            alt={item.product.name}
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                            priority={items.indexOf(item) < 3} // โหลดรูปแรก 3 รายการก่อน
+                            placeholder="blur"
+                            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg=="
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.parentElement?.classList.add('fallback-image');
+                            }}
+                          />
                         ) : (
                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">
                             <ImageOff className="w-6 h-6 text-gray-600 mb-0.5" />
                             <span className="text-[6px] font-black uppercase tracking-widest text-gray-600">No Image</span>
                           </div>
                         )}
+                        {/* Fallback สำหรับรูปที่โหลดไม่ได้ */}
+                        <div className="absolute inset-0 flex-col items-center justify-center bg-white/5 fallback-content opacity-0 pointer-events-none">
+                          <ImageOff className="w-6 h-6 text-gray-600 mb-0.5" />
+                          <span className="text-[6px] font-black uppercase tracking-widest text-gray-600">No Image</span>
+                        </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-white truncate">{item.product.name}</p>
@@ -553,22 +570,26 @@ export default function CheckoutPage() {
       <Modal
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
-        title={renderTranslation("checkout.confirm_dialog.title")}
-        className="max-w-md border-white/5 bg-black/60 backdrop-blur-3xl"
       >
-        <div className="space-y-8 py-4">
-          <div className="flex flex-col items-center text-center space-y-4">
-            <div className="w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-inner relative group">
-              <Wallet className="w-10 h-10 text-red-500 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
-              <div className="absolute inset-0 rounded-3xl border-2 border-red-500 animate-ping opacity-20" />
-            </div>
-            <div>
-              <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">{renderTranslation("checkout.confirm_dialog.title")}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed max-w-[280px]">
-                {renderTranslation("checkout.confirm_dialog.desc")}
-              </p>
-            </div>
-          </div>
+        <Modal.Overlay />
+        <Modal.Content className="max-w-md border-white/5 bg-black/60 backdrop-blur-3xl">
+          <Modal.Header>
+            <Modal.Title>{renderTranslation("checkout.confirm_dialog.title")}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="space-y-8 py-4">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-inner relative group">
+                  <Wallet className="w-10 h-10 text-red-500 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
+                  <div className="absolute inset-0 rounded-3xl border-2 border-red-500 animate-ping opacity-20" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">{renderTranslation("checkout.confirm_dialog.title")}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed max-w-[280px]">
+                    {renderTranslation("checkout.confirm_dialog.desc")}
+                  </p>
+                </div>
+              </div>
 
           <div className="bg-white/2 rounded-2xl p-6 space-y-4 border border-white/5 relative group overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-br from-red-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -614,6 +635,8 @@ export default function CheckoutPage() {
             </Button>
           </div>
         </div>
+          </Modal.Body>
+        </Modal.Content>
       </Modal>
     </div>
   );

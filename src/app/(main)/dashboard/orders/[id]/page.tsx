@@ -1,11 +1,11 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import {
+import { 
   ArrowLeft,
   ArrowRight,
   Package,
@@ -14,25 +14,15 @@ import {
   Hash,
   Download,
   Key,
-  CheckCircle2,
-  Clock,
   AlertCircle,
   Copy,
-  Check,
   Loader2,
-  ExternalLink,
   Shield,
-  Sparkles,
   EyeOff,
   Eye,
   CheckCircle,
   ImageOff,
-  FileText,
-  XCircle,
-  ChevronLeft,
-  ShieldCheck,
-  Mail,
-  Globe
+  Sparkles
 } from "lucide-react";
 import { Button, Card, Badge } from "@/components/ui";
 import { createLogger } from "@/lib/logger";
@@ -68,7 +58,7 @@ interface OrderDetail {
     product: {
       id: string;
       name: string;
-      images: any;
+      thumbnail?: string | null; // Product thumbnail image
       category: string;
       downloadKey: string | null;
       version: string | null;
@@ -89,13 +79,20 @@ interface OrderDetail {
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { t } = useTranslation("common");
-  const router = useRouter();
   const { user, loading: authLoading, isSynced } = useAuth();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const toggleKeyVisibility = useCallback((id: string) => {
     setVisibleKeys(prev =>
@@ -140,7 +137,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       }
     }
     fetchOrderDetail();
-  }, [id, user?.id, isSynced]); // Use stable deps and sync status
+  }, [id, user?.id, isSynced, t]); // Use stable deps and sync status
 
   const copyToClipboard = useCallback((text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -148,10 +145,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setTimeout(() => setCopiedKey(null), 2000);
   }, []);
 
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
+    if (!isMounted.current) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  };
+  }, [t]);
 
   const handleDownload = async (licenseId: string) => {
     try {
@@ -231,15 +229,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "COMPLETED": return "text-red-400 bg-red-500/10 border-red-500/20";
-      case "PENDING": return "text-red-300 bg-red-500/10 border-red-500/20";
-      case "CANCELLED": return "text-red-400 bg-red-500/10 border-red-500/20";
-      default: return "text-gray-400 bg-gray-500/10 border-gray-500/20";
-    }
-  };
-
   return (
     <div className="min-h-screen pt-32 px-4 pb-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />
@@ -313,42 +302,49 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <Badge className="bg-white/5 text-gray-400 border-none" suppressHydrationWarning>{order.items.length} {renderTranslation("dashboard.orders.items_count")}</Badge>
             </div>
             <div className="divide-y divide-white/5">
-              {order.items.map((item) => (
-                <div key={item.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:bg-white/2 transition-colors">
-                  <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center overflow-hidden shrink-0 group-hover:border-red-500/30 transition-colors">
-                      {Array.isArray(order.items.find(i => i.id === item.id)?.product.images) && order.items.find(i => i.id === item.id)?.product.images[0] ? (
-                        <img
-                          src={order.items.find(i => i.id === item.id)?.product.images[0]}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center">
-                          <ImageOff className="w-8 h-8 text-gray-700 mb-1" />
-                          <span className="text-[8px] font-black uppercase tracking-widest text-gray-700" suppressHydrationWarning>{renderTranslation("common.no_image")}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-lg font-bold text-white group-hover:text-red-400 transition-colors">{item.product.name}</h4>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-sm text-gray-500">
-                          {item.quantity} × {formatPrice(item.price)}
-                        </span>
-                        {item.product.version && (
-                          <Badge variant="outline" className="text-[10px] py-0 border-white/10 text-gray-400" suppressHydrationWarning>
-                            {renderTranslation("dashboard.orders.version")} {item.product.version}
-                          </Badge>
+              {order.items.map((item) => {
+                const imageUrl = item.product?.thumbnail;
+                
+                return (
+                  <div key={item.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:bg-white/2 transition-colors">
+                    <div className="flex items-center gap-6">
+                      <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center overflow-hidden shrink-0 group-hover:border-red-500/30 transition-colors">
+                        {imageUrl ? (
+                          <div className="relative w-full h-full">
+                            <Image
+                              src={imageUrl}
+                              alt={item.product.name}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center">
+                            <ImageOff className="w-8 h-8 text-gray-700 mb-1" />
+                            <span className="text-[8px] font-black uppercase tracking-widest text-gray-700" suppressHydrationWarning>{renderTranslation("common.no_image")}</span>
+                          </div>
                         )}
                       </div>
+                      <div className="space-y-1">
+                        <h4 className="text-lg font-bold text-white group-hover:text-red-400 transition-colors">{item.product.name}</h4>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-sm text-gray-500">
+                            {item.quantity} × {formatPrice(item.price)}
+                          </span>
+                          {item.product.version && (
+                            <Badge variant="outline" className="text-[10px] py-0 border-white/10 text-gray-400" suppressHydrationWarning>
+                              {renderTranslation("dashboard.orders.version")} {item.product.version}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-left sm:text-right border-t border-white/5 pt-4 sm:border-none sm:pt-0">
+                      <p className="text-xl font-black text-white">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
-                  <div className="text-left sm:text-right border-t border-white/5 pt-4 sm:border-none sm:pt-0">
-                    <p className="text-xl font-black text-white">{formatPrice(item.price * item.quantity)}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="p-8 bg-black/40 border-t border-white/5">

@@ -817,7 +817,16 @@
     },
     "table": {
       "expiration_label": "วันหมดอายุ",
-      "never_expires": "ไม่มีวันหมดอายุ"
+      "never_expires": "ไม่มีวันหมดอายุ",
+      "discount_off": "{{percent}}% OFF"
+    },
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "stats": {
+      "total": "Total"
     }
   },
   "announcements": {
@@ -834,19 +843,6 @@
     },
     "active": "Active",
     "inactive": "Inactive",
-    "starts_at": "Starts At",
-    "ends_at": "Ends At",
-    "delete_title": "Delete Announcement",
-    "delete_message": "Do you want to delete this announcement?",
-    "delete_confirm": "Delete Announcement",
-    "no_announcements": "No announcements",
-    "errors": {
-      "title_required": "Announcement title is required",
-      "content_required": "Announcement content is required",
-      "ends_after_starts": "End date must be after start date",
-      "ends_future": "End date must be in the future",
-      "save_failed": "Failed to save announcement"
-    },
     "modals": {
       "form": {
         "edit_title": "Edit Broadcast",

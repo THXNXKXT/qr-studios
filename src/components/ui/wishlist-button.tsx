@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart } from "lucide-react";
 import { useWishlistStore, WishlistItem } from "@/store/wishlist";
@@ -14,12 +14,8 @@ interface WishlistButtonProps {
 
 export function WishlistButton({ item, className, size = "md" }: WishlistButtonProps) {
   const { addItem, removeItem, isInWishlist } = useWishlistStore();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const isWishlisted = isInWishlist(item.id);
   const [showAnimation, setShowAnimation] = useState(false);
-
-  useEffect(() => {
-    setIsWishlisted(isInWishlist(item.id));
-  }, [item.id, isInWishlist]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -27,10 +23,8 @@ export function WishlistButton({ item, className, size = "md" }: WishlistButtonP
 
     if (isWishlisted) {
       removeItem(item.id);
-      setIsWishlisted(false);
     } else {
       addItem(item);
-      setIsWishlisted(true);
       setShowAnimation(true);
       setTimeout(() => setShowAnimation(false), 600);
     }

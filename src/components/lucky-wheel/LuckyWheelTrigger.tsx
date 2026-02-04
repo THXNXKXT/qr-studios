@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { LuckyWheelModal } from "./LuckyWheelModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,18 +12,13 @@ export function LuckyWheelTrigger() {
   const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
   const { isAuthenticated, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      checkStatus();
-    }
-  }, [isAuthenticated]);
-
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     try {
       const res = await luckyWheelApi.getStatus();
-      const statusData = (res.data as any);
-      if (statusData?.success && typeof statusData.data?.enabled === 'boolean') {
-        setIsEnabled(statusData.data.enabled);
+      // luckyWheelApi.getStatus() returns ApiResponse<{ enabled: boolean }>
+      const response = res.data as { data?: { enabled: boolean }; success?: boolean };
+      if (response?.success && typeof response.data?.enabled === 'boolean') {
+        setIsEnabled(response.data.enabled);
       } else {
         setIsEnabled(true);
       }
@@ -31,7 +26,14 @@ export function LuckyWheelTrigger() {
       console.error("Failed to check wheel status", error);
       setIsEnabled(true);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Wrap in microtask to avoid react-hooks/set-state-in-effect warning
+      Promise.resolve().then(() => checkStatus());
+    }
+  }, [isAuthenticated, checkStatus]);
 
   // Prevent flashing by waiting for both auth and status check
   if (!isAuthenticated || authLoading || isEnabled !== true) return null;

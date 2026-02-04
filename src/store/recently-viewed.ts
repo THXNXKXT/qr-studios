@@ -4,10 +4,16 @@ import { persist } from "zustand/middleware";
 export interface RecentlyViewedItem {
   id: string;
   name: string;
+  description: string;
   price: number;
+  originalPrice?: number;
   image: string;
   category: string;
   stock: number;
+  rating: number;
+  reviewCount: number;
+  isNew?: boolean;
+  isFeatured?: boolean;
   isFlashSale?: boolean;
   flashSalePrice?: number;
   flashSaleEnds?: Date | string;

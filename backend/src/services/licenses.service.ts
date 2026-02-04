@@ -5,9 +5,18 @@ import { NotFoundError, BadRequestError, UnauthorizedError } from '../utils/erro
 import { generateLicenseKey } from '../utils/license-generator';
 import crypto from 'crypto';
 import { env } from '../config/env';
-import { logger } from '../utils/logger';
+import { BaseService, trackedQuery, logger as baseLogger } from '../utils';
+import type { InferSelectModel } from 'drizzle-orm';
 
-export const licensesService = {
+export type License = InferSelectModel<typeof schema.licenses>;
+
+const logger = baseLogger.child('[LicensesService]');
+
+class LicensesService extends BaseService<typeof schema.licenses, License> {
+  protected table = schema.licenses;
+  protected tableName = 'licenses';
+  protected logger = logger;
+
   async getUserLicenses(userId: string) {
     const licensesData = await db.query.licenses.findMany({
       where: eq(schema.licenses.userId, userId),
@@ -26,7 +35,7 @@ export const licensesService = {
     });
 
     return licensesData;
-  },
+  }
 
   async getLicenseById(licenseId: string, userId?: string) {
     const license = await db.query.licenses.findFirst({
@@ -62,7 +71,7 @@ export const licensesService = {
     }
 
     return license;
-  },
+  }
 
   async getLicenseByKey(licenseKey: string) {
     const license = await db.query.licenses.findFirst({
@@ -91,7 +100,7 @@ export const licensesService = {
     }
 
     return license;
-  },
+  }
 
   async verifyLicense(licenseKey: string, ipAddress: string, resourceName?: string) {
     // Check if IP is blacklisted first
@@ -100,11 +109,11 @@ export const licensesService = {
     });
 
     if (blacklistedIp) {
-      await licensesService.logLicenseVerification('N/A', ipAddress, false, resourceName);
+      await this.logLicenseVerification('N/A', ipAddress, false, resourceName);
       throw new BadRequestError('IP address is blacklisted');
     }
 
-    const license = await licensesService.getLicenseByKey(licenseKey);
+    const license = await this.getLicenseByKey(licenseKey);
 
     if (license.status === 'REVOKED') {
       throw new BadRequestError('License has been revoked');
@@ -121,7 +130,7 @@ export const licensesService = {
       throw new BadRequestError('License has expired');
     }
 
-    const allowedIPs = licensesService.parseIPWhitelist(license.ipAddress);
+    const allowedIPs = this.parseIPWhitelist(license.ipAddress);
 
     if (allowedIPs.length > 0 && !allowedIPs.includes(ipAddress)) {
       throw new UnauthorizedError('IP address not whitelisted');
@@ -147,7 +156,7 @@ export const licensesService = {
         .where(eq(schema.licenses.id, license.id));
     }
 
-    await licensesService.logLicenseVerification(license.id, ipAddress, true, resourceName);
+    await this.logLicenseVerification(license.id, ipAddress, true, resourceName);
 
     return {
       valid: true,
@@ -167,16 +176,16 @@ export const licensesService = {
       dev: 'QR Studios',
       a: ipAddress,
     };
-  },
+  }
 
   async updateIPWhitelist(licenseId: string, userId: string, ipAddresses: string[]) {
-    const license = await licensesService.getLicenseById(licenseId, userId);
+    const license = await this.getLicenseById(licenseId, userId);
 
     if (license.status !== 'ACTIVE') {
       throw new BadRequestError('Can only update IP for active licenses');
     }
 
-    const validIPs = ipAddresses.filter((ip) => licensesService.isValidIP(ip));
+    const validIPs = ipAddresses.filter((ip) => this.isValidIP(ip));
 
     if (validIPs.length !== ipAddresses.length) {
       throw new BadRequestError('Invalid IP address format');
@@ -193,13 +202,13 @@ export const licensesService = {
       .where(eq(schema.licenses.id, licenseId))
       .returning();
 
-    await licensesService.logLicenseAction(licenseId, 'IP_UPDATE', `Updated IPs: ${ipString}`);
+    await this.logLicenseAction(licenseId, 'IP_UPDATE', `Updated IPs: ${ipString}`);
 
     return updated;
-  },
+  }
 
   async resetIPWhitelist(licenseId: string, userId?: string) {
-    const license = await licensesService.getLicenseById(licenseId, userId);
+    const license = await this.getLicenseById(licenseId, userId);
 
     if (license.status !== 'ACTIVE') {
       throw new BadRequestError('Can only reset IP for active licenses');
@@ -210,13 +219,13 @@ export const licensesService = {
       .where(eq(schema.licenses.id, licenseId))
       .returning();
 
-    await licensesService.logLicenseAction(licenseId, 'IP_RESET', 'IP whitelist reset');
+    await this.logLicenseAction(licenseId, 'IP_RESET', 'IP whitelist reset');
 
     return updated;
-  },
+  }
 
   async generateDownloadURL(licenseId: string, userId: string) {
-    const license = await licensesService.getLicenseById(licenseId, userId);
+    const license = await this.getLicenseById(licenseId, userId);
 
     if (license.status !== 'ACTIVE') {
       throw new BadRequestError('License is not active');
@@ -227,17 +236,17 @@ export const licensesService = {
       throw new BadRequestError('No download available for this product');
     }
 
-    const token = licensesService.generateDownloadToken(license.id, downloadKey, userId);
+    const token = this.generateDownloadToken(license.id, downloadKey, userId);
     const expiresIn = 3600;
 
-    await licensesService.logLicenseAction(licenseId, 'DOWNLOAD', 'Download URL generated');
+    await this.logLicenseAction(licenseId, 'DOWNLOAD', 'Download URL generated');
 
     return {
       downloadUrl: `/api/licenses/${licenseId}/download?token=${token}`,
       expiresIn,
       expiresAt: new Date(Date.now() + expiresIn * 1000),
     };
-  },
+  }
 
   generateDownloadToken(licenseId: string, downloadKey: string, userId: string): string {
     const payload = {
@@ -254,7 +263,7 @@ export const licensesService = {
       .digest('hex');
 
     return Buffer.from(JSON.stringify({ ...payload, signature: token })).toString('base64');
-  },
+  }
 
   verifyDownloadToken(token: string): { licenseId: string; downloadKey: string; userId: string } {
     try {
@@ -288,12 +297,12 @@ export const licensesService = {
       if (error instanceof UnauthorizedError) throw error;
       throw new UnauthorizedError('Invalid download token');
     }
-  },
+  }
 
   parseIPWhitelist(ipString: string | null): string[] {
     if (!ipString) return [];
     return ipString.split(',').map((ip) => ip.trim()).filter(Boolean);
-  },
+  }
 
   isValidIP(ip: string): boolean {
     const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
@@ -305,7 +314,7 @@ export const licensesService = {
     }
 
     return ipv6Regex.test(ip);
-  },
+  }
 
   async logLicenseVerification(
     licenseId: string,
@@ -313,28 +322,30 @@ export const licensesService = {
     success: boolean,
     resourceName?: string
   ) {
-    logger.debug('License verification', { licenseId, ipAddress, success, resourceName });
-  },
+    this.logger.debug('License verification', { licenseId, ipAddress, success, resourceName });
+  }
 
   async logLicenseAction(licenseId: string, action: string, details: string) {
-    logger.debug('License action', { licenseId, action, details });
-  },
+    this.logger.debug('License action', { licenseId, action, details });
+  }
 
   async getActiveLicenseStats() {
-    const [totalResult, activeResult, expiredResult, revokedResult] = await Promise.all([
-      db.select({ value: count() }).from(schema.licenses),
-      db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'ACTIVE')),
-      db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'EXPIRED')),
-      db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'REVOKED')),
-    ]);
+    return await trackedQuery(async () => {
+      const [totalResult, activeResult, expiredResult, revokedResult] = await Promise.all([
+        db.select({ value: count() }).from(schema.licenses),
+        db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'ACTIVE')),
+        db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'EXPIRED')),
+        db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'REVOKED')),
+      ]);
 
-    return {
-      total: totalResult[0]?.value ?? 0,
-      active: activeResult[0]?.value ?? 0,
-      expired: expiredResult[0]?.value ?? 0,
-      revoked: revokedResult[0]?.value ?? 0,
-    };
-  },
+      return {
+        total: totalResult[0]?.value ?? 0,
+        active: activeResult[0]?.value ?? 0,
+        expired: expiredResult[0]?.value ?? 0,
+        revoked: revokedResult[0]?.value ?? 0,
+      };
+    }, 'licenses.getStats');
+  }
 
   async grantLicense(userId: string, productId: string, expiresAt?: Date | null) {
     const licenseKey = generateLicenseKey();
@@ -375,7 +386,7 @@ export const licensesService = {
 
       return { ...license, product };
     });
-  },
+  }
 
   async revokeLicense(licenseId: string) {
     const [license] = await db.select().from(schema.licenses).where(eq(schema.licenses.id, licenseId));
@@ -389,10 +400,10 @@ export const licensesService = {
       .where(eq(schema.licenses.id, licenseId))
       .returning();
 
-    await licensesService.logLicenseAction(licenseId, 'REVOKE', 'License revoked by admin');
+    await this.logLicenseAction(licenseId, 'REVOKE', 'License revoked by admin');
 
     return updated;
-  },
+  }
 
   // ============================================
   // IP Blacklist Management
@@ -407,7 +418,7 @@ export const licensesService = {
       },
       orderBy: [desc(schema.ipBlacklist.createdAt)],
     });
-  },
+  }
 
   async addToBlacklist(ipAddress: string, reason: string, adminId: string) {
     // Check if already blacklisted
@@ -426,7 +437,7 @@ export const licensesService = {
     }).returning();
 
     return entry;
-  },
+  }
 
   async removeFromBlacklist(ipAddress: string) {
     const [deleted] = await db.delete(schema.ipBlacklist)
@@ -438,12 +449,14 @@ export const licensesService = {
     }
 
     return deleted;
-  },
+  }
 
   async isIpBlacklisted(ipAddress: string): Promise<boolean> {
     const entry = await db.query.ipBlacklist.findFirst({
       where: eq(schema.ipBlacklist.ipAddress, ipAddress),
     });
     return !!entry;
-  },
-};
+  }
+}
+
+export const licensesService = new LicensesService();

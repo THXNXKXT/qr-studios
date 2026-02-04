@@ -1,11 +1,12 @@
 "use client";
 
-import { memo, useMemo, useState, useEffect } from "react";
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Code, Palette, Database, Globe, Box, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { cn } from "@/lib/utils";
 
 const teamMembers = [
@@ -57,11 +58,7 @@ const colorVariants: Record<string, { dot: string; border: string; bg: string; t
 
 export const TeamSection = memo(function TeamSection() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const renderedTeam = useMemo(() => teamMembers.map((member, index) => {
     const colors = colorVariants[member.color];

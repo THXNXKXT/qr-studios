@@ -1,10 +1,10 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { db } from '../db';
 import * as schema from '../db/schema';
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, lt } from 'drizzle-orm';
 import { env } from '../config/env';
 import { UnauthorizedError } from '../utils/errors';
-import { logger } from '../utils/logger';
+import { trackedQuery, logger as baseLogger } from '../utils';
 
 export interface TokenPayload {
   id: string;
@@ -16,9 +16,13 @@ export interface TokenPayload {
   avatar?: string;
 }
 
-export const authService = {
+const logger = baseLogger.child('[AuthService]');
+
+class AuthService {
+  private logger = logger;
+
   async syncUser(accessToken: string) {
-    logger.info('Syncing user with Discord access token...');
+    this.logger.info('Syncing user with Discord access token...');
     try {
       // 1. Verify token with Discord API
       const discordResponse = await fetch('https://discord.com/api/users/@me', {
@@ -28,7 +32,7 @@ export const authService = {
       });
 
       if (!discordResponse.ok) {
-        logger.error('Discord API verification failed', { status: discordResponse.statusText });
+        this.logger.error('Discord API verification failed', { status: discordResponse.statusText });
         throw new UnauthorizedError('Failed to verify Discord access token');
       }
 
@@ -39,34 +43,36 @@ export const authService = {
         avatar?: string;
       };
 
-      logger.info('Discord data verified for user', { username: discordData.username });
+      this.logger.info('Discord data verified for user', { username: discordData.username });
 
       // Use upsert-like logic with Drizzle to handle race conditions during concurrent syncs for the same user
       const avatarUrl = discordData.avatar ? `https://cdn.discordapp.com/avatars/${discordData.id}/${discordData.avatar}.png` : null;
       
-      const usersResult = await db.insert(schema.users)
-        .values({
-          discordId: discordData.id,
-          username: discordData.username,
-          email: discordData.email,
-          avatar: avatarUrl,
-        })
-        .onConflictDoUpdate({
-          target: schema.users.discordId,
-          set: {
+      const usersResult = await trackedQuery(async () => {
+        return await db.insert(schema.users)
+          .values({
+            discordId: discordData.id,
             username: discordData.username,
             email: discordData.email,
             avatar: avatarUrl,
-            updatedAt: new Date(),
-          },
-        })
-        .returning();
+          })
+          .onConflictDoUpdate({
+            target: schema.users.discordId,
+            set: {
+              username: discordData.username,
+              email: discordData.email,
+              avatar: avatarUrl,
+              updatedAt: new Date(),
+            },
+          })
+          .returning();
+      }, 'auth.syncUser.upsert');
       
       const user = usersResult[0];
       if (!user) throw new Error('Failed to sync user');
       
-      logger.info('Generating token pair for user', { userId: user.id });
-      const tokens = await authService.generateTokenPair({
+      this.logger.info('Generating token pair for user', { userId: user.id });
+      const tokens = await this.generateTokenPair({
         id: user.id,
         discordId: user.discordId,
         username: user.username,
@@ -76,13 +82,13 @@ export const authService = {
         avatar: user.avatar || undefined,
       });
 
-      logger.info('Sync successful', { userId: user.id });
+      this.logger.info('Sync successful', { userId: user.id });
       return { user, ...tokens };
     } catch (error: any) {
-      logger.error('Sync failed', error);
+      this.logger.error('Sync failed', error);
       throw error;
     }
-  },
+  }
 
   async refreshToken(token: string, ipAddress?: string, userAgent?: string) {
     let payload: TokenPayload;
@@ -92,44 +98,52 @@ export const authService = {
       throw new UnauthorizedError('Invalid refresh token');
     }
 
-    const storedToken = await db.query.refreshTokens.findFirst({
-      where: eq(schema.refreshTokens.token, token),
-      with: {
-        user: true,
-      },
-    });
+    const storedToken = await trackedQuery(async () => {
+      return await db.query.refreshTokens.findFirst({
+        where: eq(schema.refreshTokens.token, token),
+        with: {
+          user: true,
+        },
+      });
+    }, 'auth.refreshToken.find');
 
     if (!storedToken) {
       // REUSE DETECTION: Token is validly signed but not in DB
       // This means it was either revoked or already used (rotated)
-      logger.warn('Refresh token reuse detected', { userId: payload.id });
+      this.logger.warn('Refresh token reuse detected', { userId: payload.id });
       
-      await authService.revokeRefreshTokens(payload.id);
+      await this.revokeRefreshTokens(payload.id);
       
       // Log security event
-      await db.insert(schema.auditLogs).values({
-        userId: payload.id,
-        action: 'REFRESH_TOKEN_REUSE_ATTEMPT',
-        entity: 'User',
-        entityId: payload.id,
-        newData: { token: token.substring(0, 10) + '...' },
-        ipAddress,
-        userAgent,
-      });
+      await trackedQuery(async () => {
+        return await db.insert(schema.auditLogs).values({
+          userId: payload.id,
+          action: 'REFRESH_TOKEN_REUSE_ATTEMPT',
+          entity: 'User',
+          entityId: payload.id,
+          newData: { token: token.substring(0, 10) + '...' },
+          ipAddress,
+          userAgent,
+        });
+      }, 'auth.refreshToken.logReuse');
 
       throw new UnauthorizedError('Security breach detected. Please sign in again.');
     }
 
     if (storedToken.expiresAt < new Date()) {
-      await db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.token, token));
+      await trackedQuery(async () => {
+        return await db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.token, token));
+      }, 'auth.refreshToken.deleteExpired');
       throw new UnauthorizedError('Refresh token expired');
     }
 
     // Generate new pair (Rotation)
-    await db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.token, token));
+    await trackedQuery(async () => {
+      return await db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.token, token));
+    }, 'auth.refreshToken.deleteOld');
     
-    const user = storedToken.user as any; // Cast to any temporarily if relations are not strictly typed
-    const tokens = await authService.generateTokenPair({
+    const user = storedToken.user as any;
+    const tokens = await this.generateTokenPair({
       id: user.id,
       discordId: user.discordId,
       username: user.username,
@@ -140,38 +154,46 @@ export const authService = {
     });
 
     return tokens;
-  },
+  }
 
   async blacklistToken(token: string) {
     const decoded = jwt.decode(token) as { exp: number };
     if (decoded && decoded.exp) {
-      await db.insert(schema.blacklistedTokens).values({
-        token,
-        expiresAt: new Date(decoded.exp * 1000),
-      }).onConflictDoNothing();
+      await trackedQuery(async () => {
+        return await db.insert(schema.blacklistedTokens).values({
+          token,
+          expiresAt: new Date(decoded.exp * 1000),
+        }).onConflictDoNothing();
+      }, 'auth.blacklistToken');
     }
-  },
+  }
 
   async cleanupExpiredBlacklistedTokens() {
     const now = new Date();
-    await db.delete(schema.blacklistedTokens)
-      .where(lt(schema.blacklistedTokens.expiresAt, now));
-  },
+    await trackedQuery(async () => {
+      return await db.delete(schema.blacklistedTokens)
+        .where(lt(schema.blacklistedTokens.expiresAt, now));
+    }, 'auth.cleanupExpiredTokens');
+  }
 
   async isTokenBlacklisted(token: string) {
-    const blacklisted = await db.query.blacklistedTokens.findFirst({
-      where: eq(schema.blacklistedTokens.token, token),
-    });
-    return !!blacklisted;
-  },
+    return await trackedQuery(async () => {
+      const blacklisted = await db.query.blacklistedTokens.findFirst({
+        where: eq(schema.blacklistedTokens.token, token),
+      });
+      return !!blacklisted;
+    }, 'auth.isTokenBlacklisted');
+  }
 
   async revokeRefreshTokens(userId: string) {
-    await db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.userId, userId));
-  },
+    await trackedQuery(async () => {
+      return await db.delete(schema.refreshTokens).where(eq(schema.refreshTokens.userId, userId));
+    }, 'auth.revokeRefreshTokens');
+  }
 
   async generateTokenPair(user: TokenPayload) {
-    const accessToken = authService.generateAccessToken(user);
-    const refreshToken = authService.generateRefreshToken(user);
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
 
     const expiresAt = new Date();
     // Parse JWT_REFRESH_EXPIRES_IN (e.g., '7d', '1h', '30m') to milliseconds
@@ -186,14 +208,16 @@ export const authService = {
       expiresAt.setDate(expiresAt.getDate() + 7);
     }
 
-    await db.insert(schema.refreshTokens).values({
-      token: refreshToken,
-      userId: user.id,
-      expiresAt,
-    });
+    await trackedQuery(async () => {
+      return await db.insert(schema.refreshTokens).values({
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      });
+    }, 'auth.generateTokenPair.insert');
 
     return { accessToken, refreshToken };
-  },
+  }
 
   generateAccessToken(user: TokenPayload): string {
     // Minimal payload - only essential data for auth
@@ -208,7 +232,7 @@ export const authService = {
     };
     
     return jwt.sign(payload, env.JWT_SECRET, options);
-  },
+  }
 
   generateRefreshToken(user: TokenPayload): string {
     // Minimal payload for refresh token
@@ -222,7 +246,7 @@ export const authService = {
     };
     
     return jwt.sign(payload, env.JWT_REFRESH_SECRET, options);
-  },
+  }
 
   verifyToken(token: string): TokenPayload {
     try {
@@ -230,5 +254,7 @@ export const authService = {
     } catch (error) {
       throw new UnauthorizedError('Invalid token');
     }
-  },
-};
+  }
+}
+
+export const authService = new AuthService();

@@ -3,45 +3,58 @@ import * as schema from '../db/schema';
 import { eq, and, sql, desc, count } from 'drizzle-orm';
 import { NotFoundError, BadRequestError, UnauthorizedError } from '../utils/errors';
 
-export const commissionService = {
+import { BaseService, trackedQuery, logger as baseLogger } from '../utils';
+import type { InferSelectModel } from 'drizzle-orm';
+
+export type Commission = InferSelectModel<typeof schema.commissions>;
+
+const logger = baseLogger.child('[CommissionService]');
+
+class CommissionService extends BaseService<typeof schema.commissions, Commission> {
+  protected table = schema.commissions;
+  protected tableName = 'commissions';
+  protected logger = logger;
+
   async getUserCommissions(userId: string, params: { page?: number; limit?: number } = {}) {
     const { page = 1, limit = 10 } = params;
     const offset = (page - 1) * limit;
 
-    const [commissionsData, totalResult] = await Promise.all([
-      db.query.commissions.findMany({
-        where: eq(schema.commissions.userId, userId),
-        orderBy: [desc(schema.commissions.createdAt)],
-        offset,
-        limit,
-        columns: {
-          id: true,
-          userId: true,
-          title: true,
-          description: true,
-          budget: true,
-          status: true,
-          attachments: true,
-          adminNotes: true,
-          createdAt: true,
-          updatedAt: true,
-        }
-      }),
-      db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.userId, userId)),
-    ]);
+    return await trackedQuery(async () => {
+      const [commissionsData, totalResult] = await Promise.all([
+        db.query.commissions.findMany({
+          where: eq(schema.commissions.userId, userId),
+          orderBy: [desc(schema.commissions.createdAt)],
+          offset,
+          limit,
+          columns: {
+            id: true,
+            userId: true,
+            title: true,
+            description: true,
+            budget: true,
+            status: true,
+            attachments: true,
+            adminNotes: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        }),
+        db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.userId, userId)),
+      ]);
 
-    const total = totalResult[0]?.value ?? 0;
+      const total = totalResult[0]?.value ?? 0;
 
-    return {
-      commissions: commissionsData,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  },
+      return {
+        commissions: commissionsData,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }, 'commission.getUserCommissions');
+  }
 
   async getCommissionById(commissionId: string, userId?: string) {
     const commission = await db.query.commissions.findFirst({
@@ -67,7 +80,7 @@ export const commissionService = {
     }
 
     return commission;
-  },
+  }
 
   async createCommission(
     userId: string,
@@ -97,7 +110,7 @@ export const commissionService = {
     });
 
     return commission;
-  },
+  }
 
   async updateCommissionStatus(
     commissionId: string,
@@ -156,7 +169,7 @@ export const commissionService = {
 
       return updatedCommission;
     });
-  },
+  }
 
   async deleteCommission(commissionId: string, userId: string) {
     const result = await db.delete(schema.commissions)
@@ -178,7 +191,7 @@ export const commissionService = {
     }
 
     return { success: true };
-  },
+  }
 
   async getAllCommissions(params: {
     status?: any;
@@ -227,32 +240,28 @@ export const commissionService = {
         totalPages: Math.ceil(total / limit),
       },
     };
-  },
+  }
 
   async getCommissionStats() {
-    const [
-      totalResult,
-      pendingResult,
-      acceptedResult,
-      inProgressResult,
-      completedResult,
-      cancelledResult
-    ] = await Promise.all([
-      db.select({ value: count() }).from(schema.commissions),
-      db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'PENDING')),
-      db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'ACCEPTED')),
-      db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'IN_PROGRESS')),
-      db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'COMPLETED')),
-      db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'CANCELLED')),
-    ]);
+    return await trackedQuery(async () => {
+      const [
+        totalResult, pendingResult, acceptedResult, inProgressResult, completedResult, cancelledResult
+      ] = await Promise.all([
+        db.select({ value: count() }).from(schema.commissions),
+        db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'PENDING')),
+        db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'ACCEPTED')),
+        db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'IN_PROGRESS')),
+        db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'COMPLETED')),
+        db.select({ value: count() }).from(schema.commissions).where(eq(schema.commissions.status, 'CANCELLED')),
+      ]);
 
-    return {
-      total: totalResult[0]?.value ?? 0,
-      pending: pendingResult[0]?.value ?? 0,
-      accepted: acceptedResult[0]?.value ?? 0,
-      inProgress: inProgressResult[0]?.value ?? 0,
-      completed: completedResult[0]?.value ?? 0,
-      cancelled: cancelledResult[0]?.value ?? 0,
-    };
-  },
-};
+      return {
+        total: totalResult[0]?.value ?? 0, pending: pendingResult[0]?.value ?? 0,
+        accepted: acceptedResult[0]?.value ?? 0, inProgress: inProgressResult[0]?.value ?? 0,
+        completed: completedResult[0]?.value ?? 0, cancelled: cancelledResult[0]?.value ?? 0,
+      };
+    }, 'commission.getStats');
+  }
+}
+
+export const commissionService = new CommissionService();

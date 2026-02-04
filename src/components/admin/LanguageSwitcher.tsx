@@ -1,20 +1,17 @@
 "use client";
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { useIsMounted } from '@/hooks/useIsMounted';
 import { Globe } from 'lucide-react';
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const languages = [
     { code: 'th', label: 'ภาษาไทย', flag: '🇹🇭' },

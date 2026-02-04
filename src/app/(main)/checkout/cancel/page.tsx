@@ -3,21 +3,17 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { XCircle, ArrowLeft, ShoppingCart, MessageSquare, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export default function CheckoutCancelPage() {
   const { t } = useTranslation("common");
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = (key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;

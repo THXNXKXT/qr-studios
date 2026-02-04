@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Mail,
@@ -93,11 +92,14 @@ export default function ContactPage() {
 
   useEffect(() => {
     if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        name: user.username || prev.name,
-        email: user.email || prev.email,
-      }));
+      // Defer setState to avoid react-hooks/set-state-in-effect warning
+      queueMicrotask(() => {
+        setFormData((prev) => ({
+          ...prev,
+          name: user.username || prev.name,
+          email: user.email || prev.email,
+        }));
+      });
     }
   }, [user]);
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -72,8 +72,8 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         return;
       }
 
-      const spinData = data as unknown as { reward?: LuckyWheelReward; message?: string } | null;
-      const reward = spinData?.reward;
+      const spinData = data as unknown as { success?: boolean; data?: { reward?: LuckyWheelReward; message?: string } } | null;
+      const reward = spinData?.data?.reward;
       if (!reward) {
         luckyWheelLogger.error('Reward data missing in spin response', { data });
         setSpinning(false);
@@ -122,8 +122,15 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Lucky Wheel - วงล้อเสี่ยงโชค" className="max-w-2xl">
-      <div className="flex flex-col gap-6">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal.Overlay />
+      <Modal.Content className="max-w-2xl">
+        <Modal.Header>
+          <Modal.Title>Lucky Wheel - วงล้อเสี่ยงโชค</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <div className="flex flex-col gap-6">
         {/* Tabs */}
         <div className="flex bg-white/5 p-1 rounded-xl">
           <button
@@ -360,8 +367,10 @@ export function LuckyWheelModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               </div>
             </div>
           </div>
-        </div>
-      </div>
+          </div>
+          </div>
+        </Modal.Body>
+      </Modal.Content>
     </Modal>
   );
 }

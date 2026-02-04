@@ -294,186 +294,193 @@ export default function LuckyWheelAdminPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingReward?.id ? t("lucky_wheel.edit_reward") : t("lucky_wheel.add_new_reward")}
       >
-        <div className="p-6 space-y-8">
-          {/* section: Basic Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-white/5">
-              <Gift className="w-4 h-4 text-red-500" />
-              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">{t("lucky_wheel.reward_info")}</h3>
-            </div>
-
-            <div className="space-y-2">
-              <label className={cn("text-xs font-bold uppercase tracking-wider", errors.name ? "text-red-500" : "text-gray-500")}>
-                {t("lucky_wheel.reward_name")} *
-              </label>
-              <Input
-                value={editingReward?.name || ""}
-                onChange={(e) => {
-                  setEditingReward(prev => ({ ...prev, name: e.target.value }));
-                  if (errors.name) setErrors({ ...errors, name: "" });
-                }}
-                placeholder={t("lucky_wheel.reward_name_placeholder")}
-                error={errors.name}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">{t("lucky_wheel.type")}</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingReward(prev => ({ ...prev, type: "POINTS" }))}
-                    className={cn(
-                      "flex items-center justify-center gap-2 h-11 rounded-xl border transition-all font-bold text-sm",
-                      editingReward?.type === "POINTS"
-                        ? "bg-red-500/10 border-red-500 text-red-500"
-                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                    )}
-                  >
-                    <Star className="w-4 h-4" />
-                    {mounted ? t("lucky_wheel.type_points") : ""}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingReward(prev => ({ ...prev, type: "BALANCE" }))}
-                    className={cn(
-                      "flex items-center justify-center gap-2 h-11 rounded-xl border transition-all font-bold text-sm",
-                      editingReward?.type === "BALANCE"
-                        ? "bg-red-500/10 border-red-500 text-red-500"
-                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                    )}
-                  >
-                    <Coins className="w-4 h-4" />
-                    {mounted ? t("lucky_wheel.type_balance") : ""}
-                  </button>
+        <Modal.Overlay />
+        <Modal.Content>
+          <Modal.Header>
+            <Modal.Title>{editingReward?.id ? t("lucky_wheel.edit_reward") : t("lucky_wheel.add_new_reward")}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="p-6 space-y-8">
+              {/* section: Basic Info */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                  <Gift className="w-4 h-4 text-red-500" />
+                  <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">{t("lucky_wheel.reward_info")}</h3>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className={cn("text-xs font-bold uppercase tracking-wider", errors.value ? "text-red-500" : "text-gray-500")}>
-                  {mounted ? t("lucky_wheel.value") : ""} *
-                </label>
-                <div className="relative">
+
+                <div className="space-y-2">
+                  <label className={cn("text-xs font-bold uppercase tracking-wider", errors.name ? "text-red-500" : "text-gray-500")}>
+                    {t("lucky_wheel.reward_name")} *
+                  </label>
                   <Input
-                    type="number"
-                    value={editingReward?.value ?? 0}
+                    value={editingReward?.name || ""}
                     onChange={(e) => {
-                      setEditingReward(prev => ({ ...prev, value: parseFloat(e.target.value) }));
-                      if (errors.value) setErrors({ ...errors, value: "" });
+                      setEditingReward(prev => ({ ...prev, name: e.target.value }));
+                      if (errors.name) setErrors({ ...errors, name: "" });
                     }}
-                    error={errors.value}
+                    placeholder={t("lucky_wheel.reward_name_placeholder")}
+                    error={errors.name}
                     required
-                    className="pr-10"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                    {editingReward?.type === "POINTS" ? <Star className="w-4 h-4" /> : <span className="text-xs font-bold text-gray-500">฿</span>}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500">{t("lucky_wheel.type")}</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingReward(prev => ({ ...prev, type: "POINTS" }))}
+                        className={cn(
+                          "flex items-center justify-center gap-2 h-11 rounded-xl border transition-all font-bold text-sm",
+                          editingReward?.type === "POINTS"
+                            ? "bg-red-500/10 border-red-500 text-red-500"
+                            : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                        )}
+                      >
+                        <Star className="w-4 h-4" />
+                        {mounted ? t("lucky_wheel.type_points") : ""}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingReward(prev => ({ ...prev, type: "BALANCE" }))}
+                        className={cn(
+                          "flex items-center justify-center gap-2 h-11 rounded-xl border transition-all font-bold text-sm",
+                          editingReward?.type === "BALANCE"
+                            ? "bg-red-500/10 border-red-500 text-red-500"
+                            : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                        )}
+                      >
+                        <Coins className="w-4 h-4" />
+                        {mounted ? t("lucky_wheel.type_balance") : ""}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* section: Mechanics */}
-          <div className="space-y-4 p-5 rounded-2xl bg-white/2 border border-white/5">
-            <div className="flex items-center gap-2 pb-2 border-b border-white/5">
-              <Target className="w-4 h-4 text-blue-500" />
-              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">{mounted ? t("lucky_wheel.settings_chances") : ""}</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className={cn("text-xs font-bold uppercase tracking-wider", errors.probability ? "text-red-500" : "text-gray-500")}>
-                  {mounted ? t("lucky_wheel.probability") : ""} *
-                </label>
-                <div className="relative group">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    max="1"
-                    value={editingReward?.probability ?? 0}
-                    onChange={(e) => {
-                      setEditingReward(prev => ({ ...prev, probability: parseFloat(e.target.value) }));
-                      if (errors.probability) setErrors({ ...errors, probability: "" });
-                    }}
-                    error={errors.probability}
-                    required
-                    className="pl-10"
-                  />
-                  <Target className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
-                </div>
-                <p className="text-[10px] text-gray-500 font-bold uppercase">{mounted ? t("lucky_wheel.probability_hint", { percent: ((editingReward?.probability || 0) * 100).toFixed(1) }) : ""}</p>
-              </div>
-              <div className="space-y-2">
-                <label className={cn("text-xs font-bold uppercase tracking-wider", errors.color ? "text-red-500" : "text-gray-500")}>
-                  {mounted ? t("lucky_wheel.color") : ""} *
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1 group">
-                    <Input
-                      value={editingReward?.color || "#EF4444"}
-                      onChange={(e) => {
-                        setEditingReward(prev => ({ ...prev, color: e.target.value }));
-                        if (errors.color) setErrors({ ...errors, color: "" });
-                      }}
-                      error={errors.color}
-                      className="pl-10 uppercase font-mono"
-                    />
-                    <Palette className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />
-                    <div
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg border border-white/10 overflow-hidden shadow-sm"
-                    >
-                      <input
-                        type="color"
-                        value={editingReward?.color || "#EF4444"}
+                  <div className="space-y-2">
+                    <label className={cn("text-xs font-bold uppercase tracking-wider", errors.value ? "text-red-500" : "text-gray-500")}>
+                      {mounted ? t("lucky_wheel.value") : ""} *
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        value={editingReward?.value ?? 0}
                         onChange={(e) => {
-                          setEditingReward(prev => ({ ...prev, color: e.target.value }));
-                          if (errors.color) setErrors({ ...errors, color: "" });
+                          setEditingReward(prev => ({ ...prev, value: parseFloat(e.target.value) }));
+                          if (errors.value) setErrors({ ...errors, value: "" });
                         }}
-                        className="absolute inset-[-5px] w-[200%] h-[200%] cursor-pointer"
+                        error={errors.value}
+                        required
+                        className="pr-10"
                       />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                        {editingReward?.type === "POINTS" ? <Star className="w-4 h-4" /> : <span className="text-xs font-bold text-gray-500">฿</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-2 px-2">
-              <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                <div className={cn(
-                  "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
-                  editingReward?.isActive ? "bg-green-500 border-green-500 shadow-lg shadow-green-500/20" : "border-white/20 group-hover:border-green-500/50"
-                )}>
-                  <input
-                    type="checkbox"
-                    checked={editingReward?.isActive}
-                    onChange={(e) => setEditingReward(prev => ({ ...prev, isActive: e.target.checked }))}
-                    className="hidden"
-                  />
-                  {editingReward?.isActive && <Save className="w-3.5 h-3.5 text-white" />}
+              {/* section: Mechanics */}
+              <div className="space-y-4 p-5 rounded-2xl bg-white/2 border border-white/5">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                  <Target className="w-4 h-4 text-blue-500" />
+                  <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">{mounted ? t("lucky_wheel.settings_chances") : ""}</h3>
                 </div>
-                <span className="text-sm font-bold text-gray-300">{mounted ? t("lucky_wheel.enable_reward") : ""}</span>
-              </label>
-            </div>
-          </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="px-8 font-bold text-gray-400 hover:text-white">
-              {mounted ? t("common.cancel") : ""}
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-10 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-xl shadow-red-600/20"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              {mounted ? (editingReward?.id ? t("lucky_wheel.save_changes") : t("lucky_wheel.add_reward")) : ""}
-            </Button>
-          </div>
-        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className={cn("text-xs font-bold uppercase tracking-wider", errors.probability ? "text-red-500" : "text-gray-500")}>
+                      {mounted ? t("lucky_wheel.probability") : ""} *
+                    </label>
+                    <div className="relative group">
+                      <Input
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        max="1"
+                        value={editingReward?.probability ?? 0}
+                        onChange={(e) => {
+                          setEditingReward(prev => ({ ...prev, probability: parseFloat(e.target.value) }));
+                          if (errors.probability) setErrors({ ...errors, probability: "" });
+                        }}
+                        error={errors.probability}
+                        required
+                        className="pl-10"
+                      />
+                      <Target className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">{mounted ? t("lucky_wheel.probability_hint", { percent: ((editingReward?.probability || 0) * 100).toFixed(1) }) : ""}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={cn("text-xs font-bold uppercase tracking-wider", errors.color ? "text-red-500" : "text-gray-500")}>
+                      {mounted ? t("lucky_wheel.color") : ""} *
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1 group">
+                        <Input
+                          value={editingReward?.color || "#EF4444"}
+                          onChange={(e) => {
+                            setEditingReward(prev => ({ ...prev, color: e.target.value }));
+                            if (errors.color) setErrors({ ...errors, color: "" });
+                          }}
+                          error={errors.color}
+                          className="pl-10 uppercase font-mono"
+                        />
+                        <Palette className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-red-500 transition-colors" />
+                        <div
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg border border-white/10 overflow-hidden shadow-sm"
+                        >
+                          <input
+                            type="color"
+                            value={editingReward?.color || "#EF4444"}
+                            onChange={(e) => {
+                              setEditingReward(prev => ({ ...prev, color: e.target.value }));
+                              if (errors.color) setErrors({ ...errors, color: "" });
+                            }}
+                            className="absolute inset-[-5px] w-[200%] h-[200%] cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 px-2">
+                  <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                    <div className={cn(
+                      "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
+                      editingReward?.isActive ? "bg-green-500 border-green-500 shadow-lg shadow-green-500/20" : "border-white/20 group-hover:border-green-500/50"
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={editingReward?.isActive}
+                        onChange={(e) => setEditingReward(prev => ({ ...prev, isActive: e.target.checked }))}
+                        className="hidden"
+                      />
+                      {editingReward?.isActive && <Save className="w-3.5 h-3.5 text-white" />}
+                    </div>
+                    <span className="text-sm font-bold text-gray-300">{mounted ? t("lucky_wheel.enable_reward") : ""}</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="px-8 font-bold text-gray-400 hover:text-white">
+                  {mounted ? t("common.cancel") : ""}
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-10 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest shadow-xl shadow-red-600/20"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                  {mounted ? (editingReward?.id ? t("lucky_wheel.save_changes") : t("lucky_wheel.add_reward")) : ""}
+                </Button>
+              </div>
+            </div>
+          </Modal.Body>
+        </Modal.Content>
       </Modal>
 
       <ConfirmModal

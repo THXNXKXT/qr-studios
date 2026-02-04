@@ -11,6 +11,7 @@ const createChainableMock = () => {
   chain.returning = mock(() => Promise.resolve([]));
   chain.values = mock(() => chain);
   chain.onConflictDoUpdate = mock(() => chain);
+  chain.onConflictDoNothing = mock(() => chain);
   chain.then = mock((resolve) => resolve([]));
   return chain;
 };

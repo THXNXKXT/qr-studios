@@ -80,6 +80,8 @@
     },
     "card": {
       "new": "ใหม่",
+      "featured": "แนะนำ",
+      "flash_sale": "Flash Sale",
       "add_to_cart": "เพิ่มลงตะกร้า"
     },
     "recently_viewed": "สินค้าที่เพิ่งดู",

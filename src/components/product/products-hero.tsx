@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, X, Search, ImageOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,8 @@ import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
+
+const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==";
 
 interface ProductsHeroProps {
   searchQuery: string;
@@ -23,6 +26,9 @@ export function ProductsHero({
   onAddToCart,
 }: ProductsHeroProps) {
   const { t } = useTranslation("home");
+  const [imageError, setImageError] = useState(false);
+  
+  const imageUrl = featuredProduct ? (featuredProduct.thumbnail || featuredProduct.images?.[0]) : null;
   return (
     <section className="relative py-16 overflow-hidden">
       <div className="absolute inset-0 bg-linear-to-br from-red-900/30 via-black to-black" />
@@ -87,12 +93,17 @@ export function ProductsHero({
                 
                 <div className="flex items-start gap-6 relative z-10">
                   <div className="relative w-40 h-40 rounded-2xl overflow-hidden bg-linear-to-br from-red-900/40 to-black shrink-0 border border-white/5 shadow-2xl">
-                    {(featuredProduct.thumbnail || featuredProduct.images?.[0]) ? (
+                    {imageUrl && !imageError ? (
                       <Image 
-                        src={featuredProduct.thumbnail || featuredProduct.images![0]} 
+                        src={imageUrl} 
                         alt={featuredProduct.name} 
                         fill 
+                        sizes="160px"
                         className="object-cover group-hover:scale-110 transition-transform duration-700" 
+                        priority
+                        placeholder="blur"
+                        blurDataURL={blurDataURL}
+                        onError={() => setImageError(true)}
                       />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">

@@ -1,9 +1,13 @@
 import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq, count, sql } from 'drizzle-orm';
-import { logger } from '../utils/logger';
+import { trackedQuery, logger as baseLogger } from '../utils';
 
-export const statsService = {
+const logger = baseLogger.child('[StatsService]');
+
+class StatsService {
+  private logger = logger;
+
   async getPublicStats() {
     try {
       const [
@@ -12,20 +16,32 @@ export const statsService = {
         totalLicensesResult,
         totalMembersResult
       ] = await Promise.all([
-        db.query.systemStats.findFirst({ where: eq(schema.systemStats.id, 'global') }).catch(e => {
-          logger.error('Error fetching visitorStat', { error: e });
+        trackedQuery(async () => {
+          return await db.query.systemStats.findFirst({
+            where: eq(schema.systemStats.id, 'global')
+          });
+        }, 'stats.getPublicStats.visitorStat').catch(e => {
+          this.logger.error('Error fetching visitorStat', { error: e });
           return null;
         }),
-        db.select({ value: count() }).from(schema.products).catch(e => {
-          logger.error('Error fetching totalProducts', { error: e });
+        trackedQuery(async () => {
+          return await db.select({ value: count() }).from(schema.products);
+        }, 'stats.getPublicStats.totalProducts').catch(e => {
+          this.logger.error('Error fetching totalProducts', { error: e });
           return [{ value: 0 }];
         }),
-        db.select({ value: count() }).from(schema.licenses).where(eq(schema.licenses.status, 'ACTIVE')).catch(e => {
-          logger.error('Error fetching totalLicenses', { error: e });
+        trackedQuery(async () => {
+          return await db.select({ value: count() })
+            .from(schema.licenses)
+            .where(eq(schema.licenses.status, 'ACTIVE'));
+        }, 'stats.getPublicStats.totalLicenses').catch(e => {
+          this.logger.error('Error fetching totalLicenses', { error: e });
           return [{ value: 0 }];
         }),
-        db.select({ value: count() }).from(schema.users).catch(e => {
-          logger.error('Error fetching totalMembers', { error: e });
+        trackedQuery(async () => {
+          return await db.select({ value: count() }).from(schema.users);
+        }, 'stats.getPublicStats.totalMembers').catch(e => {
+          this.logger.error('Error fetching totalMembers', { error: e });
           return [{ value: 0 }];
         })
       ]);
@@ -37,7 +53,7 @@ export const statsService = {
         totalMembers: totalMembersResult[0]?.value ?? 0
       };
     } catch (error) {
-      logger.error('Critical error in getPublicStats', { error });
+      this.logger.error('Critical error in getPublicStats', { error });
       return {
         totalVisitors: 0,
         totalProducts: 0,
@@ -45,18 +61,22 @@ export const statsService = {
         totalMembers: 0
       };
     }
-  },
+  }
 
   async incrementVisitors() {
-    return db.insert(schema.systemStats)
-      .values({ id: 'global', totalVisitors: 1 })
-      .onConflictDoUpdate({
-        target: schema.systemStats.id,
-        set: { 
-          totalVisitors: sql`${schema.systemStats.totalVisitors} + 1`,
-          updatedAt: new Date()
-        }
-      })
-      .returning();
+    return await trackedQuery(async () => {
+      return await db.insert(schema.systemStats)
+        .values({ id: 'global', totalVisitors: 1 })
+        .onConflictDoUpdate({
+          target: schema.systemStats.id,
+          set: {
+            totalVisitors: sql`${schema.systemStats.totalVisitors} + 1`,
+            updatedAt: new Date()
+          }
+        })
+        .returning();
+    }, 'stats.incrementVisitors');
   }
-};
+}
+
+export const statsService = new StatsService();

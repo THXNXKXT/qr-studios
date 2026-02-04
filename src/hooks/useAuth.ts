@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { useAuthStore } from '@/store/auth';
 
@@ -41,16 +41,7 @@ export function useAuth() {
     }
   }, [clearAuth]);
 
-  // Extract primitive values from session to stabilize dependencies
-  const sessionEmail = session?.user?.email;
-  const sessionName = session?.user?.name;
-  const sessionImage = session?.user?.image;
-
-  useEffect(() => {
-    sync(session, status);
-  }, [sessionEmail, sessionName, sessionImage, status, sync]);
-
-  const refresh = useCallback(() => sync(session, status, true), [sessionEmail, sessionName, sessionImage, status, sync]);
+  const refresh = useCallback(() => sync(session, status, true), [session, status, sync]);
   const verifyPayment = useCallback((sessionId: string) => verifyPaymentStore(sessionId), [verifyPaymentStore]);
   const verifyTopup = useCallback((sessionId: string) => verifyTopupStore(sessionId), [verifyTopupStore]);
 

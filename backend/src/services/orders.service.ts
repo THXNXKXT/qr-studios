@@ -5,54 +5,63 @@ import { env } from '../config/env';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { emailService } from './email.service';
 import { getTierInfo } from '../utils/tiers';
-import { logger } from '../utils/logger';
-
+import { BaseService, trackedQuery, logger as baseLogger } from '../utils';
+import type { InferSelectModel } from 'drizzle-orm';
 import { discordService } from './discord.service';
 
-export const ordersService = {
+export type Order = InferSelectModel<typeof schema.orders>;
+
+const logger = baseLogger.child('[OrdersService]');
+
+class OrdersService extends BaseService<typeof schema.orders, Order> {
+  protected table = schema.orders;
+  protected tableName = 'orders';
+  protected logger = logger;
+
   async calculateFinalDiscount(userId: string, total: number, promoCodeData?: any | null, tx?: any) {
     const dbClient = tx || db;
-    // Calculate total spent for tier
-    const [totalSpentResult] = await dbClient.select({
-      total: sql<number>`sum(${schema.orders.total})`
-    })
-    .from(schema.orders)
-    .where(
-      and(
-        eq(schema.orders.userId, userId),
-        eq(schema.orders.status, 'COMPLETED')
-      )
-    );
-    const totalSpent = Number(totalSpentResult?.total || 0);
+    return await trackedQuery(async () => {
+      const [totalSpentResult] = await dbClient.select({
+        total: sql<number>`sum(${schema.orders.total})`
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.userId, userId),
+          eq(schema.orders.status, 'COMPLETED')
+        )
+      );
+      const totalSpent = Number(totalSpentResult?.total || 0);
 
-    const tier = getTierInfo(totalSpent);
-    const tierDiscount = Math.round((total * tier.discount) / 100);
+      const tier = getTierInfo(totalSpent);
+      const tierDiscount = Math.round((total * tier.discount) / 100);
 
-    let promoDiscount = 0;
-    if (promoCodeData) {
-      if (promoCodeData.minPurchase && total < promoCodeData.minPurchase) {
-        throw new BadRequestError(
-          `Minimum purchase amount is ${promoCodeData.minPurchase}`
-        );
-      }
-
-      if (promoCodeData.type === 'PERCENTAGE') {
-        promoDiscount = Math.round((total * promoCodeData.discount) / 100 * 100) / 100;
-        if (promoCodeData.maxDiscount && promoDiscount > promoCodeData.maxDiscount) {
-          promoDiscount = promoCodeData.maxDiscount;
+      let promoDiscount = 0;
+      if (promoCodeData) {
+        if (promoCodeData.minPurchase && total < promoCodeData.minPurchase) {
+          throw new BadRequestError(
+            `Minimum purchase amount is ${promoCodeData.minPurchase}`
+          );
         }
-      } else {
-        promoDiscount = promoCodeData.discount;
-      }
-    }
 
-    return {
-      tierDiscount,
-      promoDiscount,
-      totalDiscount: tierDiscount + promoDiscount,
-      tier
-    };
-  },
+        if (promoCodeData.type === 'PERCENTAGE') {
+          promoDiscount = Math.round((total * promoCodeData.discount) / 100 * 100) / 100;
+          if (promoCodeData.maxDiscount && promoDiscount > promoCodeData.maxDiscount) {
+            promoDiscount = promoCodeData.maxDiscount;
+          }
+        } else {
+          promoDiscount = promoCodeData.discount;
+        }
+      }
+
+      return {
+        tierDiscount,
+        promoDiscount,
+        totalDiscount: tierDiscount + promoDiscount,
+        tier
+      };
+    }, 'orders.calculateFinalDiscount');
+  }
 
   async createOrder(
     userId: string,
@@ -104,12 +113,11 @@ export const ordersService = {
       throw new BadRequestError('No valid products in order');
     }
 
-    const productsResult = await db.query.products.findMany({
+    const productsResult = await trackedQuery(() => db.query.products.findMany({
       where: inArray(schema.products.id, productIdStrings),
-    });
+    }), 'orders.createOrder.findProducts');
 
     logger.debug('Products found in DB', { count: productsResult.length });
-    logger.debug('Products details', { products: productsResult.map(p => ({ id: p.id, name: p.name })) });
 
     // CRITICAL: Compare products found with UNIQUE IDs requested
     if (productsResult.length !== productIdStrings.length) {
@@ -237,7 +245,7 @@ export const ordersService = {
                   name: true,
                   slug: true,
                   category: true,
-                  images: true,
+                  thumbnail: true,
                   version: true,
                 },
               },
@@ -248,85 +256,146 @@ export const ordersService = {
 
       return finalOrder;
     });
-  },
+  }
 
   async getOrderById(orderId: string, userId?: string) {
-    const order = await db.query.orders.findFirst({
-      where: eq(schema.orders.id, orderId),
-      with: {
-        items: {
-          with: {
-            product: {
-              columns: {
-                id: true,
-                name: true,
-                slug: true,
-                images: true,
-                category: true,
-                version: true,
-              },
-            },
-          },
-        },
-        licenses: {
-          with: {
-            product: {
-              columns: {
-                id: true,
-                name: true,
-                slug: true,
-                category: true,
-                version: true,
-              }
+    return await trackedQuery(async () => {
+      // Use explicit select with join to ensure all fields are included
+      const [order] = await db.select({
+        id: schema.orders.id,
+        userId: schema.orders.userId,
+        total: schema.orders.total,
+        discount: schema.orders.discount,
+        promoCode: schema.orders.promoCode,
+        status: schema.orders.status,
+        paymentMethod: schema.orders.paymentMethod,
+        paymentIntent: schema.orders.paymentIntent,
+        createdAt: schema.orders.createdAt,
+        updatedAt: schema.orders.updatedAt,
+      })
+      .from(schema.orders)
+      .where(eq(schema.orders.id, orderId))
+      .limit(1);
+
+      if (!order) {
+        throw new NotFoundError('Order not found');
+      }
+
+      if (userId && order.userId !== userId) {
+        throw new BadRequestError('Unauthorized access to order');
+      }
+
+      // Get items with product details
+      const items = await db.select({
+        id: schema.orderItems.id,
+        orderId: schema.orderItems.orderId,
+        productId: schema.orderItems.productId,
+        quantity: schema.orderItems.quantity,
+        price: schema.orderItems.price,
+        createdAt: schema.orderItems.createdAt,
+        product: {
+          id: schema.products.id,
+          name: schema.products.name,
+          slug: schema.products.slug,
+          thumbnail: schema.products.thumbnail,
+          category: schema.products.category,
+          version: schema.products.version,
+          downloadFileKey: schema.products.downloadFileKey,
+          downloadKey: schema.products.downloadKey,
+          rewardPoints: schema.products.rewardPoints,
+          stock: schema.products.stock,
+        }
+      })
+      .from(schema.orderItems)
+      .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
+      .where(eq(schema.orderItems.orderId, order.id));
+
+      // Get licenses
+      const licenses = await db.query.licenses.findMany({
+        where: eq(schema.licenses.orderId, order.id),
+        with: {
+          product: {
+            columns: {
+              id: true,
+              name: true,
+              slug: true,
+              category: true,
+              version: true,
             }
           }
-        },
-        user: {
-          columns: {
-            id: true,
-            username: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
-    });
+        }
+      });
 
-    if (!order) {
-      throw new NotFoundError('Order not found');
-    }
+      // Get user
+      const user = await db.query.users.findFirst({
+        where: eq(schema.users.id, order.userId),
+        columns: {
+          id: true,
+          username: true,
+          email: true,
+          avatar: true,
+        }
+      });
 
-    if (userId && order.userId !== userId) {
-      throw new BadRequestError('Unauthorized access to order');
-    }
-
-    return order;
-  },
+      return JSON.parse(JSON.stringify({
+        ...order,
+        items,
+        licenses,
+        user
+      }));
+    }, 'orders.getOrderById');
+  }
 
   async getUserOrders(userId: string) {
-    const ordersData = await db.query.orders.findMany({
-      where: eq(schema.orders.userId, userId),
-      with: {
-        items: {
-          with: {
+    return await trackedQuery(async () => {
+      // Use explicit select with join instead of relation query
+      const orders = await db.select({
+        id: schema.orders.id,
+        userId: schema.orders.userId,
+        total: schema.orders.total,
+        discount: schema.orders.discount,
+        promoCode: schema.orders.promoCode,
+        status: schema.orders.status,
+        paymentMethod: schema.orders.paymentMethod,
+        paymentIntent: schema.orders.paymentIntent,
+        createdAt: schema.orders.createdAt,
+        updatedAt: schema.orders.updatedAt,
+      })
+      .from(schema.orders)
+      .where(eq(schema.orders.userId, userId))
+      .orderBy(desc(schema.orders.createdAt));
+      
+      // Get items for each order
+      const ordersWithItems = await Promise.all(
+        orders.map(async (order) => {
+          const items = await db.select({
+            id: schema.orderItems.id,
+            orderId: schema.orderItems.orderId,
+            productId: schema.orderItems.productId,
+            quantity: schema.orderItems.quantity,
+            price: schema.orderItems.price,
+            createdAt: schema.orderItems.createdAt,
             product: {
-              columns: {
-                id: true,
-                name: true,
-                slug: true,
-                images: true,
-                category: true,
-                version: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: [desc(schema.orders.createdAt)],
-    });
-
-    return ordersData;
-  },
+              id: schema.products.id,
+              name: schema.products.name,
+              slug: schema.products.slug,
+              thumbnail: schema.products.thumbnail,
+              category: schema.products.category,
+              version: schema.products.version,
+            }
+          })
+          .from(schema.orderItems)
+          .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
+          .where(eq(schema.orderItems.orderId, order.id));
+          
+          return { ...order, items };
+        })
+      );
+      
+      // Force return with plain objects and verify thumbnail
+      return JSON.parse(JSON.stringify(ordersWithItems));
+    }, 'orders.getUserOrders');
+  }
 
   async cancelOrder(orderId: string, userId: string) {
     return await db.transaction(async (tx) => {
@@ -382,7 +451,7 @@ export const ordersService = {
 
       return updatedOrder;
     });
-  },
+  }
 
   async payWithBalance(userId: string, orderId: string) {
     return await db.transaction(async (tx) => {
@@ -444,7 +513,7 @@ export const ordersService = {
       // 5. Complete the order (grant licenses, etc.)
       return await this.completeOrder(orderId, tx);
     });
-  },
+  }
 
   async completeOrder(orderId: string, transactionClient?: any) {
     const executeLogic = async (tx: any) => {
@@ -459,7 +528,7 @@ export const ordersService = {
                   name: true,
                   slug: true,
                   category: true,
-                  images: true,
+                  thumbnail: true,
                   version: true,
                   downloadFileKey: true,
                   downloadKey: true, // Fallback for email delivery
@@ -687,5 +756,7 @@ export const ordersService = {
     }
 
     return result.order;
-  },
-};
+  }
+}
+
+export const ordersService = new OrdersService();

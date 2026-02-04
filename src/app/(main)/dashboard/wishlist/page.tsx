@@ -1,34 +1,31 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2, ImageOff } from "lucide-react";
+import { Heart, ShoppingCart, Trash2, ArrowRight, ImageOff } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { WishlistSkeleton } from "@/components/dashboard/wishlist-skeleton";
-import { useWishlistStore } from "@/store/wishlist";
+import { useWishlistStore, type WishlistItem } from "@/store/wishlist";
 import { useCartStore } from "@/store/cart";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { getAuthToken } from "@/lib/auth-helper";
 import { useTranslation } from "react-i18next";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import type { ProductCategory } from "@/types";
+
+const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==";
 
 export default function WishlistPage() {
   const { t } = useTranslation("common");
   const { user, loading: authLoading, isSynced } = useAuth();
   const { items, loading: wishlistLoading, fetchWishlist, removeItem, clearWishlist } = useWishlistStore();
   const addToCart = useCartStore((state) => state.addItem);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
 
-  const renderTranslation = (key: string, options?: any): string => {
-    if (!mounted) return "";
-    const result = t(key, options);
-    return typeof result === "string" ? result : key;
-  };
-
-  const handleAddToCart = useCallback((item: any) => {
+  const handleAddToCart = useCallback((item: WishlistItem) => {
     addToCart({
       id: item.id,
       name: item.name,
@@ -51,8 +48,6 @@ export default function WishlistPage() {
   }, [addToCart]);
 
   useEffect(() => {
-    setMounted(true);
-
     async function initWishlist() {
       const token = getAuthToken();
 
@@ -67,6 +62,21 @@ export default function WishlistPage() {
 
     initWishlist();
   }, [user?.id, isSynced, fetchWishlist]);
+
+  // Handle redirect in useEffect to avoid react-hooks/immutability error
+  useEffect(() => {
+    if (!user && !authLoading && !getAuthToken()) {
+      if (typeof window !== 'undefined') {
+        window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
+      }
+    }
+  }, [user, authLoading]);
+
+  const renderTranslation = (key: string, options?: Record<string, unknown>): string => {
+    if (!mounted) return "";
+    const result = t(key, options);
+    return typeof result === "string" ? result : key;
+  };
 
   // Use optimistic loading check
   const isAuthInitializing = !isSynced && !user?.id && !!getAuthToken();
@@ -93,11 +103,8 @@ export default function WishlistPage() {
     );
   }
 
-  // Robust redirect logic
+  // Robust redirect logic - now handled in useEffect above
   if (!user && !authLoading && !getAuthToken()) {
-    if (typeof window !== 'undefined') {
-      window.location.href = `/auth/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
-    }
     return null;
   }
 
@@ -169,7 +176,16 @@ export default function WishlistPage() {
                         src={item.image}
                         alt={item.name}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        priority={index < 4}
+                        placeholder="blur"
+                        blurDataURL={blurDataURL}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement?.classList.add('image-error');
+                        }}
                       />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">
@@ -177,6 +193,11 @@ export default function WishlistPage() {
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">No Image</span>
                       </div>
                     )}
+                    {/* Fallback for failed images */}
+                    <div className="absolute inset-0 flex-col items-center justify-center bg-white/5 image-error hidden">
+                      <ImageOff className="w-10 h-10 text-gray-600 mb-2" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">No Image</span>
+                    </div>
                     <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-transparent" />
 
                     {/* Remove Button */}

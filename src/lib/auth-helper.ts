@@ -3,6 +3,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4001";
 
 import { createLogger } from "@/lib/logger";
+import { setCookie, getCookie, eraseCookie } from "@/lib/cookies";
 
 const authHelperLogger = createLogger("auth:helper");
 
@@ -25,37 +26,6 @@ export interface BackendSession {
 }
 
 /**
- * Set cookie helper
- */
-function setCookie(name: string, value: string, days: number) {
-  const expires = new Date();
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
-}
-
-/**
- * Get cookie helper
- */
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-  }
-  return null;
-}
-
-/**
- * Erase cookie helper
- */
-export function eraseCookie(name: string) {
-  document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-}
-
-/**
  * Create backend session after Discord OAuth
  */
 export async function createBackendSession(user: {
@@ -65,7 +35,7 @@ export async function createBackendSession(user: {
   const timeoutId = setTimeout(() => {
     try {
       controller.abort("Auth request timeout");
-    } catch (e) {
+    } catch (_e) {
       controller.abort();
     }
   }, 30000); // Increased to 30s for safety
@@ -143,7 +113,7 @@ export async function getBackendSession(): Promise<BackendUser | null> {
   const timeoutId = setTimeout(() => {
     try {
       controller.abort("Auth request timeout");
-    } catch (e) {
+    } catch (_e) {
       controller.abort();
     }
   }, 30000); // Increased to 30s for safety

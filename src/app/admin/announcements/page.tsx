@@ -68,10 +68,22 @@ export default function AdminAnnouncementsPage() {
       ]);
 
       if (annRes.data) {
-        setAnnouncements((Array.isArray(annRes.data) ? annRes.data : []) as Announcement[]);
+        // Handle both formats: { success, data } or direct array
+        const responseData = annRes.data as { success?: boolean; data?: unknown[] } | unknown[];
+        let announcementsArray: unknown[] = [];
+        
+        if (Array.isArray(responseData)) {
+          announcementsArray = responseData;
+        } else if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+          announcementsArray = Array.isArray(responseData.data) ? responseData.data : [];
+        }
+        
+        const normalizedData = announcementsArray as Announcement[];
+        setAnnouncements(normalizedData);
       }
       if (statsRes.data && 'success' in statsRes.data) {
-        setStats((statsRes.data as unknown as { data: Record<string, { active: number; inactive: number; total: number }> }).data || null);
+        const statsData = (statsRes.data as unknown as { success: boolean; data: { announcements?: { active: number; inactive: number; total: number } } }).data;
+        setStats(statsData.announcements ? { announcements: statsData.announcements } : null);
       }
     } catch (err) {
       announcementsLogger.error('Failed to fetch announcements', { error: err });
@@ -194,7 +206,7 @@ export default function AdminAnnouncementsPage() {
         {[
           { label: mounted ? t("announcements.active") : "", value: stats?.announcements?.active || 0, icon: Eye, color: "text-red-500", bg: "bg-red-500/10" },
           { label: mounted ? t("announcements.inactive") : "", value: stats?.announcements?.inactive || 0, icon: EyeOff, color: "text-gray-500", bg: "bg-white/5" },
-          { label: mounted ? t("announcements.title") : "", value: stats?.announcements?.total || 0, icon: Megaphone, color: "text-white", bg: "bg-white/5" },
+          { label: mounted ? t("announcements.stats.total") : "", value: stats?.announcements?.total || 0, icon: Megaphone, color: "text-white", bg: "bg-white/5" },
           { label: mounted ? t("announcements.stats.reach") : "", value: "∞", icon: TrendingUp, color: "text-red-800", bg: "bg-red-900/20" },
         ].map((stat, index) => (
           <motion.div
@@ -244,7 +256,7 @@ export default function AdminAnnouncementsPage() {
                     : "text-gray-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                {mounted ? (status === "all" ? t("promo_codes.filter.all") : status === "active" ? t("announcements.active") : t("announcements.inactive")) : ""}
+                {mounted ? (status === "all" ? t("announcements.filter.all") : status === "active" ? t("announcements.active") : t("announcements.inactive")) : ""}
               </button>
             ))}
           </div>
@@ -334,7 +346,7 @@ export default function AdminAnnouncementsPage() {
                     <h3 className="text-2xl font-black text-white uppercase tracking-tight group-hover:text-red-400 transition-colors">
                       {announcement.title}
                     </h3>
-                    <p className="text-gray-400 leading-relaxed font-medium line-clamp-3">
+                    <p className="text-gray-400 leading-relaxed font-medium line-clamp-3 whitespace-pre-wrap">
                       {announcement.content}
                     </p>
 

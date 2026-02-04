@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import { Clock, ArrowRight, ImageOff, Star } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useRecentlyViewedStore } from "@/store/recently-viewed";
-import { Card } from "@/components/ui";
-import { formatPrice, getProductPrice, isProductOnFlashSale } from "@/lib/utils";
+import { useIsMounted } from "@/hooks/useIsMounted";
+import { ProductCard } from "./product-card";
+import type { Product, ProductCategory } from "@/types";
 
 interface RecentlyViewedProps {
   limit?: number;
@@ -18,11 +17,7 @@ interface RecentlyViewedProps {
 export function RecentlyViewed({ limit = 4, excludeId }: RecentlyViewedProps) {
   const { t } = useTranslation("home");
   const { items } = useRecentlyViewedStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const isMounted = useIsMounted();
 
   const filteredItems = useMemo(() => 
     items
@@ -31,7 +26,7 @@ export function RecentlyViewed({ limit = 4, excludeId }: RecentlyViewedProps) {
     [items, excludeId, limit]
   );
 
-  if (!mounted) return null;
+  if (!isMounted) return null;
 
   if (filteredItems.length === 0) return null;
 
@@ -55,61 +50,24 @@ export function RecentlyViewed({ limit = 4, excludeId }: RecentlyViewedProps) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {filteredItems.map((item, index) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Link href={`/products/${item.id}`}>
-              <Card className="group overflow-hidden border-white/5 bg-white/2 hover:border-red-500/50 transition-all duration-300">
-                <div className="relative aspect-video">
-                  {item.image ? (
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">
-                      <ImageOff className="w-8 h-8 text-gray-600 mb-1" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-gray-600">No Image</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="p-3">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">{item.category}</p>
-                  <h3 className="font-bold text-white text-xs line-clamp-1 group-hover:text-red-400 transition-colors">
-                    {item.name}
-                  </h3>
-                  <div className="flex items-center justify-between gap-1.5 mt-1">
-                    <div className="flex items-baseline gap-1.5">
-                      <p className="text-red-500 font-black text-xs tracking-tighter">
-                        {formatPrice(getProductPrice(item))}
-                      </p>
-                      {isProductOnFlashSale(item) && (
-                        <p className="text-[8px] text-gray-500 line-through opacity-50 font-bold">
-                          {formatPrice(item.price)}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Reward Points */}
-                    {item.expectedPoints !== undefined && item.expectedPoints > 0 && (
-                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-yellow-400/5 border border-yellow-400/10">
-                        <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500/20" />
-                        <span className="text-[8px] font-black text-yellow-500 tracking-tighter">
-                          {item.expectedPoints.toLocaleString()} <span className="opacity-60">PTS</span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          </motion.div>
+          <ProductCard 
+            key={item.id} 
+            product={{
+              ...item,
+              thumbnail: item.image,
+              images: [item.image],
+              description: item.description,
+              rating: item.rating,
+              reviewCount: item.reviewCount,
+              isActive: true,
+              createdAt: new Date(item.viewedAt),
+              updatedAt: new Date(item.viewedAt),
+              features: [],
+              tags: [],
+              category: item.category as ProductCategory
+            } as Product} 
+            index={index}
+          />
         ))}
       </div>
     </section>

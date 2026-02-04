@@ -174,6 +174,7 @@ export const productsController = {
         const updateData: any = {
             ...data,
             thumbnail: data.thumbnail !== undefined ? data.thumbnail : oldProduct.thumbnail,
+            images: data.images !== undefined ? data.images : oldProduct.images,
             downloadUrl: data.downloadUrl !== undefined ? data.downloadUrl : oldProduct.downloadUrl,
             downloadFileKey: data.downloadFileKey !== undefined ? data.downloadFileKey : oldProduct.downloadFileKey,
             isDownloadable: data.isDownloadable !== undefined ? data.isDownloadable : oldProduct.isDownloadable,

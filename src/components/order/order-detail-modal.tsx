@@ -1,11 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
   Package,
   CreditCard,
-  Calendar,
   Download,
   Key,
   CheckCircle,
@@ -58,8 +55,15 @@ export function OrderDetailModal({ order, isOpen, onClose, onDownload }: OrderDe
   const StatusIcon = status.icon;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="รายละเอียดคำสั่งซื้อ">
-      <div className="space-y-6">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>รายละเอียดคำสั่งซื้อ</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <div className="space-y-6">
         {/* Order Header */}
         <div className="flex items-center justify-between p-4 rounded-xl bg-white/5">
           <div className="flex items-center gap-3">
@@ -79,7 +83,7 @@ export function OrderDetailModal({ order, isOpen, onClose, onDownload }: OrderDe
               </p>
             </div>
           </div>
-          <Badge variant={status.color as any}>{status.label}</Badge>
+          <Badge variant={status.color as "warning" | "success" | "destructive" | "secondary"}>{status.label}</Badge>
         </div>
 
         {/* Order Items */}
@@ -184,7 +188,9 @@ export function OrderDetailModal({ order, isOpen, onClose, onDownload }: OrderDe
             </Button>
           )}
         </div>
-      </div>
+        </div>
+        </Modal.Body>
+      </Modal.Content>
     </Modal>
   );
 }

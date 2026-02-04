@@ -193,7 +193,7 @@ export default function AdminPromoCodesPage() {
           { label: mounted ? t("promo_codes.active") : "", value: promoCodes.filter(c => c.isActive).length, icon: Tag, color: "text-red-500", bg: "bg-red-500/10" },
           { label: mounted ? t("promo_codes.usage_count") : "", value: promoCodes.reduce((sum, c) => sum + c.usedCount, 0), icon: Copy, color: "text-white", bg: "bg-white/5" },
           { label: mounted ? t("promo_codes.expired") : "", value: promoCodes.filter(c => c.expiresAt && new Date(c.expiresAt) < new Date()).length, icon: Clock, color: "text-gray-500", bg: "bg-white/5" },
-          { label: mounted ? t("promo_codes.title") : "", value: promoCodes.length, icon: Zap, color: "text-red-400", bg: "bg-red-500/5" },
+          { label: mounted ? t("promo_codes.stats.total") : "", value: promoCodes.length, icon: Zap, color: "text-red-400", bg: "bg-red-500/5" },
         ].map((stat, index) => (
           <motion.div
             key={index}
@@ -297,7 +297,7 @@ export default function AdminPromoCodesPage() {
                     <td className="px-6 py-6">
                       <div>
                         <p className="font-black text-red-500 text-lg">
-                          {mounted ? (promo.type === "PERCENTAGE" ? `${promo.discount}% OFF` : formatPrice(promo.discount)) : ""}
+                          {mounted ? (promo.type === "PERCENTAGE" ? t("promo_codes.table.discount_off", { percent: promo.discount }) : formatPrice(promo.discount)) : ""}
                         </p>
                       </div>
                     </td>

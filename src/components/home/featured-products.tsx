@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Badge } from "@/components/ui";
 import { ProductCard } from "@/components/product";
@@ -26,8 +26,9 @@ export function FeaturedProducts() {
   const fetchFeatured = useCallback(async () => {
     try {
       const { data } = await productsApi.getFeatured();
-      if (data && (data as any).success) {
-        setProducts((data as any).data || []);
+      const response = data as { success?: boolean; data?: Product[] };
+      if (response?.success) {
+        setProducts(response.data || []);
       }
     } catch (err) {
       featuredProductsLogger.error('Failed to fetch featured products', { error: err });
@@ -44,10 +45,10 @@ export function FeaturedProducts() {
     <ProductCard key={product.id} product={product} index={index} />
   )), [products]);
 
-  const renderTranslation = (key: string) => {
+  const renderTranslation = useCallback((key: string) => {
     if (!mounted) return "";
     return t(key);
-  };
+  }, [mounted, t]);
 
   if (!mounted) return null;
 

@@ -19,7 +19,7 @@ import {
   History,
   Layout
 } from "lucide-react";
-import { Card, Button, Input, Badge } from "@/components/ui";
+import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
 import { useTranslation } from "react-i18next";
@@ -77,6 +77,8 @@ export default function AdminCommissionsPage() {
   const [updateStatus, setUpdateStatus] = useState<CommissionStatus>("PENDING");
   const [adminNotes, setAdminNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchCommissions = useCallback(async () => {
     setLoading(true);
@@ -146,6 +148,17 @@ export default function AdminCommissionsPage() {
       c.id.includes(searchQuery)
     );
   }, [commissions, searchQuery]);
+
+  const paginatedCommissions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCommissions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCommissions, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredCommissions.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus]);
 
   return (
     <div className="space-y-10 relative overflow-hidden">
@@ -246,7 +259,7 @@ export default function AdminCommissionsPage() {
             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">{mounted ? t("common.loading") : ""}</p>
           </div>
         ) : (
-          filteredCommissions.map((commission: Commission, index: number) => {
+          paginatedCommissions.map((commission: Commission, index: number) => {
             const status = statusConfig[commission.status];
             return (
               <motion.div
@@ -373,6 +386,16 @@ export default function AdminCommissionsPage() {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
 
       {/* Update Modal */}
       <AnimatePresence>

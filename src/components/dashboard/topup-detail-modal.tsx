@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { Wallet, Check, Copy, Clock, CreditCard, Sparkles, AlertCircle, XCircle } from "lucide-react";
+import { Check, Copy, Clock, CreditCard, Sparkles, XCircle } from "lucide-react";
 import { Badge, Button, Modal } from "@/components/ui";
 import { formatPrice, cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState } from "react";
 
 interface TopupTransaction {
@@ -26,8 +26,8 @@ export function TopupDetailModal({ topup, onClose }: TopupDetailModalProps) {
   if (!topup) return null;
 
   const isCompleted = topup.status === "COMPLETED";
-  const isCancelled = topup.status === "CANCELLED";
-  const isFailed = topup.status === "FAILED";
+  const _isCancelled = topup.status === "CANCELLED";
+  const _isFailed = topup.status === "FAILED";
   const isPending = topup.status === "PENDING";
 
   const copyToClipboard = (text: string) => {
@@ -37,13 +37,11 @@ export function TopupDetailModal({ topup, onClose }: TopupDetailModalProps) {
   };
 
   return (
-    <Modal
-      isOpen={!!topup}
-      onClose={onClose}
-      showCloseButton={false}
-      className="max-w-[380px] w-[92%] border-white/10 bg-black/90 backdrop-blur-3xl p-0 shadow-2xl rounded-2xl overflow-hidden"
-    >
-      <div className="relative flex flex-col overflow-hidden max-h-[90vh]">
+    <Modal isOpen={!!topup} onClose={onClose}>
+      <Modal.Overlay />
+      <Modal.Content className="max-w-[380px] w-[92%] border-white/10 bg-black/90 backdrop-blur-3xl p-0 shadow-2xl rounded-2xl overflow-hidden">
+        <Modal.Body>
+          <div className="relative flex flex-col overflow-hidden max-h-[90vh]">
         {/* Decorative Background Gradients */}
         <div className="absolute top-0 inset-x-0 h-32 bg-linear-to-b from-red-600/15 to-transparent pointer-events-none" />
         <div className="absolute -top-20 -left-20 w-40 h-40 bg-red-600/20 rounded-full blur-[60px] pointer-events-none" />
@@ -224,8 +222,10 @@ export function TopupDetailModal({ topup, onClose }: TopupDetailModalProps) {
               ปิดหน้าต่าง
             </Button>
           </div>
-        </div>
-      </div>
+          </div>
+          </div>
+        </Modal.Body>
+      </Modal.Content>
     </Modal>
   );
 }

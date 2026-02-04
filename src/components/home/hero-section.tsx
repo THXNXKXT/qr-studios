@@ -1,20 +1,17 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Code, Palette } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export const HeroSection = memo(function HeroSection() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const renderTranslation = (key: string) => {
     if (!mounted) return "";

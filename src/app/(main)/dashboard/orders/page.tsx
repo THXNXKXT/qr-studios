@@ -5,15 +5,14 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { getAuthToken } from "@/lib/auth-helper";
-import {
-  Package,
-  Search,
+import Image from "next/image";
+import { 
+  Package, 
   ArrowLeft,
   ArrowRight,
-  Eye,
-  Clock,
-  Loader2,
-  ImageOff,
+  Clock, 
+  Search,
+  ImageOff
 } from "lucide-react";
 import { Badge, Button, Card, Input, Pagination } from "@/components/ui";
 import { useTranslation } from "react-i18next";
@@ -22,6 +21,8 @@ import { formatPrice, cn } from "@/lib/utils";
 import { ordersApi } from "@/lib/api";
 import { AnimatePresence } from "framer-motion";
 import { createLogger } from "@/lib/logger";
+
+const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==";
 
 interface ApiResponse<T> {
   data?: T;
@@ -39,7 +40,7 @@ interface Order {
   items: Array<{
     product: {
       name: string;
-      images?: string[];
+      thumbnail?: string | null;
     };
     price: number;
   }>;
@@ -52,6 +53,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const itemsPerPage = 10;
   const [mounted, setMounted] = useState(false);
 
@@ -59,7 +61,7 @@ export default function OrdersPage() {
     setMounted(true);
   }, []);
 
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = (key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
@@ -77,11 +79,8 @@ export default function OrdersPage() {
       return;
     }
 
-    // If we have a user, fetch their data
     if (user?.id) {
-      // Only show full-page loading if we don't have any data yet
-      if (orders.length === 0) setLoading(true);
-      
+      // Don't set loading(true) if we already have data to prevent flickering
       try {
         const { data } = await ordersApi.getAll();
         const response = data as ApiResponse<Order[]>;
@@ -94,7 +93,6 @@ export default function OrdersPage() {
         setLoading(false);
       }
     } else if (isSynced) {
-      // Auth finished but no user (probably guest or error)
       setLoading(false);
     }
   }, [user?.id, isSynced]); // Dependencies for callback
@@ -240,20 +238,34 @@ export default function OrdersPage() {
                         </div>
                         
                         <div className="space-y-2 mt-2">
-                          {order.items?.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center overflow-hidden shrink-0">
-                                {item.product?.images?.[0] ? (
-                                  <img src={item.product.images[0]} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <ImageOff className="w-4 h-4 text-gray-600" />
-                                )}
+                          {order.items?.map((item, idx) => {
+                            const errorKey = `${order.id}-${idx}`;
+                            return (
+                              <div key={idx} className="flex items-center gap-3">
+                                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                                  {item.product?.thumbnail && !imageErrors[errorKey] ? (
+                                    <Image
+                                      src={item.product.thumbnail}
+                                      alt={item.product.name}
+                                      fill
+                                      sizes="48px"
+                                      className="object-cover"
+                                      placeholder="blur"
+                                      blurDataURL={blurDataURL}
+                                      onError={() => setImageErrors(prev => ({ ...prev, [errorKey]: true }))}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <ImageOff className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-white font-bold group-hover:text-red-400 transition-colors line-clamp-1">
+                                  {item.product?.name || renderTranslation('common.product')}
+                                </p>
                               </div>
-                              <p className="text-white font-bold group-hover:text-red-400 transition-colors line-clamp-1">
-                                {item.product?.name || renderTranslation('common.product')}
-                              </p>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                         
                         <p className="text-xs text-gray-500 mt-3 flex items-center gap-2">

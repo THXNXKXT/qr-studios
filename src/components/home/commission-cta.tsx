@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Palette, CheckCircle, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Badge } from "@/components/ui";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export function CommissionCTA() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const benefits = [
     t("commission.benefits.custom"),

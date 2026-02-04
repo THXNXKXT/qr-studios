@@ -25,8 +25,6 @@ export const ordersController = {
     const user = c.get('user');
     const { items, promoCode, paymentMethod } = c.req.valid('json' as never) as any;
     
-    console.log('[OrdersController] Validated data:', { items, promoCode, paymentMethod });
-
     const order = await ordersService.createOrder(
       user.id,
       items, // items already has productId and quantity from schema

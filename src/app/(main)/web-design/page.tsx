@@ -1,37 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import {
   Globe,
-  Code,
-  Palette,
   Smartphone,
-  Zap,
-  Shield,
-  Clock,
   CheckCircle,
   ArrowRight,
   MessageCircle,
   Star,
-  Users,
   Layers,
-  Database,
   ShoppingCart,
   Mail,
 } from "lucide-react";
 import { Button, Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export default function WebDesignPage() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [selectedService, setSelectedService] = useState<number | null>(null);
 
-  const technologies = [
+  const technologies = useMemo(() => [
     { name: "Next.js", color: "bg-black" },
     { name: "React", color: "bg-red-500" },
     { name: "TypeScript", color: "bg-red-600" },
@@ -40,17 +34,13 @@ export default function WebDesignPage() {
     { name: "PostgreSQL", color: "bg-red-800" },
     { name: "MongoDB", color: "bg-red-900" },
     { name: "Prisma", color: "bg-red-600" },
-  ];
+  ], []);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  };
+  }, [t, mounted]);
 
   const handleServiceClick = useCallback((index: number) => {
     setSelectedService(prev => prev === index ? null : index);
@@ -148,29 +138,6 @@ export default function WebDesignPage() {
     },
   ], [t]);
 
-  const whyChooseUs = useMemo(() => [
-    {
-      icon: Code,
-      title: t("web_design.why.code.title"),
-      description: t("web_design.why.code.desc"),
-    },
-    {
-      icon: Zap,
-      title: t("web_design.why.speed.title"),
-      description: t("web_design.why.speed.desc"),
-    },
-    {
-      icon: Shield,
-      title: t("web_design.why.security.title"),
-      description: t("web_design.why.security.desc"),
-    },
-    {
-      icon: Clock,
-      title: t("web_design.why.time.title"),
-      description: t("web_design.why.time.desc"),
-    },
-  ], [t]);
-
   const renderedServices = useMemo(() => services.map((service, index) => {
     const Icon = service.icon;
     return (
@@ -230,7 +197,7 @@ export default function WebDesignPage() {
     >
       {tech.name}
     </motion.div>
-  )), []);
+  )), [technologies]);
 
   const renderedProcess = useMemo(() => processSteps.map((item, index) => (
     <motion.div
@@ -259,28 +226,6 @@ export default function WebDesignPage() {
       </div>
     </motion.div>
   )), [processSteps]);
-
-  const renderedWhyChooseUs = useMemo(() => whyChooseUs.map((item, index) => {
-    const Icon = item.icon;
-    return (
-      <motion.div
-        key={index}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: index * 0.1 }}
-        className="text-center"
-      >
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-          <Icon className="w-8 h-8 text-red-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-white mb-2">
-          {item.title}
-        </h3>
-        <p className="text-gray-400 text-sm">{item.description}</p>
-      </motion.div>
-    );
-  }), [whyChooseUs]);
 
   const renderedPortfolios = useMemo(() => portfolios.map((item, index) => (
     <motion.div

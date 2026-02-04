@@ -36,6 +36,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Ignore backend folder (has its own config)
     "backend/**",
+    // Ignore API License folder (Node.js scripts)
+    "API License/**",
     // Ignore node_modules
     "node_modules/**",
     // Ignore generated files

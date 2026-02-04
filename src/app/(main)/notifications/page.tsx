@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNotificationStore } from "@/store/notification";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,7 +12,6 @@ import {
   Loader2,
   Inbox,
   Clock,
-  ExternalLink,
   Package,
   Megaphone,
   CreditCard,
@@ -33,14 +32,13 @@ const typeConfig = {
 export default function NotificationsPage() {
   const { t } = useTranslation("common");
   const { user, loading: authLoading } = useAuth();
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = (key: string, options?: Record<string, unknown>): string => {
     const result = t(key, options);
     return typeof result === "string" ? result : key;
   };
 
   const { 
     notifications, 
-    unreadCount, 
     loading: notifyLoading, 
     fetchNotifications, 
     markAsRead, 

@@ -38,6 +38,7 @@ interface PromoData {
   code: string;
   discount: number;
   type: "PERCENTAGE" | "FIXED";
+  usedCount: number;
 }
 
 interface PromoCode {
@@ -91,8 +92,13 @@ export default function CartPage() {
         const { data, error } = await promoApi.validate(codeToValidate, validTotal, token || undefined);
         
         const response = data as ApiResponse<PromoData>;
-        if (data && response.success) {
-          setAppliedCode(response.data ?? null);
+        if (data && response.success && response.data) {
+          setAppliedCode({
+            code: response.data.code,
+            discount: response.data.discount,
+            type: response.data.type.toLowerCase() as "percentage" | "fixed",
+            usedCount: 0
+          });
         } else {
           removeCode();
         }

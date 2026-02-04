@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   CheckCircle,
 } from "lucide-react";
-import { Card, Button, Input } from "@/components/ui";
+import { Card, Button, Input, Pagination } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
@@ -52,6 +52,8 @@ export default function AdminReviewsPage() {
   const [stats, setStats] = useState<{
     reviews: { total: number; verified: number; avgRating: number };
   } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { t } = useTranslation("admin");
   const [mounted, setMounted] = useState(false);
 
@@ -89,6 +91,17 @@ export default function AdminReviewsPage() {
   useEffect(() => {
     fetchReviews();
   }, [fetchReviews]);
+
+  const paginatedReviews = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return reviews.slice(startIndex, startIndex + itemsPerPage);
+  }, [reviews, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(reviews.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterRating]);
 
   const handleDeleteClick = (review: Review) => {
     setSelectedReview(review);
@@ -247,7 +260,7 @@ export default function AdminReviewsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {reviews.map((review, index) => (
+                {paginatedReviews.map((review, index) => (
                   <motion.tr
                     key={review.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -325,6 +338,16 @@ export default function AdminReviewsPage() {
             </table>
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-white/5 bg-white/2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
 
         {!loading && reviews.length === 0 && (
           <div className="p-20 text-center relative overflow-hidden">

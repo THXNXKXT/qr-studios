@@ -16,6 +16,7 @@ import { Bell, Calendar, Megaphone, Loader2, ChevronRight } from "lucide-react";
 import { Badge, Button } from "@/components/ui";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AnnouncementsPage() {
   const { t, i18n } = useTranslation("home");
@@ -99,17 +100,19 @@ export default function AnnouncementsPage() {
                 </Link>
 
                 <div 
-                  className="text-gray-400 leading-relaxed prose prose-invert max-w-none line-clamp-3 mb-6"
+                  className="text-gray-400 leading-relaxed prose prose-invert max-w-none line-clamp-3 mb-6 whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: announcement.content }}
                 />
 
                 {announcement.media && announcement.media.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     {announcement.media.slice(0, 2).map((url, i) => (
-                      <img 
+                      <Image 
                         key={i}
                         src={url} 
                         alt={`Announcement media ${i + 1}`}
+                        width={400}
+                        height={192}
                         className="rounded-2xl border border-white/10 w-full h-48 object-cover"
                       />
                     ))}

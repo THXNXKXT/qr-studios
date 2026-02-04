@@ -1,23 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import {
   MessageCircle,
-  Mail,
-  Heart,
-  ExternalLink
+  Mail
 } from "lucide-react";
 
 export function Footer() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const footerLinks = {
     products: [

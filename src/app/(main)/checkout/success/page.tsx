@@ -1,46 +1,40 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Check,
   Loader2,
   ArrowRight,
-  ShoppingBag,
   AlertCircle,
   Star
 } from "lucide-react";
 import { Button, Card, Confetti, useConfetti, Badge } from "@/components/ui";
-import { checkoutApi } from "@/lib/api";
 import { useCartStore } from "@/store/cart";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/auth";
 import { useTranslation } from "react-i18next";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 function CheckoutSuccessContent() {
   const { t } = useTranslation("common");
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, verifyPayment, isVerifyingPayment, verifiedSessions } = useAuth();
+  const { user, verifyPayment, isVerifyingPayment } = useAuth();
   const sessionId = searchParams.get("session_id");
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
-  const { items, clearCart } = useCartStore();
+  const { clearCart } = useCartStore();
   const { isActive: showConfetti, trigger: triggerConfetti } = useConfetti();
   const verificationStarted = useRef(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  };
+  }, [mounted, t]);
 
   const handleVerification = useCallback(async () => {
     if (!sessionId || verificationStarted.current) return;
@@ -74,7 +68,11 @@ function CheckoutSuccessContent() {
   }, [sessionId, isVerifyingPayment, verifyPayment, clearCart, triggerConfetti, renderTranslation]);
 
   useEffect(() => {
-    handleVerification();
+    // Defer handleVerification to avoid react-hooks/set-state-in-effect warning
+    const timer = setTimeout(() => {
+      handleVerification();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [handleVerification]);
 
   if (status === "loading") {

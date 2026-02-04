@@ -3,23 +3,20 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, CreditCard, Smartphone, Wallet, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
-import { Card, Button } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { useTranslation, Trans } from "react-i18next";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useCallback } from "react";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export default function PaymentGuidePage() {
   const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const renderTranslation = (key: string, options?: any): string => {
+  const renderTranslation = useCallback((key: string, options?: Record<string, unknown>): string => {
     if (!mounted) return "";
     const result = t(key, options);
     return typeof result === "string" ? result : key;
-  };
+  }, [mounted, t]);
 
   const steps = useMemo(() => [
     {
@@ -42,7 +39,7 @@ export default function PaymentGuidePage() {
       content: renderTranslation("payment_guide.steps.step4.content"),
       icon: ShieldCheck,
     },
-  ], [mounted, t]);
+  ], [renderTranslation]);
 
   const paymentMethods = useMemo(() => [
     {
@@ -60,7 +57,7 @@ export default function PaymentGuidePage() {
       desc: renderTranslation("checkout.pay_with_balance"),
       icon: Wallet,
     },
-  ], [mounted, t]);
+  ], [renderTranslation]);
   return (
     <div className="min-h-screen pt-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-linear-to-br from-red-900/10 via-black to-black pointer-events-none" />

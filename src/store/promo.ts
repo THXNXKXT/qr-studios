@@ -12,31 +12,6 @@ export interface PromoCode {
   usedCount: number;
 }
 
-// Mock promo codes
-const promoCodes: PromoCode[] = [
-  {
-    code: "WELCOME10",
-    discount: 10,
-    type: "percentage",
-    maxDiscount: 500,
-    usedCount: 0,
-  },
-  {
-    code: "SAVE50",
-    discount: 50,
-    type: "fixed",
-    minPurchase: 500,
-    usedCount: 0,
-  },
-  {
-    code: "VIP20",
-    discount: 20,
-    type: "percentage",
-    maxDiscount: 1000,
-    usedCount: 0,
-  },
-];
-
 interface PromoStore {
   appliedCode: PromoCode | null;
   code: string | null;
@@ -73,7 +48,7 @@ export const usePromoStore = create<PromoStore>()(
         // Safety check for legacy buggy data
         // If it's a percentage but the discount value is very high (e.g., > 100),
         // it's likely the old buggy absolute value stored in localStorage.
-        let discountValue = promo.discount;
+        const discountValue = promo.discount;
         if (type === "percentage" && discountValue > 100) {
           // This is definitely old buggy data.
           // We don't clear here to avoid side effects in a getter, 

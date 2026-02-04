@@ -81,3 +81,11 @@ src/locales/admin/th.json.utf8
 src/locales/admin/th.json.bak
 reconstruct_th.py
 stable_reconstruct_locales.py
+
+
+# Skills
+.agents/
+.claude/
+.codex/
+.opencode/
+.windsurf/

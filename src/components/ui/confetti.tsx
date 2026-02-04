@@ -9,6 +9,7 @@ interface ConfettiPiece {
   color: string;
   delay: number;
   rotation: number;
+  duration: number;
 }
 
 interface ConfettiProps {
@@ -33,22 +34,31 @@ export function Confetti({ isActive, duration = 3000 }: ConfettiProps) {
   useEffect(() => {
     if (isActive) {
       // Generate confetti pieces
-      const newPieces: ConfettiPiece[] = Array.from({ length: Math.max(0, 50) }, (_, i) => ({
+      const newPieces: ConfettiPiece[] = Array.from({ length: 50 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         color: colors[Math.floor(Math.random() * colors.length)],
         delay: Math.random() * 0.5,
         rotation: Math.random() * 360,
+        duration: 2.5 + Math.random(),
       }));
-      setPieces(newPieces);
-      setShow(true);
+      
+      // Use requestAnimationFrame to avoid setState during render/effect cycle if possible, 
+      // or ensure it's handled after the current execution frame.
+      const frame = requestAnimationFrame(() => {
+        setPieces(newPieces);
+        setShow(true);
+      });
 
       // Hide after duration
       const timer = setTimeout(() => {
         setShow(false);
       }, duration);
 
-      return () => clearTimeout(timer);
+      return () => {
+        cancelAnimationFrame(frame);
+        clearTimeout(timer);
+      };
     }
   }, [isActive, duration]);
 
@@ -74,7 +84,7 @@ export function Confetti({ isActive, duration = 3000 }: ConfettiProps) {
               }}
               exit={{ opacity: 0 }}
               transition={{
-                duration: 2.5 + Math.random(),
+                duration: piece.duration,
                 delay: piece.delay,
                 ease: "easeOut",
               }}

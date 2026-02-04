@@ -96,13 +96,26 @@ describe("ProductsService", () => {
 
   describe("getProductById", () => {
     test("should return product with aggregated rating", async () => {
-      const mockProduct = { id: "p1", name: "P1", rewardPoints: 50 };
+      const mockProduct = { id: "p1", name: "P1", rewardPoints: 50, isActive: true };
       (db.query.products.findFirst as any).mockResolvedValue(mockProduct);
-      (db.select as any).mockImplementation(() => ({
-        from: mock(() => ({
-          where: mock().mockResolvedValue([{ avgRating: 4.5, count: 10 }]),
-        })),
-      }));
+      
+      // Mock for count query - needs to support both count() patterns
+      (db.select as any).mockImplementation((cols?: any) => {
+        // Check if it's the ratings query (has avgRating column)
+        if (cols && typeof cols === 'object' && 'avgRating' in cols) {
+          return {
+            from: mock(() => ({
+              where: mock().mockResolvedValue([{ avgRating: 4.5, count: 10 }]),
+            })),
+          };
+        }
+        // Default count query
+        return {
+          from: mock(() => ({
+            where: mock().mockResolvedValue([{ value: 0 }]),
+          })),
+        };
+      });
 
       const result = await productsService.getProductById("p1");
 

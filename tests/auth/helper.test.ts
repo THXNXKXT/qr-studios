@@ -4,12 +4,10 @@ import { expect, test, describe, mock, beforeEach, afterEach } from "bun:test";
 const mockStorage: Record<string, string> = {};
 let cookieStore = "";
 
-// @ts-ignore
 global.window = {
   location: { href: "" }
-} as any;
+} as Window & typeof globalThis;
 
-// @ts-ignore
 global.document = {
   get cookie() {
     return cookieStore;
@@ -24,30 +22,29 @@ global.document = {
     } else {
       const cookieName = k.trim();
       const cookieValue = v.trim();
-      // Simple cookie store implementation
       const cookies = cookieStore.split(";").filter(c => c.trim() && !c.trim().startsWith(cookieName + "="));
       cookies.push(`${cookieName}=${cookieValue}`);
       cookieStore = cookies.join("; ");
     }
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
-// @ts-ignore
 global.localStorage = {
   getItem: mock((key: string) => mockStorage[key] || null),
   setItem: mock((key: string, val: string) => { mockStorage[key] = val; }),
   removeItem: mock((key: string) => { delete mockStorage[key]; }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Mock fetch
-const originalFetch = global.fetch;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 global.fetch = mock() as any;
 
 import { 
   createBackendSession, 
   getBackendSession, 
   isAuthenticated, 
-  getAuthToken, 
   clearBackendSession 
 } from "../../src/lib/auth-helper";
 
@@ -56,10 +53,11 @@ describe("AuthHelper", () => {
     // Clear mocks and stores
     for (const key in mockStorage) delete mockStorage[key];
     cookieStore = "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockClear();
-    (global.localStorage.getItem as any).mockClear();
-    (global.localStorage.setItem as any).mockClear();
-    (global.localStorage.removeItem as any).mockClear();
+    (global.localStorage.getItem as ReturnType<typeof mock>).mockClear();
+    (global.localStorage.setItem as ReturnType<typeof mock>).mockClear();
+    (global.localStorage.removeItem as ReturnType<typeof mock>).mockClear();
   });
 
   afterEach(() => {
@@ -147,7 +145,7 @@ describe("AuthHelper", () => {
           json: async () => ({ success: true, data: { user: { id: "123" } } }),
         });
 
-        const result = await getBackendSession();
+        await getBackendSession();
         
         expect(mockStorage["auth_token"]).toBe("cookie_token"); // Sync storage to cookie
         expect(global.fetch).toHaveBeenCalledWith(

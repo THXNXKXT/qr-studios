@@ -69,9 +69,18 @@ export default function AdminSettingsPage() {
     try {
       const res = await adminApi.getSettings();
       if (res.data) {
-        const settingsData = res.data;
-        const normalizedData = Array.isArray(settingsData) ? settingsData : [];
-        setRawSettings(normalizedData as Setting[]);
+        // Handle both formats: { success, data } or direct array
+        const responseData = res.data as { success?: boolean; data?: unknown[] } | unknown[];
+        let settingsArray: unknown[] = [];
+        
+        if (Array.isArray(responseData)) {
+          settingsArray = responseData;
+        } else if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+          settingsArray = Array.isArray(responseData.data) ? responseData.data : [];
+        }
+        
+        const normalizedData = settingsArray as Setting[];
+        setRawSettings(normalizedData);
         const settingsMap: Record<string, string | number | boolean | null> = {};
         normalizedData.forEach((s) => {
           settingsMap[s.key] = s.value as string | number | boolean | null;

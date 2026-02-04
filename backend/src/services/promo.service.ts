@@ -2,12 +2,19 @@ import { db } from '../db';
 import * as schema from '../db/schema';
 import { eq, and, sql, lt, or } from 'drizzle-orm';
 import { BadRequestError, NotFoundError } from '../utils/errors';
+import { trackedQuery, logger as baseLogger } from '../utils';
 
-export const promoService = {
+const logger = baseLogger.child('[PromoService]');
+
+class PromoService {
+  private logger = logger;
+
   async validatePromoCode(code: string, cartTotal: number, userId?: string) {
-    const promo = await db.query.promoCodes.findFirst({
-      where: eq(schema.promoCodes.code, code.toUpperCase()),
-    });
+    const promo = await trackedQuery(async () => {
+      return await db.query.promoCodes.findFirst({
+        where: eq(schema.promoCodes.code, code.toUpperCase()),
+      });
+    }, 'promo.validatePromoCode.findPromo');
 
     if (!promo) {
       throw new NotFoundError('Promo code not found');
@@ -27,12 +34,14 @@ export const promoService = {
 
     // Check if user has already used this promo code
     if (userId) {
-      const usage = await db.query.promoCodeUsages.findFirst({
-        where: and(
-          eq(schema.promoCodeUsages.userId, userId),
-          eq(schema.promoCodeUsages.promoCodeId, promo.id)
-        ),
-      });
+      const usage = await trackedQuery(async () => {
+        return await db.query.promoCodeUsages.findFirst({
+          where: and(
+            eq(schema.promoCodeUsages.userId, userId),
+            eq(schema.promoCodeUsages.promoCodeId, promo.id)
+          ),
+        });
+      }, 'promo.validatePromoCode.checkUsage');
 
       if (usage) {
         throw new BadRequestError('You have already used this promo code');
@@ -59,13 +68,13 @@ export const promoService = {
       valid: true,
       id: promo.id,
       code: promo.code,
-      discount: promo.discount, // Return the original value (e.g., 10 for 10%)
-      type: promo.type.toLowerCase(), // Return lowercase type ('percentage' or 'fixed')
+      discount: promo.discount,
+      type: promo.type.toLowerCase(),
       maxDiscount: promo.maxDiscount,
       minPurchase: promo.minPurchase,
       message: `Promo code ${promo.code} applied successfully`,
     };
-  },
+  }
 
   async applyPromoCode(code: string, orderId: string, userId: string) {
     return await db.transaction(async (tx) => {
@@ -97,7 +106,7 @@ export const promoService = {
         throw new BadRequestError('Promo code already applied to this order');
       }
 
-      // Calculate subtotal from items to ensure we don't trust stored total if it was tampered with
+      // Calculate subtotal from items
       const subtotal = order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
       // Use the transaction client for validation too
@@ -177,5 +186,7 @@ export const promoService = {
         absoluteDiscount: discountAmount
       };
     });
-  },
-};
+  }
+}
+
+export const promoService = new PromoService();

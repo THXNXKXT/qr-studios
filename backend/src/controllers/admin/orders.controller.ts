@@ -58,7 +58,7 @@ export const ordersController = {
                     items: {
                         with: {
                             product: {
-                                columns: { id: true, name: true, slug: true, category: true, thumbnail: true, images: true }
+                                columns: { id: true, name: true, slug: true, category: true, thumbnail: true }
                             }
                         }
                     }
@@ -81,7 +81,7 @@ export const ordersController = {
                 items: {
                     with: {
                         product: {
-                            columns: { id: true, name: true, slug: true, category: true, version: true, downloadKey: true, thumbnail: true, images: true }
+                            columns: { id: true, name: true, slug: true, category: true, version: true, downloadKey: true, thumbnail: true }
                         }
                     }
                 },

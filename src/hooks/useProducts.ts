@@ -57,7 +57,7 @@ export function useProducts(params?: {
       const { data, error: apiError } = await productsApi.getAll(params);
 
       if (apiError) {
-        setError(apiError);
+        setError(typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error');
         setLoading(false);
         return;
       }
@@ -71,6 +71,7 @@ export function useProducts(params?: {
     }
 
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params?.category, params?.search, params?.sort, params?.page, params?.limit]);
 
   return { products, loading, error, pagination };
@@ -87,7 +88,7 @@ export function useFeaturedProducts() {
       const { data, error: apiError } = await productsApi.getAll({ limit: 6 });
 
       if (apiError) {
-        setError(apiError);
+        setError(typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error');
       } else if (data && typeof data === 'object' && 'data' in data) {
         setProducts(((data as ProductsResponse).data || []).filter((p: Product) => p.isFeatured));
       }
@@ -112,7 +113,7 @@ export function useFlashSaleProducts() {
       const { data, error: apiError } = await productsApi.getAll();
 
       if (apiError) {
-        setError(apiError);
+        setError(typeof apiError === 'string' ? apiError : apiError.message || 'Unknown error');
       } else if (data && typeof data === 'object' && 'data' in data) {
         setProducts(((data as ProductsResponse).data || []).filter((p: Product) => p.isFlashSale));
       }

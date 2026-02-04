@@ -810,13 +810,22 @@
     "delete_confirm": "ลบโค้ด",
     "no_codes": "ไม่พบโค้ดส่วนลด",
     "no_codes_hint": "ลองเปลี่ยนเงื่อนไขการค้นหาหรือเพิ่มรหัสใหม่",
+    "filter": {
+      "all": "ทั้งหมด",
+      "active": "ใช้งาน",
+      "inactive": "ปิดใช้งาน"
+    },
+    "stats": {
+      "total": "ทั้งหมด"
+    },
     "placeholders": {
       "no_min": "ไม่มีขั้นต่ำ",
       "unlimited": "ไม่จำกัด"
     },
     "table": {
       "expiration_label": "วันหมดอายุ",
-      "never_expires": "ไม่มีวันหมดอายุ"
+      "never_expires": "ไม่มีวันหมดอายุ",
+      "discount_off": "ลด {{percent}}%"
     },
     "errors": {
       "save_fail": "บันทึกโค้ดส่วนลดไม่สำเร็จ",
@@ -879,6 +888,14 @@
     "delete_message": "คุณต้องการลบประกาศนี้หรือไม่?",
     "delete_confirm": "ลบประกาศ",
     "no_announcements": "ไม่มีประกาศ",
+    "search_placeholder": "ค้นหาหัวข้อประกาศ...",
+    "filter": {
+      "all": "ทั้งหมด"
+    },
+    "stats": {
+      "total": "ทั้งหมด",
+      "reach": "การเข้าถึง"
+    },
     "card": {
       "image_index": "รูปภาพที่ {{index}}"
     },

@@ -36,8 +36,8 @@ export function StatsSection() {
           });
         }
         
-        if (error) {
-          statsLogger.error('Stats API Error', { error });
+        if (error && (error.message || error.status)) {
+          statsLogger.error('Stats API Error', { error: error.message || 'Unknown error', status: error.status });
         }
       } catch (err) {
         statsLogger.error('Stats Fetch Error', { error: err });

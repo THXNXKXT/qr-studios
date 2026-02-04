@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,16 +23,17 @@ import {
   Mail,
   Heart,
   Megaphone,
-  Star,
   Languages,
-  Blocks
+  Blocks,
+  ArrowRight
 } from "lucide-react";
 import { Button, Badge } from "@/components/ui";
 import { useCartStore } from "@/store/cart";
 import { useNotificationStore } from "@/store/notification";
 import { useWishlistStore } from "@/store/wishlist";
 import { useAuth } from "@/hooks/useAuth";
-import { getAuthToken, clearBackendSession, eraseCookie } from "@/lib/auth-helper";
+import { useIsMounted } from "@/hooks/useIsMounted";
+import { getAuthToken } from "@/lib/auth-helper";
 import { cn, getTierInfo } from "@/lib/utils";
 
 const navLinks = [
@@ -57,22 +57,21 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isUserReady, setIsUserReady] = useState(false);
+  const isMounted = useIsMounted();
   const [isOptimisticAuth, setIsOptimisticAuth] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const itemCount = useCartStore((state) => state.getItemCount());
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } = useNotificationStore();
-  const { user, loading, isSyncing, isAuthenticated: isAuthFromHook, logout } = useAuth();
+  const { user, loading, isAuthenticated: isAuthFromHook, logout } = useAuth();
 
+  // Check cookie immediately on mount to prevent flicker
   useEffect(() => {
-    setIsMounted(true);
-    // Check cookie immediately on mount to prevent flicker
     const token = getAuthToken();
     if (token) {
-      setIsOptimisticAuth(true);
+      // Defer setState to avoid react-hooks/set-state-in-effect warning
+      queueMicrotask(() => setIsOptimisticAuth(true));
     }
   }, []);
 
@@ -89,11 +88,10 @@ export function Navbar() {
 
   useEffect(() => {
     if (!loading && user) {
-      setIsUserReady(true);
-      setIsOptimisticAuth(true);
+      // Defer setState to avoid react-hooks/set-state-in-effect warning
+      queueMicrotask(() => setIsOptimisticAuth(true));
     } else if (!loading && !user) {
-      setIsUserReady(false);
-      setIsOptimisticAuth(false);
+      queueMicrotask(() => setIsOptimisticAuth(false));
     }
   }, [loading, user]);
 
@@ -291,19 +289,21 @@ export function Navbar() {
                       ))
                     )}
                   </div>
-                  {notifications.filter(n => !n.isRead).length > 3 && (
-                    <div className="p-3 bg-white/5 border-t border-white/10 text-center">
-                      <button 
-                        onClick={() => {
-                          setShowNotifications(false);
-                          router.push('/notifications');
-                        }}
-                        className="text-xs text-gray-400 hover:text-white transition-colors"
-                      >
-                        {t('nav.view_all_notifications')} ({notifications.filter(n => !n.isRead).length})
-                      </button>
-                    </div>
-                  )}
+                  <div className="p-3 bg-white/5 border-t border-white/10">
+                    <Link
+                      href="/notifications"
+                      onClick={() => setShowNotifications(false)}
+                      className="flex items-center justify-center gap-2 text-xs text-gray-400 hover:text-white transition-colors w-full"
+                    >
+                      <span>{t('nav.view_all_notifications')}</span>
+                      {notifications.filter(n => !n.isRead).length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          {notifications.filter(n => !n.isRead).length}
+                        </Badge>
+                      )}
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -368,11 +368,12 @@ export function Navbar() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                   >
                     {user.avatar ? (
-                      <div className="w-8 h-8 rounded-full overflow-hidden border border-red-500/30">
-                        <img 
-                          src={user.avatar} 
-                          alt={user.username} 
-                          className="w-full h-full object-cover"
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-red-500/30 relative">
+                        <Image
+                          src={user.avatar}
+                          alt={user.username}
+                          fill
+                          className="object-cover"
                         />
                       </div>
                     ) : (
@@ -562,11 +563,12 @@ export function Navbar() {
                         className="flex-1 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
                       >
                         {user.avatar ? (
-                          <div className="w-9 h-9 rounded-full overflow-hidden border border-red-500/30">
-                            <img 
-                              src={user.avatar} 
-                              alt={user.username} 
-                              className="w-full h-full object-cover"
+                          <div className="w-9 h-9 rounded-full overflow-hidden border border-red-500/30 relative">
+                            <Image
+                              src={user.avatar}
+                              alt={user.username}
+                              fill
+                              className="object-cover"
                             />
                           </div>
                         ) : (

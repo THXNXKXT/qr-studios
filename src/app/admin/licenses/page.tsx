@@ -24,7 +24,7 @@ import {
   Hash,
   RotateCcw
 } from "lucide-react";
-import { Card, Button, Input, Badge } from "@/components/ui";
+import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { ConfirmModal } from "@/components/admin/confirm-modal";
 import { cn } from "@/lib/utils";
 import { adminApi } from "@/lib/api";
@@ -109,6 +109,8 @@ export default function AdminLicensesPage() {
   const [isGranting, setIsGranting] = useState(false);
   const [allUsers, setAllUsers] = useState<UserOption[]>([]);
   const [allProducts, setAllProducts] = useState<ProductOption[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [confirmRevoke, setConfirmRevoke] = useState<{ isOpen: boolean; id: string | null }>({
     isOpen: false,
     id: null,
@@ -264,6 +266,17 @@ export default function AdminLicensesPage() {
       return matchesSearch && matchesStatus;
     }), [searchQuery, filterStatus, licenses]);
 
+  const paginatedLicenses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredLicenses.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredLicenses, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredLicenses.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus]);
+
   return (
     <div className="space-y-10 relative overflow-hidden pb-20">
       {/* Background Effects */}
@@ -325,7 +338,7 @@ export default function AdminLicensesPage() {
               </div>
               <div className="relative z-10">
                 <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black" suppressHydrationWarning>{stat.label}</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{stat.label}</p>
               </div>
             </Card>
           </motion.div>
@@ -369,7 +382,7 @@ export default function AdminLicensesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredLicenses.map((license, index) => {
+                {paginatedLicenses.map((license, index) => {
                   const status = statusConfig[license.status] || statusConfig.ACTIVE;
                   return (
                     <motion.tr
@@ -456,7 +469,17 @@ export default function AdminLicensesPage() {
           )}
         </div>
 
-        {!loading && licenses.length === 0 && (
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-white/5 bg-white/2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+
+        {!loading && filteredLicenses.length === 0 && (
           <div className="p-20 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-50" />
             <Key className="w-20 h-20 text-gray-800 mx-auto mb-6 relative z-10 opacity-20" />

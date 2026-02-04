@@ -130,12 +130,12 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
 
       const submissionData = {
         ...formData,
-        media: currentMedia,
+        media: currentMedia.map(m => m.url), // Send array of URLs instead of objects
         startsAt: formData.startsAt ? new Date(formData.startsAt).toISOString() : null,
         endsAt: formData.endsAt ? new Date(formData.endsAt).toISOString() : null,
       };
 
-      await onSave(submissionData as Announcement);
+      await onSave(submissionData as unknown as Announcement);
       onClose();
     } catch (error: unknown) {
       console.error("Error saving announcement:", error);
@@ -317,12 +317,14 @@ export function AnnouncementFormModal({ isOpen, onClose, announcement, onSave }:
                         ))}
                         {/* Existing R2 Files */}
                         {formData.media.map((item, index) => (
-                          <div key={"existing-" + index} className="relative aspect-square rounded-2xl bg-white/5 overflow-hidden group border border-white/10">
-                            <NextImage src={item.url as string} alt="" fill className="object-cover" sizes="(max-width: 768px) 50vw, 150px" />
-                            <button type="button" onClick={() => removeMedia(index)} className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500">
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
+                          item.url ? (
+                            <div key={"existing-" + index} className="relative aspect-square rounded-2xl bg-white/5 overflow-hidden group border border-white/10">
+                              <NextImage src={item.url as string} alt="" fill className="object-cover" sizes="(max-width: 768px) 50vw, 150px" />
+                              <button type="button" onClick={() => removeMedia(index)} className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : null
                         ))}
                       </div>
                     </div>

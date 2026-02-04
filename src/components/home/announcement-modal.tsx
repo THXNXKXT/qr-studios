@@ -4,14 +4,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from "react-i18next";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { 
-  Megaphone, 
-  Sparkles, 
-  Gift, 
   ArrowRight, 
   X,
-  Bell,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -83,15 +79,13 @@ const STORAGE_KEY = "qr-studio-announcement-dismissed";
 const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
 
 export function AnnouncementModal() {
-  const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [isOpen, setIsOpen] = useState(false);
   const [currentAnnouncement, setCurrentAnnouncement] = useState<Announcement | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
     // ตรวจสอบว่าผู้ใช้กด "ไม่ต้องแสดงอีกในวันนี้" หรือยัง
     const dismissed = localStorage.getItem(STORAGE_KEY);
     const dismissedData = dismissed ? JSON.parse(dismissed) : {};

@@ -5,19 +5,19 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Archive,
-  RotateCcw,
-  Eye,
-  Package,
-  Loader2,
-  ImageOff,
-  Star,
-  AlertTriangle,
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Archive, 
+  RotateCcw, 
+  Eye, 
+  Package, 
+  Loader2, 
+  ImageOff, 
+  Star, 
+  AlertTriangle 
 } from "lucide-react";
 import { Card, Button, Input, Badge, Pagination } from "@/components/ui";
 import { ProductFormModal, ConfirmModal } from "@/components/admin";
@@ -47,7 +47,6 @@ function normalizeProducts(raw: unknown): Product[] {
     .filter(Boolean)
     .map((p: unknown) => {
       const item = p as Record<string, unknown>;
-      const images = Array.isArray(item?.images) ? item.images.filter(isSafeImageSrc) : [];
       const thumbnail = isSafeImageSrc(item?.thumbnail) ? item.thumbnail : undefined;
       return {
         ...item,
@@ -55,7 +54,6 @@ function normalizeProducts(raw: unknown): Product[] {
         name: typeof item?.name === "string" ? item.name : String(item?.name ?? ""),
         category: (item?.category ?? "").toString(),
         thumbnail,
-        images,
         features: Array.isArray(item?.features) ? item.features : [],
         tags: Array.isArray(item?.tags) ? item.tags : [],
         isActive: item?.isActive !== undefined ? Boolean(item.isActive) : true,
@@ -87,9 +85,21 @@ export default function AdminProductsPage() {
     setLoading(true);
     try {
       const res = await adminApi.getProducts();
-      if (res.data) {
-        setProducts(normalizeProducts(res.data));
+      // Handle both formats: { success, data } or direct array
+      const responseData = res.data as { success?: boolean; data?: unknown[] } | unknown[];
+      let productsArray: unknown[] = [];
+      
+      if (Array.isArray(responseData)) {
+        productsArray = responseData;
+      } else if (responseData && typeof responseData === 'object') {
+        if ('success' in responseData && responseData.success && 'data' in responseData) {
+          productsArray = Array.isArray(responseData.data) ? responseData.data : [];
+        } else if ('data' in responseData && Array.isArray(responseData.data)) {
+          productsArray = responseData.data;
+        }
       }
+      
+      setProducts(normalizeProducts(productsArray));
     } catch (err) {
       productsLogger.error('Failed to fetch products', { error: err });
     } finally {

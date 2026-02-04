@@ -81,6 +81,8 @@
     },
     "card": {
       "new": "New",
+      "featured": "Recommended",
+      "flash_sale": "Flash Sale",
       "add_to_cart": "Add to Cart"
     },
     "recently_viewed": "Recently Viewed",

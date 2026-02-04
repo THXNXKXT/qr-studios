@@ -1,16 +1,18 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState, useEffect } from "react";
+import { memo, useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShoppingCart, Eye, ImageOff, Zap, Star } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { Button, Badge, Card, WishlistButton, StockCounter, ReviewStars, FlashSaleTimer } from "@/components/ui";
-import { useCartStore } from "@/store/cart";
+import { ImageOff, Star, Zap, Sparkles, ThumbsUp } from "lucide-react";
+import { Card, StockCounter, ReviewStars, Badge } from "@/components/ui";
 import { useRecentlyViewedStore } from "@/store/recently-viewed";
+import { useIsMounted } from "@/hooks/useIsMounted";
+import { useTranslation } from "react-i18next";
 import { formatPrice, getProductPrice, isProductOnFlashSale } from "@/lib/utils";
 import type { Product } from "@/types";
+
+const blurDataURL = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==";
 
 interface ProductCardProps {
   product: Product;
@@ -18,41 +20,26 @@ interface ProductCardProps {
 }
 
 export const ProductCard = memo(function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { t } = useTranslation("common");
-  const [mounted, setMounted] = useState(false);
-  const addItem = useCartStore((state) => state.addItem);
+  const { t } = useTranslation("home");
+  const isMounted = useIsMounted();
+  const [imageError, setImageError] = useState(false);
   const addToRecentlyViewed = useRecentlyViewedStore((state) => state.addItem);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const renderTranslation = (key: string, options?: any): string => {
-    if (!mounted) return "";
-    const result = t(key, options);
-    return typeof result === "string" ? result : key;
-  };
-
-  const categoryLabels: Record<string, string> = {
-    SCRIPT: "Script",
-    UI: "UI",
-    BUNDLE: "Bundle",
-  };
-
-  const handleAddToCart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem(product);
-  }, [addItem, product]);
-
   const handleClick = useCallback(() => {
+    if (!product) return;
     addToRecentlyViewed({
       id: product.id,
       name: product.name,
+      description: product.description || "",
       price: product.price,
-      image: product.thumbnail || product.images[0] || "",
+      originalPrice: product.originalPrice,
+      image: product.thumbnail || "",
       category: product.category,
       stock: product.stock,
+      rating: product.rating || 0,
+      reviewCount: product.reviewCount || 0,
+      isNew: product.isNew,
+      isFeatured: product.isFeatured,
       isFlashSale: product.isFlashSale,
       flashSalePrice: product.flashSalePrice,
       flashSaleEnds: product.flashSaleEnds,
@@ -62,6 +49,10 @@ export const ProductCard = memo(function ProductCard({ product, index = 0 }: Pro
   }, [addToRecentlyViewed, product]);
 
   const stock = product.stock;
+
+  if (!isMounted) return null;
+
+  const imageUrl = product.thumbnail || product.images?.[0];
 
   return (
     <motion.div
@@ -73,12 +64,41 @@ export const ProductCard = memo(function ProductCard({ product, index = 0 }: Pro
         <Card className="group overflow-hidden hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10">
           {/* Image */}
           <div className="relative aspect-video bg-linear-to-br from-red-900/50 to-black overflow-hidden">
-            {(product.thumbnail || product.images[0]) ? (
+            {/* Badges Container */}
+            <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+              {/* Flash Sale Badge */}
+              {isProductOnFlashSale(product) && (
+                <Badge variant="destructive" className="gap-1 animate-pulse py-1 font-black uppercase tracking-widest text-[10px] w-fit">
+                  <Zap className="w-3.5 h-3.5 fill-white" />
+                  Flash Sale -{Math.round((1 - (product.flashSalePrice || product.price) / (product.originalPrice || product.price)) * 100)}%
+                </Badge>
+              )}
+              {/* New Badge */}
+              {product.isNew && (
+                <Badge className="gap-1 py-1 font-black uppercase tracking-widest text-[10px] bg-green-600 text-white border-emerald-500/50 w-fit">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {t("products.card.new")}
+                </Badge>
+              )}
+              {/* Featured Badge */}
+              {product.isFeatured && (
+                <Badge className="gap-1 py-1 font-black uppercase tracking-widest text-[10px] bg-amber-500 text-white border-amber-400/50 w-fit">
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  {t("products.card.featured")}
+                </Badge>
+              )}
+            </div>
+            {imageUrl && !imageError ? (
               <Image
-                src={product.thumbnail || product.images[0]}
+                src={imageUrl}
                 alt={product.name}
                 fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
+                priority={index < 4}
+                placeholder="blur"
+                blurDataURL={blurDataURL}
+                onError={() => setImageError(true)}
               />
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5">
@@ -86,79 +106,6 @@ export const ProductCard = memo(function ProductCard({ product, index = 0 }: Pro
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">No Image</span>
               </div>
             )}
-
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
-
-            {/* Badges & Timer */}
-            <div className="absolute top-3 left-3 flex flex-col gap-2 z-20">
-              {product.isNew && (
-                <Badge variant="success" className="w-fit px-3 py-1 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-green-500/20">
-                  {renderTranslation("products.card.new")}
-                </Badge>
-              )}
-              {isProductOnFlashSale(product) && (
-                <div className="flex flex-col gap-1.5">
-                  <Badge variant="destructive" className="gap-1 animate-pulse px-3 py-1 font-black uppercase tracking-widest text-[10px] w-fit shadow-lg shadow-red-500/30">
-                    <Zap className="w-3.5 h-3.5 fill-white" />
-                    Flash Sale -{Math.round((1 - (product.flashSalePrice || product.price) / (product.originalPrice || product.price)) * 100)}%
-                  </Badge>
-                  {product.flashSaleEnds && (
-                    <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-2 py-1 flex items-center gap-2 w-fit transition-opacity duration-300 group-hover:opacity-0">
-                      <FlashSaleTimer
-                        endTime={product.flashSaleEnds}
-                        variant="compact"
-                        className="scale-75 origin-left"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-              {!isProductOnFlashSale(product) && product.originalPrice && (
-                <Badge variant="destructive" className="w-fit px-3 py-1 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-red-500/30">
-                  -{Math.round((1 - product.price / product.originalPrice) * 100)}%
-                </Badge>
-              )}
-            </div>
-
-            {/* Wishlist Button */}
-            <div className="absolute top-3 right-3 z-10">
-              <WishlistButton
-                item={{
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  image: product.thumbnail || product.images[0] || "",
-                  category: product.category,
-                  description: product.description,
-                  stock: product.stock,
-                  isFlashSale: product.isFlashSale,
-                  flashSalePrice: product.flashSalePrice,
-                  flashSaleEnds: product.flashSaleEnds,
-                }}
-                size="sm"
-              />
-            </div>
-
-            {/* Quick Actions */}
-            <div className="absolute bottom-3 left-3 right-3 flex gap-2 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 transition-all duration-300 z-10">
-              <Button
-                variant="default"
-                size="sm"
-                className="flex-1 bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20"
-                onClick={handleAddToCart}
-              >
-                <ShoppingCart className="w-4 h-4" />
-                {renderTranslation("products.detail.add_to_cart_btn")}
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="shrink-0 bg-white/10 hover:bg-white/20 backdrop-blur-md border-white/10"
-              >
-                <Eye className="w-4 h-4 text-white" />
-              </Button>
-            </div>
           </div>
 
           {/* Content */}
